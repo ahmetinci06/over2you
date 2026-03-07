@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Over2You — Admin CMS</title>
+  <style>
+    :root { --bg: #fafafa; --card: #fff; --text: #1c1c1c; --muted: #888; --border: #e0e0e0; --accent: #1c1c1c; --accent-light: #f0f0f0; --success: #28a745; --danger: #dc3545; --radius: 8px; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
+
+    /* Layout */
+    .admin-layout { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+    @media (max-width: 768px) { .admin-layout { grid-template-columns: 1fr; } .sidebar { display: none; } .sidebar.open { display: flex; position: fixed; z-index: 100; inset: 0; } }
+
+    /* Sidebar */
+    .sidebar { background: var(--text); color: #fff; padding: 1.5rem; display: flex; flex-direction: column; gap: 0.25rem; }
+    .sidebar-logo { font-size: 18px; font-weight: 900; font-style: italic; letter-spacing: -1px; margin-bottom: 2rem; opacity: 0.9; }
+    .sidebar-link { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0.75rem; border-radius: var(--radius); color: rgba(255,255,255,0.6); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; border: none; background: none; width: 100%; text-align: left; }
+    .sidebar-link:hover { background: rgba(255,255,255,0.1); color: #fff; }
+    .sidebar-link.active { background: rgba(255,255,255,0.15); color: #fff; }
+    .sidebar-link svg { width: 18px; height: 18px; flex-shrink: 0; }
+    .sidebar-bottom { margin-top: auto; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1); }
+    .sidebar-bottom a { color: rgba(255,255,255,0.4); font-size: 12px; }
+
+    /* Main */
+    .main { padding: 2rem; max-width: 1100px; overflow-y: auto; }
+    .main-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
+    .main-title { font-size: 20px; font-weight: 800; }
+    .mobile-menu { display: none; background: none; border: none; cursor: pointer; }
+    @media (max-width: 768px) { .mobile-menu { display: block; } }
+
+    /* Cards */
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.5rem; }
+    .card-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 1rem; color: var(--muted); }
+
+    /* Forms */
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+    .form-row.single { grid-template-columns: 1fr; }
+    @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
+    .form-group { display: flex; flex-direction: column; gap: 0.3rem; }
+    .form-group label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+    .form-group input, .form-group select, .form-group textarea { padding: 0.6rem 0.75rem; border: 1px solid var(--border); border-radius: 4px; font-size: 13px; font-family: inherit; outline: none; transition: border-color 0.2s; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--accent); }
+    .form-group textarea { resize: vertical; min-height: 60px; }
+
+    /* Buttons */
+    .btn { padding: 0.55rem 1.25rem; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; border: none; border-radius: 4px; cursor: pointer; transition: opacity 0.2s; display: inline-flex; align-items: center; gap: 0.4rem; }
+    .btn:hover { opacity: 0.85; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-success { background: var(--success); color: #fff; }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    .btn-sm { padding: 0.35rem 0.75rem; font-size: 11px; }
+    .btn-group { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+    /* Product List */
+    .product-table { width: 100%; border-collapse: collapse; }
+    .product-table th { text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); padding: 0.5rem; border-bottom: 1px solid var(--border); }
+    .product-table td { padding: 0.6rem 0.5rem; border-bottom: 1px solid #f0f0f0; font-size: 13px; vertical-align: middle; }
+    .product-table tr:hover { background: var(--accent-light); }
+    .product-swatch { width: 32px; height: 40px; border-radius: 4px; flex-shrink: 0; }
+    .product-name-cell { display: flex; align-items: center; gap: 0.75rem; }
+    .badge { display: inline-block; padding: 2px 6px; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; border-radius: 3px; }
+    .badge-new { background: var(--accent); color: #fff; }
+    .badge-stock { background: #ffc107; color: #000; }
+
+    /* Tab panels */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* Login */
+    .login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem; }
+    .login-box { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 2.5rem; max-width: 400px; width: 100%; text-align: center; }
+    .login-box h1 { font-size: 24px; font-weight: 900; font-style: italic; margin-bottom: 0.5rem; }
+    .login-box p { font-size: 13px; color: var(--muted); margin-bottom: 2rem; }
+    .login-box input { width: 100%; margin-bottom: 1rem; }
+    .login-box .btn { width: 100%; justify-content: center; padding: 0.75rem; }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--accent); color: #fff; padding: 0.75rem 1.25rem; border-radius: var(--radius); font-size: 13px; font-weight: 600; z-index: 1000; transform: translateY(120%); transition: transform 0.3s; }
+    .toast.show { transform: translateY(0); }
+
+    /* Color picker */
+    .color-preview { display: inline-flex; align-items: center; gap: 0.5rem; }
+    .color-dot { width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--border); }
+    input[type="color"] { width: 40px; height: 32px; padding: 0; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; }
+
+    /* Stats */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; }
+    .stat-value { font-size: 24px; font-weight: 800; }
+    .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+
+    /* Modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 500; display: none; align-items: center; justify-content: center; padding: 1rem; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: var(--card); border-radius: var(--radius); max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 2rem; }
+    .modal-title { font-size: 16px; font-weight: 800; margin-bottom: 1.5rem; }
+  </style>
+</head>
+<body>
+
+  <!-- Login Screen -->
+  <div class="login-screen" id="loginScreen">
+    <div class="login-box">
+      <h1>OVER2YOU</h1>
+      <p>Admin CMS — Enter your GitHub token to manage the store</p>
+      <div class="form-group">
+        <label>GitHub Personal Access Token</label>
+        <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxx">
+      </div>
+      <div class="form-group" style="margin-bottom:1rem;">
+        <label>Repository (owner/repo)</label>
+        <input type="text" id="ghRepo" value="ahmetinci06/over2you">
+      </div>
+      <button class="btn btn-primary" onclick="doLogin()">LOGIN</button>
+      <p style="font-size:11px;color:var(--muted);margin-top:1rem;">Token needs <strong>repo</strong> scope. <a href="https://github.com/settings/tokens/new?scopes=repo&description=Over2You+CMS" target="_blank">Create one →</a></p>
+    </div>
+  </div>
+
+  <!-- Admin Layout -->
+  <div class="admin-layout" id="adminLayout" style="display:none;">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo">O2Y CMS</div>
+      <button class="sidebar-link active" data-tab="dashboard" onclick="switchTab('dashboard')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </button>
+      <button class="sidebar-link" data-tab="products" onclick="switchTab('products')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
+        Products
+      </button>
+      <button class="sidebar-link" data-tab="settings" onclick="switchTab('settings')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        Settings
+      </button>
+      <button class="sidebar-link" data-tab="orders" onclick="switchTab('orders')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Orders
+      </button>
+      <div class="sidebar-bottom">
+        <a href="../index.html" target="_blank">← View Store</a>
+      </div>
+    </aside>
+
+    <main class="main">
+      <button class="mobile-menu" onclick="document.getElementById('sidebar').classList.toggle('open')">☰ Menu</button>
+
+      <!-- DASHBOARD -->
+      <div class="tab-panel active" id="tab-dashboard">
+        <div class="main-header"><h1 class="main-title">Dashboard</h1></div>
+        <div class="stats-grid" id="statsGrid"></div>
+        <div class="card"><div class="card-title">Quick Actions</div>
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="switchTab('products');openProductModal()">+ Add Product</button>
+            <button class="btn btn-outline" onclick="switchTab('settings')">Edit Settings</button>
+            <a href="../index.html" target="_blank" class="btn btn-outline">View Store →</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- PRODUCTS -->
+      <div class="tab-panel" id="tab-products">
+        <div class="main-header">
+          <h1 class="main-title">Products</h1>
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="openProductModal()">+ Add Product</button>
+            <button class="btn btn-outline" onclick="exportProductsJSON()">📥 Export JSON</button>
+            <button class="btn btn-outline" onclick="importProductsJSON()">📤 Import JSON</button>
+          </div>
+        </div>
+        <div class="card" style="padding:0;overflow-x:auto;">
+          <table class="product-table" id="productTable"><thead><tr><th>Product</th><th>Category</th><th>Price</th><th>Sizes</th><th>Badge</th><th></th></tr></thead><tbody id="productTableBody"></tbody></table>
+        </div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="tab-panel" id="tab-settings">
+        <div class="main-header">
+          <h1 class="main-title">Store Settings</h1>
+          <button class="btn btn-success" onclick="saveSettings()">Save & Deploy</button>
+        </div>
+        <div class="card"><div class="card-title">Branding</div>
+          <div class="form-row"><div class="form-group"><label>Site Name</label><input id="s_siteName"></div><div class="form-group"><label>Logo Text</label><input id="s_logoText"></div></div>
+          <div class="form-row single"><div class="form-group"><label>Announcement Bar</label><input id="s_announcement"></div></div>
+        </div>
+        <div class="card"><div class="card-title">Contact & Social</div>
+          <div class="form-row"><div class="form-group"><label>Support Email</label><input id="s_supportEmail"></div><div class="form-group"><label>WhatsApp Number</label><input id="s_whatsappNumber" placeholder="905XXXXXXXXX"></div></div>
+          <div class="form-row"><div class="form-group"><label>Instagram URL</label><input id="s_instagram"></div><div class="form-group"><label>TikTok URL</label><input id="s_tiktok"></div></div>
+        </div>
+        <div class="card"><div class="card-title">Shipping</div>
+          <div class="form-row"><div class="form-group"><label>Free Shipping Threshold (€)</label><input type="number" id="s_freeShippingThreshold"></div><div class="form-group"><label>Shipping Cost (€)</label><input type="number" step="0.01" id="s_shippingCost"></div></div>
+        </div>
+        <div class="card"><div class="card-title">Payment — Bank Transfer</div>
+          <div class="form-row"><div class="form-group"><label>Bank Name</label><input id="s_bankName"></div><div class="form-group"><label>Account Holder</label><input id="s_bankHolder"></div></div>
+          <div class="form-row single"><div class="form-group"><label>IBAN</label><input id="s_bankIBAN"></div></div>
+        </div>
+        <div class="card"><div class="card-title">Payment — iyzico</div>
+          <div class="form-row"><div class="form-group"><label>API Key</label><input id="s_iyzicoApiKey" placeholder="sandbox or live key"></div><div class="form-group"><label>Secret Key</label><input type="password" id="s_iyzicoSecretKey"></div></div>
+          <div class="form-row single"><div class="form-group"><label>Base URL</label><select id="s_iyzicoBaseUrl"><option value="https://sandbox-api.iyzipay.com">Sandbox</option><option value="https://api.iyzipay.com">Production</option></select></div></div>
+        </div>
+      </div>
+
+      <!-- ORDERS -->
+      <div class="tab-panel" id="tab-orders">
+        <div class="main-header"><h1 class="main-title">Orders</h1><button class="btn btn-outline" onclick="exportOrdersCSV()">📥 Export CSV</button></div>
+        <div class="card"><p style="color:var(--muted);font-size:13px;">Orders from localStorage will appear here. For production, connect a database.</p>
+          <div id="ordersList" style="margin-top:1rem;"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Product Edit Modal -->
+  <div class="modal-overlay" id="productModal">
+    <div class="modal">
+      <div class="modal-title" id="modalTitle">Add Product</div>
+      <input type="hidden" id="p_id">
+      <div class="form-row"><div class="form-group"><label>Product Name</label><input id="p_name" placeholder="Hoodie Lapis Blue"></div><div class="form-group"><label>Category</label><select id="p_category"><option value="hoodies">Hoodies</option><option value="sweatpants">Sweatpants</option><option value="crewnecks">Crewnecks</option><option value="tshirts">T-Shirts</option><option value="accessories">Accessories</option></select></div></div>
+      <div class="form-row"><div class="form-group"><label>Price (€)</label><input type="number" step="0.01" id="p_price"></div><div class="form-group"><label>Badge</label><select id="p_badge"><option value="">None</option><option value="NEW">NEW</option><option value="LAST STOCK">LAST STOCK</option><option value="SALE">SALE</option></select></div></div>
+      <div class="form-row"><div class="form-group"><label>Color Name</label><input id="p_colorName" placeholder="Lapis Blue"></div><div class="form-group"><label>Color</label><div style="display:flex;gap:0.5rem;align-items:center;"><input type="color" id="p_color" value="#2a5a8a"><span id="p_colorHex" style="font-size:12px;color:var(--muted);">#2a5a8a</span></div></div></div>
+      <div class="form-row"><div class="form-group"><label>Color Family</label><select id="p_colorFamily"><option value="black">Black</option><option value="white">White</option><option value="grey">Grey</option><option value="blue">Blue</option><option value="red">Red</option><option value="pink">Pink</option><option value="brown">Brown</option><option value="dark">Dark</option></select></div><div class="form-group"><label>Sizes (comma separated)</label><input id="p_sizes" value="XXS,XS,S,M,L,XL,XXL"></div></div>
+      <div class="form-row single"><div class="form-group"><label>Description</label><textarea id="p_description" rows="3"></textarea></div></div>
+      <div class="btn-group" style="margin-top:1.5rem;justify-content:flex-end;">
+        <button class="btn btn-outline" onclick="closeProductModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveProduct()">Save Product</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+  // ===== STATE =====
+  let ghToken = '', ghRepo = '', products = [], settings = {};
+
+  // ===== AUTH =====
+  function doLogin() {
+    ghToken = document.getElementById('ghToken').value.trim();
+    ghRepo = document.getElementById('ghRepo').value.trim();
+    if (!ghToken || !ghRepo) return;
+    localStorage.setItem('o2y_token', ghToken);
+    localStorage.setItem('o2y_repo', ghRepo);
+    loadAdmin();
+  }
+
+  // Auto-login
+  (function() {
+    const t = localStorage.getItem('o2y_token');
+    const r = localStorage.getItem('o2y_repo');
+    if (t && r) { ghToken = t; ghRepo = r; loadAdmin(); }
+  })();
+
+  async function loadAdmin() {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('adminLayout').style.display = 'grid';
+    try {
+      products = await fetchFile('data/products.json');
+      settings = await fetchFile('data/settings.json');
+      renderDashboard();
+      renderProducts();
+      renderSettings();
+      renderOrders();
+    } catch(e) {
+      toast('Error loading data: ' + e.message, true);
+    }
+  }
+
+  // ===== GITHUB API =====
+  async function fetchFile(path) {
+    const res = await fetch(`https://api.github.com/repos/${ghRepo}/contents/${path}`, {
+      headers: { 'Authorization': `token ${ghToken}`, 'Accept': 'application/vnd.github.v3+json' }
+    });
+    const data = await res.json();
+    return JSON.parse(atob(data.content));
+  }
+
+  async function saveFile(path, content, message) {
+    // Get current SHA
+    const res = await fetch(`https://api.github.com/repos/${ghRepo}/contents/${path}`, {
+      headers: { 'Authorization': `token ${ghToken}`, 'Accept': 'application/vnd.github.v3+json' }
+    });
+    const data = await res.json();
+    const sha = data.sha;
+    // PUT
+    const saveRes = await fetch(`https://api.github.com/repos/${ghRepo}/contents/${path}`, {
+      method: 'PUT',
+      headers: { 'Authorization': `token ${ghToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message, content: btoa(unescape(encodeURIComponent(JSON.stringify(content, null, 2)))), sha })
+    });
+    if (!saveRes.ok) throw new Error('Failed to save: ' + saveRes.statusText);
+    return saveRes.json();
+  }
+
+  // ===== TABS =====
+  function switchTab(tab) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+  }
+
+  // ===== DASHBOARD =====
+  function renderDashboard() {
+    const categories = [...new Set(products.map(p => p.category))];
+    document.getElementById('statsGrid').innerHTML = `
+      <div class="stat-card"><div class="stat-value">${products.length}</div><div class="stat-label">Products</div></div>
+      <div class="stat-card"><div class="stat-value">${categories.length}</div><div class="stat-label">Categories</div></div>
+      <div class="stat-card"><div class="stat-value">${products.filter(p=>p.badge==='NEW').length}</div><div class="stat-label">New Items</div></div>
+      <div class="stat-card"><div class="stat-value">${settings.currency || 'EUR'}</div><div class="stat-label">Currency</div></div>
+    `;
+  }
+
+  // ===== PRODUCTS =====
+  function renderProducts() {
+    const tbody = document.getElementById('productTableBody');
+    tbody.innerHTML = products.map((p, i) => `
+      <tr>
+        <td><div class="product-name-cell"><div class="product-swatch" style="background:${p.color};border-radius:4px;"></div>${p.name}</div></td>
+        <td>${p.category}</td>
+        <td>€${p.price.toFixed(2)}</td>
+        <td style="font-size:11px;">${p.sizes.join(', ')}</td>
+        <td>${p.badge ? `<span class="badge ${p.badge==='NEW'?'badge-new':'badge-stock'}">${p.badge}</span>` : '—'}</td>
+        <td><div class="btn-group"><button class="btn btn-sm btn-outline" onclick="editProduct(${i})">Edit</button><button class="btn btn-sm btn-danger" onclick="deleteProduct(${i})">×</button></div></td>
+      </tr>
+    `).join('');
+  }
+
+  function openProductModal(product) {
+    document.getElementById('productModal').classList.add('open');
+    document.getElementById('modalTitle').textContent = product ? 'Edit Product' : 'Add Product';
+    if (product) {
+      document.getElementById('p_id').value = product.id;
+      document.getElementById('p_name').value = product.name;
+      document.getElementById('p_category').value = product.category;
+      document.getElementById('p_price').value = product.price;
+      document.getElementById('p_badge').value = product.badge || '';
+      document.getElementById('p_color').value = product.color;
+      document.getElementById('p_colorHex').textContent = product.color;
+      document.getElementById('p_colorName').value = product.colorName || '';
+      document.getElementById('p_colorFamily').value = product.colorFamily || 'dark';
+      document.getElementById('p_sizes').value = product.sizes.join(',');
+      document.getElementById('p_description').value = product.description || '';
+    } else {
+      document.getElementById('p_id').value = '';
+      document.querySelectorAll('#productModal input:not([type=hidden]):not([type=color]), #productModal textarea').forEach(i => i.value = '');
+      document.getElementById('p_sizes').value = 'XXS,XS,S,M,L,XL,XXL';
+      document.getElementById('p_price').value = '84.00';
+    }
+  }
+
+  function closeProductModal() { document.getElementById('productModal').classList.remove('open'); }
+
+  function editProduct(index) { openProductModal(products[index]); }
+
+  async function deleteProduct(index) {
+    if (!confirm(`Delete "${products[index].name}"?`)) return;
+    products.splice(index, 1);
+    try {
+      await saveFile('data/products.json', products, `CMS: delete ${products[index]?.name || 'product'}`);
+      renderProducts(); renderDashboard();
+      toast('Product deleted');
+    } catch(e) { toast('Error: ' + e.message, true); }
+  }
+
+  async function saveProduct() {
+    const id = document.getElementById('p_id').value;
+    const product = {
+      id: id ? parseInt(id) : Math.max(0, ...products.map(p=>p.id)) + 1,
+      name: document.getElementById('p_name').value,
+      price: parseFloat(document.getElementById('p_price').value),
+      category: document.getElementById('p_category').value,
+      sizes: document.getElementById('p_sizes').value.split(',').map(s=>s.trim()),
+      badge: document.getElementById('p_badge').value || null,
+      color: document.getElementById('p_color').value,
+      colorName: document.getElementById('p_colorName').value,
+      colorFamily: document.getElementById('p_colorFamily').value,
+      description: document.getElementById('p_description').value,
+      images: ["col-hoodies.jpg","col-6pm.jpg"]
+    };
+    if (!product.name || !product.price) { toast('Name and price required', true); return; }
+
+    if (id) {
+      const idx = products.findIndex(p => p.id === parseInt(id));
+      if (idx >= 0) products[idx] = product;
+    } else {
+      products.push(product);
+    }
+
+    try {
+      await saveFile('data/products.json', products, `CMS: ${id ? 'update' : 'add'} ${product.name}`);
+      closeProductModal(); renderProducts(); renderDashboard();
+      toast(id ? 'Product updated' : 'Product added');
+    } catch(e) { toast('Error: ' + e.message, true); }
+  }
+
+  // ===== SETTINGS =====
+  function renderSettings() {
+    const fields = ['siteName','logoText','announcement','supportEmail','whatsappNumber','instagram','tiktok','freeShippingThreshold','shippingCost','bankName','bankHolder','bankIBAN'];
+    fields.forEach(f => { const el = document.getElementById('s_' + f); if (el) el.value = settings[f] || ''; });
+    if (settings.iyzico) {
+      document.getElementById('s_iyzicoApiKey').value = settings.iyzico.apiKey || '';
+      document.getElementById('s_iyzicoSecretKey').value = settings.iyzico.secretKey || '';
+      document.getElementById('s_iyzicoBaseUrl').value = settings.iyzico.baseUrl || 'https://sandbox-api.iyzipay.com';
+    }
+  }
+
+  async function saveSettings() {
+    settings.siteName = document.getElementById('s_siteName').value;
+    settings.logoText = document.getElementById('s_logoText').value;
+    settings.announcement = document.getElementById('s_announcement').value;
+    settings.supportEmail = document.getElementById('s_supportEmail').value;
+    settings.whatsappNumber = document.getElementById('s_whatsappNumber').value;
+    settings.instagram = document.getElementById('s_instagram').value;
+    settings.tiktok = document.getElementById('s_tiktok').value;
+    settings.freeShippingThreshold = parseFloat(document.getElementById('s_freeShippingThreshold').value) || 100;
+    settings.shippingCost = parseFloat(document.getElementById('s_shippingCost').value) || 6.90;
+    settings.bankName = document.getElementById('s_bankName').value;
+    settings.bankHolder = document.getElementById('s_bankHolder').value;
+    settings.bankIBAN = document.getElementById('s_bankIBAN').value;
+    settings.iyzico = {
+      apiKey: document.getElementById('s_iyzicoApiKey').value,
+      secretKey: document.getElementById('s_iyzicoSecretKey').value,
+      baseUrl: document.getElementById('s_iyzicoBaseUrl').value
+    };
+    try {
+      await saveFile('data/settings.json', settings, 'CMS: update settings');
+      toast('Settings saved & deploying...');
+    } catch(e) { toast('Error: ' + e.message, true); }
+  }
+
+  // ===== ORDERS =====
+  function renderOrders() {
+    const orders = JSON.parse(localStorage.getItem('over2you_orders') || '[]');
+    const el = document.getElementById('ordersList');
+    if (orders.length === 0) { el.innerHTML = '<p style="color:var(--muted);">No orders yet.</p>'; return; }
+    el.innerHTML = orders.reverse().map(o => `
+      <div style="border:1px solid var(--border);border-radius:var(--radius);padding:1rem;margin-bottom:0.75rem;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem;">
+          <strong>${o.orderNumber}</strong><span style="font-size:12px;color:var(--muted);">${new Date(o.date).toLocaleString()}</span>
+        </div>
+        <div style="font-size:12px;">${o.items.map(i=>`${i.name} (${i.size}) x${i.qty}`).join(', ')}</div>
+        <div style="font-size:13px;font-weight:700;margin-top:0.5rem;">€${o.total.toFixed(2)} — ${o.paymentMethod}</div>
+      </div>
+    `).join('');
+  }
+
+  // ===== COLOR PICKER =====
+  document.getElementById('p_color').addEventListener('input', e => {
+    document.getElementById('p_colorHex').textContent = e.target.value;
+  });
+
+  // ===== TOAST =====
+  function toast(msg, isError) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.style.background = isError ? 'var(--danger)' : 'var(--accent)';
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 3000);
+  }
+
+  // ===== LOGOUT =====
+  function logout() {
+    localStorage.removeItem('o2y_token');
+    localStorage.removeItem('o2y_repo');
+    location.reload();
+  }
+
+  // ===== IMAGE UPLOAD =====
+  async function uploadImage(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64 = reader.result.split(',')[1];
+        const path = 'public/img/' + file.name.replace(/[^a-zA-Z0-9._-]/g, '-');
+        try {
+          // Check if exists
+          let sha;
+          try {
+            const existing = await fetch(`https://api.github.com/repos/${ghRepo}/contents/${path}`, {
+              headers: { 'Authorization': `token ${ghToken}` }
+            });
+            if (existing.ok) { const d = await existing.json(); sha = d.sha; }
+          } catch(e) {}
+
+          const body = { message: `CMS: upload ${file.name}`, content: base64 };
+          if (sha) body.sha = sha;
+
+          const res = await fetch(`https://api.github.com/repos/${ghRepo}/contents/${path}`, {
+            method: 'PUT',
+            headers: { 'Authorization': `token ${ghToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          });
+          if (!res.ok) throw new Error('Upload failed');
+          const data = await res.json();
+          resolve(data.content.download_url);
+        } catch(e) { reject(e); }
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // ===== EXPORT ORDERS CSV =====
+  function exportOrdersCSV() {
+    const orders = JSON.parse(localStorage.getItem('over2you_orders') || '[]');
+    if (orders.length === 0) { toast('No orders to export', true); return; }
+    const headers = ['Order #','Date','Name','Email','Phone','Address','City','Country','Items','Subtotal','Shipping','Total','Payment'];
+    const rows = orders.map(o => [
+      o.orderNumber, o.date,
+      o.customer ? o.customer.firstName + ' ' + o.customer.lastName : '',
+      o.customer?.email || '', o.customer?.phone || '',
+      o.customer?.address || '', o.customer?.city || '', o.customer?.country || '',
+      o.items.map(i => `${i.name}(${i.size})x${i.qty}`).join('; '),
+      o.subtotal?.toFixed(2) || '', o.shipping?.toFixed(2) || '', o.total?.toFixed(2) || '',
+      o.paymentMethod || ''
+    ]);
+    const csv = [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = `over2you-orders-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click(); toast('CSV exported');
+  }
+
+  // ===== BULK PRODUCT IMPORT/EXPORT =====
+  function exportProductsJSON() {
+    const blob = new Blob([JSON.stringify(products, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = `over2you-products-${new Date().toISOString().split('T')[0]}.json`;
+    a.click(); toast('Products JSON exported');
+  }
+
+  async function importProductsJSON() {
+    const input = document.createElement('input'); input.type = 'file'; input.accept = '.json';
+    input.onchange = async (e) => {
+      const file = e.target.files[0]; if (!file) return;
+      const text = await file.text();
+      try {
+        const imported = JSON.parse(text);
+        if (!Array.isArray(imported)) throw new Error('Must be array');
+        products = imported;
+        await saveFile('data/products.json', products, `CMS: bulk import ${imported.length} products`);
+        renderProducts(); renderDashboard();
+        toast(`Imported ${imported.length} products`);
+      } catch(err) { toast('Invalid JSON: ' + err.message, true); }
+    };
+    input.click();
+  }
+  </script>
+</body>
+</html>

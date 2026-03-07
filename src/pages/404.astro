@@ -1,0 +1,11 @@
+---
+import Layout from '../layouts/Layout.astro';
+const base = import.meta.env.BASE_URL;
+---
+<Layout title="404 — Over2You">
+  <div style="text-align:center;padding:8rem 2rem;min-height:60vh;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+    <h1 style="font:italic 900 4rem/1 var(--heading-font-family);letter-spacing:-2px;margin-bottom:1rem;">404</h1>
+    <p style="font-size:var(--text-sm);color:rgb(var(--text-color)/0.5);margin-bottom:2rem;text-transform:uppercase;letter-spacing:0.08em;">Page not found</p>
+    <a href={base} class="btn-primary" style="display:inline-block;padding:0.85rem 2.5rem;">BACK TO HOME</a>
+  </div>
+</Layout>

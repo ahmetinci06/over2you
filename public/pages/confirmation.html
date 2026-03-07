@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Confirmed — Over2You</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .confirmation-page {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 4rem var(--container-gutter) 6rem;
+      text-align: center;
+    }
+    .confirm-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: #28a745;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.5rem;
+    }
+    .confirm-icon svg { width: 32px; height: 32px; }
+    .confirm-title {
+      font: var(--heading-font-style) 900 1.5rem / 1.2 var(--heading-font-family);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.75rem;
+    }
+    .confirm-subtitle {
+      font-size: var(--text-base);
+      color: rgb(var(--text-color) / 0.6);
+      margin-bottom: 2rem;
+      line-height: 1.7;
+    }
+    .order-number-box {
+      background: #f5f5f5;
+      padding: 1.25rem;
+      margin-bottom: 2rem;
+    }
+    .order-number-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: rgb(var(--text-color) / 0.5);
+      margin-bottom: 0.3rem;
+    }
+    .order-number-value {
+      font: var(--heading-font-style) 800 1.25rem / 1.2 var(--heading-font-family);
+      letter-spacing: 0.06em;
+    }
+    .confirm-details {
+      text-align: left;
+      border-top: 1px solid rgb(var(--border-color));
+      padding-top: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .confirm-detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.5rem 0;
+      font-size: var(--text-sm);
+    }
+    .confirm-detail-label { color: rgb(var(--text-color) / 0.5); }
+    .confirm-bank-info {
+      text-align: left;
+      background: #fffbe6;
+      border: 1px solid #f0d000;
+      padding: 1.25rem;
+      margin-bottom: 2rem;
+      font-size: var(--text-sm);
+      line-height: 1.8;
+    }
+    .confirm-bank-info strong { font-weight: 700; }
+    .confirm-actions { display: flex; flex-direction: column; gap: 0.75rem; }
+  </style>
+</head>
+<body class="color-scheme color-scheme--scheme-1">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="header-primary-nav">
+        <a href="../index.html" class="nav-link">HOME</a>
+        <a href="shop.html" class="nav-link">SHOP</a>
+      </div>
+      <a href="../index.html" class="header-logo"><span class="logo-text">OVER2YOU</span></a>
+      <div class="header-secondary-nav">
+        <button class="icon-btn cart-btn" id="cartBtn" aria-label="Cart">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+          <span class="cart-count" id="cartCount">0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="confirmation-page" id="confirmPage">
+    <!-- Filled by JS -->
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-grid">
+      <div class="footer-col"><h4>SUPPORT</h4><a href="mailto:SUPPORT@OVER2YOU.COM">SUPPORT@OVER2YOU.COM</a></div>
+      <div class="footer-col"><h4>Service</h4><a href="#">Returns</a><a href="#">Shipping</a></div>
+      <div class="footer-col"><h4>Legal</h4><a href="#">Privacy Policy</a><a href="#">Terms of Service</a></div>
+    </div>
+    <div class="footer-bottom"><p>© 2026 - Over2You. All rights reserved.</p></div>
+  </footer>
+
+  <script src="../js/app.js"></script>
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const page = document.getElementById('confirmPage');
+    const params = new URLSearchParams(window.location.search);
+    const orderNumber = params.get('order') || 'N/A';
+    const method = params.get('method') || 'card';
+
+    // Get latest order
+    const orders = JSON.parse(localStorage.getItem('over2you_orders') || '[]');
+    const order = orders.find(o => o.orderNumber === orderNumber) || orders[orders.length - 1];
+
+    let bankInfo = '';
+    if (method === 'bank') {
+      bankInfo = `
+        <div class="confirm-bank-info">
+          <strong>⚠ Payment Required — Bank Transfer</strong><br><br>
+          Please transfer <strong>€${order ? order.total.toFixed(2) : '0.00'}</strong> to:<br><br>
+          <strong>Over2You</strong><br>
+          IBAN: TR00 0000 0000 0000 0000 0000 00<br>
+          Bank: [Bank Name]<br>
+          Reference: <strong>${orderNumber}</strong><br><br>
+          <em>Your order will ship once payment is confirmed (usually within 24h).</em>
+        </div>
+      `;
+    }
+
+    let itemsList = '';
+    if (order && order.items) {
+      itemsList = order.items.map(i =>
+        `<div class="confirm-detail-row"><span>${i.name} (${i.size}) x${i.qty}</span><span>€${(i.price*i.qty).toFixed(2)}</span></div>`
+      ).join('');
+    }
+
+    page.innerHTML = `
+      <div class="confirm-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <h1 class="confirm-title">${method === 'bank' ? 'ORDER RECEIVED' : 'ORDER CONFIRMED'}</h1>
+      <p class="confirm-subtitle">
+        ${method === 'bank'
+          ? 'Thank you! Your order has been received. Please complete the bank transfer below to process your order.'
+          : method === 'whatsapp'
+            ? 'Thank you! Your order has been sent via WhatsApp. We\'ll confirm your order shortly.'
+            : 'Thank you for your purchase! You\'ll receive a confirmation email shortly.'}
+      </p>
+
+      <div class="order-number-box">
+        <div class="order-number-label">Order Number</div>
+        <div class="order-number-value">${orderNumber}</div>
+      </div>
+
+      ${bankInfo}
+
+      ${order ? `
+        <div class="confirm-details">
+          ${itemsList}
+          <div class="confirm-detail-row" style="border-top:1px solid rgb(var(--border-color));padding-top:0.75rem;margin-top:0.5rem;">
+            <span style="font-weight:700;">Total</span>
+            <span style="font-weight:700;">€${order.total.toFixed(2)}</span>
+          </div>
+          <div class="confirm-detail-row"><span class="confirm-detail-label">Shipping</span><span>${order.shipping === 0 ? 'Free' : '€' + order.shipping.toFixed(2)}</span></div>
+          <div class="confirm-detail-row"><span class="confirm-detail-label">Payment</span><span>${method === 'card' ? 'Credit Card' : method === 'bank' ? 'Bank Transfer' : 'WhatsApp'}</span></div>
+          ${order.customer ? `<div class="confirm-detail-row"><span class="confirm-detail-label">Email</span><span>${order.customer.email}</span></div>` : ''}
+        </div>
+      ` : ''}
+
+      <div class="confirm-actions">
+        <a href="shop.html" class="btn-primary" style="display:block;text-align:center;">CONTINUE SHOPPING</a>
+      </div>
+    `;
+  });
+  </script>
+</body>
+</html>

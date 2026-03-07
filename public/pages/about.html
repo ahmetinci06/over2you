@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About — Over2You</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="color-scheme color-scheme--scheme-1">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="header-primary-nav">
+        <!-- Desktop / Mobile menu toggle logic is the same, clicking toggle opens the sidebar -->
+        <button class="menu-toggle" id="menuToggle" aria-label="Menu">
+          <span></span><span></span><span></span>
+        </button>
+
+        <a href="../index.html" class="nav-link">NEW IN</a>
+        
+        <div class="nav-dropdown" id="desktopShopNav">
+          <a href="#" class="nav-link nav-dropdown-trigger">
+            SHOP ALL
+          </a>
+        </div>
+        
+        <a href="shop.html" class="nav-link">OVER2YOU+</a>
+        <a href="#" class="nav-link">COLLECTIONS</a>
+        <a href="shop.html?cat=women" class="nav-link">WOMEN</a>
+        <a href="#" class="nav-link">SPORTS</a>
+        <a href="about.html" class="nav-link">BRAND</a>
+      </div>
+      <a href="../index.html" class="header-logo"><span class="logo-text">OVER2YOU</span></a>
+      <div class="header-secondary-nav">
+        <a href="#" class="nav-link">Over2You Active</a>
+        <button class="icon-btn cart-btn" id="cartBtn" aria-label="Cart">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+          <span class="cart-count" id="cartCount">0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== SITE SIDEBAR NAV (Used for Mobile & Desktop 'SHOP ALL' dropdown equivalent) ===== -->
+  <div class="mobile-nav-overlay" id="mobileNavOverlay"></div>
+  <nav class="mobile-nav" id="mobileNav">
+    <div class="mobile-nav-header">
+      <button class="menu-close" id="menuCloseBtn" aria-label="Close menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+      </button>
+    </div>
+    <div class="mobile-nav-content">
+      <!-- Level 1 Menu -->
+      <ul class="nav-list main-nav-list" id="mainNavList">
+        <li><a href="../index.html" class="mobile-nav-link">NEW IN</a></li>
+        <li>
+          <a href="#" class="mobile-nav-link has-submenu" data-target="shopMenu">
+            SHOP ALL
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 18l6-6-6-6"></path></svg>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="mobile-nav-link has-submenu">
+            OVER2YOU+
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 18l6-6-6-6"></path></svg>
+          </a>
+        </li>
+        <li>
+          <!-- COLORS WIDGET -->
+          <div class="nav-widget">
+            <span class="nav-widget-title">COLORS:</span>
+            <div class="color-swatches">
+              <a href="shop.html?color=black" class="color-swatch" style="background:#2a2a2a" title="Black"></a>
+              <a href="shop.html?color=pink" class="color-swatch" style="background:#e8b5ce" title="Pink"></a>
+              <a href="shop.html?color=dark" class="color-swatch" style="background:#111" title="Dark"></a>
+              <a href="shop.html?color=brown" class="color-swatch" style="background:#5c4033" title="Brown"></a>
+              <a href="shop.html?color=grey" class="color-swatch" style="background:#808080" title="Grey"></a>
+              <a href="shop.html?color=white" class="color-swatch" style="background:#f5f5f5" title="White"></a>
+              <a href="shop.html?color=red" class="color-swatch" style="background:#c94c4c" title="Red"></a>
+              <a href="shop.html?color=blue" class="color-swatch" style="background:#6495ed" title="Blue"></a>
+            </div>
+          </div>
+          
+          <!-- CATEGORIES WIDGET -->
+          <div class="nav-widget">
+            <span class="nav-widget-title">CATEGORIES:</span>
+            <div class="category-thumbs">
+              <a href="shop.html" class="cat-thumb">
+                 <div class="cat-img-box"><span style="font-weight:900;font-size:10px;">O2Y+</span></div>
+                 <span>SHOP ALL</span>
+              </a>
+              <a href="shop.html?cat=hoodies" class="cat-thumb">
+                 <div class="cat-img-box"><img src="../img/col-hoodies.jpg" alt="Hoodies" onerror="this.style.display='none'"></div>
+                 <span>HOODIES</span>
+              </a>
+              <a href="shop.html?cat=sweatpants" class="cat-thumb">
+                 <div class="cat-img-box"><img src="../img/col-sweatpants.jpg" alt="Sweatpants" onerror="this.style.display='none'"></div>
+                 <span>SWEATPANTS</span>
+              </a>
+              <a href="shop.html?cat=crewnecks" class="cat-thumb">
+                 <div class="cat-img-box"><img src="../img/col-crewnecks.jpg" alt="Crewnecks" onerror="this.style.display='none'"></div>
+                 <span>CREWNECKS</span>
+              </a>
+            </div>
+          </div>
+        </li>
+        <li>
+          <a href="#" class="mobile-nav-link has-submenu">
+            COLLECTIONS
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 18l6-6-6-6"></path></svg>
+          </a>
+        </li>
+        <li><a href="shop.html?cat=women" class="mobile-nav-link">WOMEN</a></li>
+        <li><a href="#" class="mobile-nav-link">SPORTS</a></li>
+        <li>
+          <a href="about.html" class="mobile-nav-link has-submenu">
+            BRAND
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 18l6-6-6-6"></path></svg>
+          </a>
+        </li>
+      </ul>
+
+      <!-- Submenu: SHOP ALL -->
+      <div class="submenu-container" id="shopMenu">
+        <button class="submenu-back" aria-label="Back">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 18l-6-6 6-6"></path></svg>
+          BACK
+        </button>
+        <ul class="nav-list">
+          <li><a href="shop.html" class="mobile-nav-link">SHOP ALL</a></li>
+          <li><a href="shop.html?cat=basics" class="mobile-nav-link">BASICS</a></li>
+          <li><a href="shop.html?cat=tops" class="mobile-nav-link">TOPS</a></li>
+          <li><a href="shop.html?cat=bottoms" class="mobile-nav-link">BOTTOMS</a></li>
+          <li><a href="shop.html?cat=accessories" class="mobile-nav-link">ACCESSORIES</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- About Content -->
+  <div class="about-hero">
+    <h1>OH, WE SPARKED<br>YOUR INTEREST?</h1>
+    <p>Come on in, have a seat. We're a community focused streetwear brand, redefining youth culture. Designed in Germany, worn all over the world.</p>
+  </div>
+
+  <div class="about-section">
+    <h2>OUR STORY</h2>
+    <p>We started with a simple idea: create the perfect hoodie. Not just any hoodie — one that feels like home. Premium cotton, vibrant colors, and a fit that makes you never want to take it off.</p>
+    <p>What began as a passion project quickly grew into a movement. A community of people who believe that what you wear should make you feel something. Every color tells a story. Every piece is designed to be lived in.</p>
+  </div>
+
+  <div class="about-section">
+    <h2>QUALITY</h2>
+    <p>We obsess over every detail. From the weight of the fabric to the exact shade of each colorway. Our pieces are made to last — not just a season, but years. Premium materials, thoughtful construction, and colors so vibrant you'll want to eat them.</p>
+  </div>
+
+  <div class="about-section">
+    <h2>COMMUNITY</h2>
+    <p>We're not just a brand — we're a family. Our community drives everything we do. From color votes to exclusive drops, you're part of the process. This is your brand as much as it is ours.</p>
+  </div>
+
+  <div class="about-cta">
+    <h2>JOIN THE MOVEMENT</h2>
+    <p>Be part of something bigger.</p>
+    <a href="shop.html" class="btn-primary">SHOP NOW</a>
+  </div>
+
+  <!-- Cart Drawer -->
+  <div class="cart-overlay" id="cartOverlay"></div>
+  <div class="cart-drawer" id="cartDrawer">
+    <div class="cart-drawer-header">
+      <h3>CART</h3>
+      <button class="cart-drawer-close" id="cartClose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="cart-drawer-body" id="cartBody"><p class="cart-empty-msg">Your cart is empty</p></div>
+    <div class="cart-drawer-footer" id="cartFooter" style="display:none;">
+      <div class="cart-total-row"><span>Total</span><span id="cartTotal">€0.00</span></div>
+      <button class="btn-checkout">CHECKOUT</button>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <h4>SUPPORT</h4>
+        <a href="mailto:SUPPORT@OVER2YOU.COM">SUPPORT@OVER2YOU.COM</a>
+      </div>
+      <div class="footer-col">
+        <h4>Service</h4>
+        <a href="#">Returns</a><a href="#">Shipping</a><a href="#">Order Tracking</a>
+      </div>
+      <div class="footer-col">
+        <h4>Legal</h4>
+        <a href="#">Imprint</a><a href="#">Privacy Policy</a><a href="#">Terms of Service</a>
+      </div>
+      <div class="footer-col">
+        <h4>SOCIALS</h4>
+        <div class="social-links">
+          <a href="#"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>
+          <a href="#"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 00-.79-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.53v-3.4a4.85 4.85 0 01-.81-.05l-.38-.06z"/></svg></a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom"><p>© 2026 - Over2You. All rights reserved.</p></div>
+  </footer>
+
+  <script src="../js/app.js"></script>
+</body>
+</html>

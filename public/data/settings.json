@@ -1,0 +1,29 @@
+{
+  "siteName": "Over2You",
+  "siteTitle": "Over2You | OFFICIAL WEBSITE",
+  "logoText": "OVER2YOU",
+  "logoImage": "",
+  "currency": "EUR",
+  "currencySymbol": "€",
+  "freeShippingThreshold": 100,
+  "shippingCost": 6.90,
+  "supportEmail": "SUPPORT@OVER2YOU.COM",
+  "whatsappNumber": "905XXXXXXXXX",
+  "instagram": "",
+  "tiktok": "",
+  "youtube": "",
+  "bankName": "",
+  "bankIBAN": "TR00 0000 0000 0000 0000 0000 00",
+  "bankHolder": "Over2You",
+  "iyzico": {
+    "apiKey": "",
+    "secretKey": "",
+    "baseUrl": "https://sandbox-api.iyzipay.com"
+  },
+  "announcement": "FREE SHIPPING ON ORDERS OVER €100",
+  "heroSlides": [
+    { "mobileImg": "img/hero-mobile-1.jpg", "desktopImg": "img/hero-desktop-1.jpg", "buttonText": "NEW COLORS ONLINE", "buttonLink": "pages/shop.html" },
+    { "mobileImg": "img/hero-mobile-2.jpg", "desktopImg": "img/hero-desktop-2.jpg", "buttonText": "WOMEN", "buttonLink": "pages/shop.html?cat=women" },
+    { "mobileImg": "img/hero-mobile-3.jpg", "desktopImg": "img/hero-desktop-3.jpg", "buttonText": "SHOP NOW", "buttonLink": "pages/shop.html" }
+  ]
+}
