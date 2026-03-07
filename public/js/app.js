@@ -47,16 +47,14 @@ let products = [
 ];
 
 // ===== UTILITIES =====
+const BASE = window.O2Y_BASE || '/over2you/';
+
 function getImgBase() {
-  const path = window.location.pathname;
-  if (path.includes('/pages/')) return '../img/';
-  return 'img/';
+  return BASE + 'img/';
 }
 
 function getPageBase() {
-  const path = window.location.pathname;
-  if (path.includes('/pages/')) return '';
-  return 'pages/';
+  return BASE;
 }
 
 // ===== SLIDESHOW =====
@@ -206,7 +204,7 @@ function getPageBase() {
       resultsContainer.innerHTML = matches.length === 0
         ? '<p class="search-no-results">No products found</p>'
         : matches.map(p => `
-          <a href="${base}product.html?id=${p.id}" class="search-result-item">
+          <a href="${base}product?id=${p.id}" class="search-result-item">
             <div class="search-result-swatch" style="background:${p.color};"></div>
             <div class="search-result-info">
               <span class="search-result-name">${p.name}</span>
@@ -315,7 +313,7 @@ const Cart = (function() {
       if (items.length === 0) return;
       close();
       const base = getPageBase();
-      window.location.href = base + 'checkout.html';
+      window.location.href = base + 'checkout';
     });
   }
 
@@ -356,7 +354,7 @@ function renderProducts(filter, targetEl) {
     : filtered.map(product => `
     <div class="product-card" data-id="${product.id}">
       <div class="product-card-img">
-        <a href="${base}product.html?id=${product.id}">
+        <a href="${base}product?id=${product.id}">
           <div class="product-card-img-placeholder" style="background:${product.color};">
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="0.5">
               <path d="M12 2C8 2 4 4 4 8v12a2 2 0 002 2h12a2 2 0 002-2V8c0-4-4-6-8-6z"/>
@@ -370,7 +368,7 @@ function renderProducts(filter, targetEl) {
       <div class="product-sizes">
         ${product.sizes.map(s => `<span class="product-size-tag">${s}</span>`).join('')}
       </div>
-      <a href="${base}product.html?id=${product.id}" style="text-decoration:none;color:inherit;">
+      <a href="${base}product?id=${product.id}" style="text-decoration:none;color:inherit;">
         <div class="product-name">${product.name}</div>
         <div class="product-price">€${product.price.toFixed(2)}</div>
       </a>
@@ -421,8 +419,8 @@ function renderProducts(filter, targetEl) {
     </div>
     <div class="product-info">
       <nav class="breadcrumb" style="font-size:11px;margin-bottom:2rem;color:#888;">
-        <a href="${pageBase ? '../index.html' : 'index.html'}">Home</a> /
-        <a href="${pageBase}shop.html?cat=${product.category}">${product.category.charAt(0).toUpperCase() + product.category.slice(1)}</a> /
+        <a href="${BASE}">Home</a> /
+        <a href="${pageBase}shop?cat=${product.category}">${product.category.charAt(0).toUpperCase() + product.category.slice(1)}</a> /
         ${product.name}
       </nav>
       <h1 class="product-title">${product.name}</h1>
@@ -431,9 +429,9 @@ function renderProducts(filter, targetEl) {
       <span class="option-label">Color: ${product.colorName}</span>
       <div class="color-swatches-product" id="productColorSwatches">
         ${related.slice(0, 8).map(r => `
-          <a href="product.html?id=${r.id}" class="swatch-product ${r.id === product.id ? 'selected' : ''}" style="background:${r.color};" title="${r.colorName}"></a>
+          <a href="product?id=${r.id}" class="swatch-product ${r.id === product.id ? 'selected' : ''}" style="background:${r.color};" title="${r.colorName}"></a>
         `).join('')}
-        <a href="product.html?id=${product.id}" class="swatch-product selected" style="background:${product.color};" title="${product.colorName}"></a>
+        <a href="product?id=${product.id}" class="swatch-product selected" style="background:${product.color};" title="${product.colorName}"></a>
       </div>
 
       <span class="option-label">Size: <span id="selectedSizeLabel">Select Size</span></span>
@@ -547,11 +545,11 @@ function renderProducts(filter, targetEl) {
 
 // ===== LOAD DATA FROM JSON (CMS-managed) =====
 (async function loadData() {
-  const base = window.location.pathname.includes('/pages/') ? '../' : '';
+  // base handled by global BASE
   try {
     const [prodRes, settRes] = await Promise.all([
-      fetch(base + 'data/products.json').catch(() => null),
-      fetch(base + 'data/settings.json').catch(() => null)
+      fetch(BASE + 'data/products.json').catch(() => null),
+      fetch(BASE + 'data/settings.json').catch(() => null)
     ]);
     if (prodRes && prodRes.ok) {
       const data = await prodRes.json();

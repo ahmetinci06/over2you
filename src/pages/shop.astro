@@ -1,0 +1,58 @@
+---
+import Layout from '../layouts/Layout.astro';
+const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : import.meta.env.BASE_URL + '/');
+---
+<Layout title="Shop All — Over2You">
+  <div class="shop-header" style="padding:6rem var(--container-gutter) 2rem;">
+    <h1 style="font:var(--heading-font-style) 900 var(--heading-xl)/1.1 var(--heading-font-family);text-transform:uppercase;letter-spacing:var(--heading-letter-spacing);">SHOP ALL</h1>
+    <p style="font-size:var(--text-sm);color:rgb(var(--text-color)/0.5);margin-top:0.5rem;" id="shopCount"></p>
+  </div>
+  <div class="shop-filters" style="padding:0 var(--container-gutter) 1.5rem;display:flex;gap:0.5rem;flex-wrap:wrap;">
+    <button class="filter-btn active" data-filter="all" onclick="filterProducts('all',this)">ALL</button>
+    <button class="filter-btn" data-filter="hoodies" onclick="filterProducts('hoodies',this)">HOODIES</button>
+    <button class="filter-btn" data-filter="sweatpants" onclick="filterProducts('sweatpants',this)">SWEATPANTS</button>
+    <button class="filter-btn" data-filter="crewnecks" onclick="filterProducts('crewnecks',this)">CREWNECKS</button>
+    <button class="filter-btn" data-filter="tshirts" onclick="filterProducts('tshirts',this)">T-SHIRTS</button>
+  </div>
+  <div class="product-grid" id="shopProductGrid" style="padding:0 var(--container-gutter) 4rem;"></div>
+
+  <script is:inline>
+  function filterProducts(cat, btn) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    if (window.renderProducts) {
+      const grid = document.getElementById('shopProductGrid');
+      window.renderProducts(cat, grid);
+      const filtered = cat === 'all' ? window.products : window.products.filter(p => p.category === cat);
+      const countEl = document.getElementById('shopCount');
+      if (countEl) countEl.textContent = filtered.length + ' products';
+    }
+  }
+  document.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(window.location.search);
+    const cat = params.get('cat') || 'all';
+    const color = params.get('color');
+    // Wait for products to load
+    const tryRender = () => {
+      if (window.products && window.products.length > 0) {
+        if (color) {
+          const colorProducts = window.products.filter(p => p.colorFamily === color);
+          const grid = document.getElementById('shopProductGrid');
+          window.renderProducts('all', grid, colorProducts);
+          document.getElementById('shopCount').textContent = colorProducts.length + ' products';
+        } else {
+          filterProducts(cat, document.querySelector(`[data-filter="${cat}"]`));
+        }
+      } else {
+        setTimeout(tryRender, 100);
+      }
+    };
+    tryRender();
+  });
+  </script>
+</Layout>
+
+<style is:inline>
+.filter-btn { padding:0.5rem 1.25rem; background:transparent; border:1px solid rgb(var(--border-color)); font:var(--heading-font-style) 600 11px/1 var(--heading-font-family); text-transform:uppercase; letter-spacing:0.06em; cursor:pointer; transition:all 0.2s; }
+.filter-btn.active,.filter-btn:hover { background:rgb(var(--button-background)); color:rgb(var(--button-text-color)); border-color:rgb(var(--button-background)); }
+</style>

@@ -1,10 +1,8 @@
 ---
 import Layout from '../layouts/Layout.astro';
-const rawBase = import.meta.env.BASE_URL;
-const base = rawBase.endsWith('/') ? rawBase : rawBase + '/';
+const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : import.meta.env.BASE_URL + '/');
 ---
 <Layout title="Over2You | OFFICIAL WEBSITE" transparentHeader={true}>
-  <!-- Hero Slideshow -->
   <section class="slideshow" id="slideshow">
     <div class="slideshow-track" id="slideshowTrack">
       <div class="slide">
@@ -12,7 +10,7 @@ const base = rawBase.endsWith('/') ? rawBase : rawBase + '/';
         <img class="slide-img desktop" src={`${base}img/hero-desktop-1.jpg`} alt="New Colors" />
         <div class="slide-overlay">
           <span class="logo-text" style="color:#fff;margin-bottom:1.5rem;font-size:3.5rem;">OVER2YOU</span>
-          <a href={`${base}pages/shop.html`} class="slide-btn">NEW COLORS ONLINE</a>
+          <a href={`${base}shop`} class="slide-btn">NEW COLORS ONLINE</a>
         </div>
       </div>
       <div class="slide">
@@ -20,7 +18,7 @@ const base = rawBase.endsWith('/') ? rawBase : rawBase + '/';
         <img class="slide-img desktop" src={`${base}img/hero-desktop-2.jpg`} alt="Collection" />
         <div class="slide-overlay">
           <span class="logo-text" style="color:#fff;margin-bottom:1.5rem;font-size:3.5rem;">OVER2YOU</span>
-          <a href={`${base}pages/shop.html?cat=women`} class="slide-btn">WOMEN</a>
+          <a href={`${base}shop?cat=women`} class="slide-btn">WOMEN</a>
         </div>
       </div>
       <div class="slide">
@@ -28,7 +26,7 @@ const base = rawBase.endsWith('/') ? rawBase : rawBase + '/';
         <img class="slide-img desktop" src={`${base}img/hero-desktop-3.jpg`} alt="Collection" />
         <div class="slide-overlay">
           <span class="logo-text" style="color:#fff;margin-bottom:1.5rem;font-size:3.5rem;">OVER2YOU</span>
-          <a href={`${base}pages/shop.html`} class="slide-btn">SHOP NOW</a>
+          <a href={`${base}shop`} class="slide-btn">SHOP NOW</a>
         </div>
       </div>
     </div>
@@ -41,37 +39,23 @@ const base = rawBase.endsWith('/') ? rawBase : rawBase + '/';
     </div>
   </section>
 
-  <!-- Media Grid -->
   <section class="media-grid">
-    <a href={`${base}pages/shop.html`} class="media-grid-item">
+    <a href={`${base}shop`} class="media-grid-item">
       <img src={`${base}img/grid-1.jpg`} alt="Over2You+ Basics" />
-      <div class="media-grid-overlay">
-        <span class="logo-text" style="color:#fff;font-size:24px;margin-bottom:0.5rem;">OVER2YOU+</span>
-        <span class="media-grid-title">Basics</span>
-      </div>
+      <div class="media-grid-overlay"><span class="logo-text" style="color:#fff;font-size:24px;margin-bottom:0.5rem;">OVER2YOU+</span><span class="media-grid-title">Basics</span></div>
     </a>
-    <a href={`${base}pages/shop.html?cat=women`} class="media-grid-item">
+    <a href={`${base}shop?cat=women`} class="media-grid-item">
       <img src={`${base}img/grid-2.jpg`} alt="Women" />
-      <div class="media-grid-overlay">
-        <span class="logo-text" style="color:#fff;font-size:24px;margin-bottom:0.5rem;">OVER2YOU</span>
-        <span class="media-grid-title">WOMEN</span>
-      </div>
+      <div class="media-grid-overlay"><span class="logo-text" style="color:#fff;font-size:24px;margin-bottom:0.5rem;">OVER2YOU</span><span class="media-grid-title">WOMEN</span></div>
     </a>
     <a href="#" class="media-grid-item">
       <img src={`${base}img/grid-3.jpg`} alt="Over2You Active" />
-      <div class="media-grid-overlay">
-        <span class="logo-text" style="color:#fff;font-size:24px;margin-bottom:0.5rem;">O2Y ACTIVE</span>
-        <span class="media-grid-title">Over2You Active</span>
-      </div>
+      <div class="media-grid-overlay"><span class="logo-text" style="color:#fff;font-size:24px;margin-bottom:0.5rem;">O2Y ACTIVE</span><span class="media-grid-title">Over2You Active</span></div>
     </a>
   </section>
 
-  <!-- Newsletter -->
   <section class="newsletter-section">
     <h2>SIGN UP TO THE Over2You NEWSLETTER</h2>
-    <form class="newsletter-form" id="newsletterForm">
-      <input type="email" placeholder="Enter your email" required />
-      <button type="submit">SUBSCRIBE</button>
-    </form>
+    <form class="newsletter-form" id="newsletterForm"><input type="email" placeholder="Enter your email" required /><button type="submit">SUBSCRIBE</button></form>
   </section>
 </Layout>

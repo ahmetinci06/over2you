@@ -1,0 +1,16 @@
+---
+import Layout from '../layouts/Layout.astro';
+const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : import.meta.env.BASE_URL + '/');
+---
+<Layout title="About — Over2You">
+  <div style="max-width:800px;margin:0 auto;padding:8rem var(--container-gutter) 4rem;text-align:center;">
+    <h1 style="font:var(--heading-font-style) 900 2.5rem/1.1 var(--heading-font-family);text-transform:uppercase;letter-spacing:var(--heading-letter-spacing);margin-bottom:2rem;">ABOUT OVER2YOU</h1>
+    <p style="font-size:var(--text-base);color:rgb(var(--text-color)/0.7);line-height:1.8;margin-bottom:2rem;">
+      Over2You was born from the belief that premium essentials should be accessible to everyone. We design timeless pieces using only the finest organic cotton, crafted with care for both you and the planet.
+    </p>
+    <p style="font-size:var(--text-base);color:rgb(var(--text-color)/0.7);line-height:1.8;margin-bottom:3rem;">
+      Every garment is made from 400gsm heavyweight organic cotton with brushed fleece interior. No compromises. No fast fashion. Just pieces you'll want to wear every day.
+    </p>
+    <a href={`${base}shop`} class="btn-primary" style="display:inline-block;padding:0.85rem 3rem;">SHOP NOW</a>
+  </div>
+</Layout>

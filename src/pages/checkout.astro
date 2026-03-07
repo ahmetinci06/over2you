@@ -1,0 +1,141 @@
+---
+import Layout from '../layouts/Layout.astro';
+const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : import.meta.env.BASE_URL + '/');
+---
+<Layout title="Checkout — Over2You">
+  <div class="checkout-wrapper" id="checkoutWrapper" style="max-width:1100px;margin:0 auto;padding:6rem var(--container-gutter) 4rem;">
+    <p style="text-align:center;color:rgb(var(--text-color)/0.4);">Loading checkout...</p>
+  </div>
+</Layout>
+
+<style is:inline>
+  .checkout-wrapper { display:grid; grid-template-columns:1fr; gap:3rem; }
+  @media (min-width:900px) { .checkout-wrapper { grid-template-columns:1.3fr 0.7fr; } }
+  .checkout-title { font:var(--heading-font-style) 800 1.5rem/1.2 var(--heading-font-family); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:2rem; padding-bottom:1rem; border-bottom:1px solid rgb(var(--border-color)); }
+  .form-section { margin-bottom:2rem; }
+  .form-section-title { font:var(--heading-font-style) 700 var(--text-sm)/1.4 var(--heading-font-family); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:1rem; color:rgb(var(--text-color)/0.6); }
+  .form-row { display:grid; grid-template-columns:1fr; gap:0.75rem; margin-bottom:0.75rem; }
+  .form-row.two-col { grid-template-columns:1fr 1fr; }
+  @media (max-width:600px) { .form-row.two-col { grid-template-columns:1fr; } }
+  .form-group { display:flex; flex-direction:column; gap:0.3rem; }
+  .form-group label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:rgb(var(--text-color)/0.6); }
+  .form-group input,.form-group select,.form-group textarea { padding:0.7rem 0.8rem; border:1px solid rgb(var(--border-color)); font:var(--text-font-style) var(--text-font-weight) var(--text-base)/1.65 var(--text-font-family); color:rgb(var(--text-color)); background:rgb(var(--background)); outline:none; border-radius:0; transition:border-color 0.2s; }
+  .form-group input:focus,.form-group select:focus,.form-group textarea:focus { border-color:rgb(var(--text-color)); }
+  .form-group input.error { border-color:#c94c4c; }
+  .payment-methods { margin:1.5rem 0; }
+  .payment-option { display:flex; align-items:flex-start; gap:0.75rem; padding:1rem; border:1px solid rgb(var(--border-color)); margin-bottom:-1px; cursor:pointer; transition:background 0.2s; }
+  .payment-option:hover { background:rgb(var(--text-color)/0.02); }
+  .payment-option.selected { background:rgb(var(--text-color)/0.03); border-color:rgb(var(--text-color)); z-index:1; position:relative; }
+  .payment-option input[type="radio"] { margin-top:2px; accent-color:rgb(var(--text-color)); }
+  .payment-option-label { font:var(--heading-font-style) 600 var(--text-sm)/1.4 var(--heading-font-family); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:0.2rem; }
+  .payment-option-desc { font-size:11px; color:rgb(var(--text-color)/0.5); }
+  .bank-details { display:none; padding:1rem; background:#f9f9f9; border:1px solid rgb(var(--border-color)); border-top:none; font-size:var(--text-sm); line-height:1.8; }
+  .bank-details.visible { display:block; }
+  .order-summary { position:sticky; top:80px; height:fit-content; }
+  .order-summary-title { font:var(--heading-font-style) 700 var(--text-sm)/1.4 var(--heading-font-family); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:1.5rem; padding-bottom:0.75rem; border-bottom:1px solid rgb(var(--border-color)); }
+  .summary-item { display:flex; gap:1rem; padding:0.75rem 0; border-bottom:1px solid rgb(var(--border-color)/0.15); }
+  .summary-item-swatch { width:50px; height:65px; flex-shrink:0; }
+  .summary-item-name { font:var(--heading-font-style) 600 11px/1.4 var(--heading-font-family); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:0.15rem; }
+  .summary-item-variant { font-size:10px; color:rgb(var(--text-color)/0.5); }
+  .summary-item-price { font-size:var(--text-sm); font-weight:600; text-align:right; white-space:nowrap; }
+  .summary-totals { margin-top:1rem; }
+  .summary-row { display:flex; justify-content:space-between; padding:0.4rem 0; font-size:var(--text-sm); }
+  .summary-row.total { font:var(--heading-font-style) 700 var(--text-base)/1.4 var(--heading-font-family); border-top:1px solid rgb(var(--border-color)); padding-top:0.75rem; margin-top:0.5rem; }
+  .btn-place-order { display:block; width:100%; padding:1rem; background:rgb(var(--button-background)); color:rgb(var(--button-text-color)); font:var(--heading-font-style) 800 var(--text-sm)/1.65 var(--heading-font-family); text-transform:uppercase; letter-spacing:0.03em; text-align:center; border:none; cursor:pointer; margin-top:1.5rem; transition:opacity 0.3s; }
+  .btn-place-order:hover { opacity:0.85; }
+  .btn-place-order:disabled { opacity:0.4; cursor:not-allowed; }
+  .btn-whatsapp { display:flex; align-items:center; justify-content:center; gap:0.5rem; width:100%; padding:0.85rem; background:#25D366; color:#fff; font:var(--heading-font-style) 700 var(--text-sm)/1.65 var(--heading-font-family); text-transform:uppercase; letter-spacing:0.03em; border:none; cursor:pointer; margin-top:0.75rem; transition:opacity 0.3s; }
+  .btn-whatsapp:hover { opacity:0.85; }
+  .secure-badge { display:flex; align-items:center; justify-content:center; gap:0.5rem; margin-top:1rem; font-size:10px; color:rgb(var(--text-color)/0.4); text-transform:uppercase; letter-spacing:0.06em; }
+</style>
+
+<script is:inline>
+document.addEventListener('DOMContentLoaded', () => {
+  const wrapper = document.getElementById('checkoutWrapper');
+  const B = window.O2Y_BASE;
+  const items = Cart.getItems();
+
+  if (items.length === 0) {
+    wrapper.innerHTML = '<div style="text-align:center;padding:4rem;grid-column:1/-1;"><h2 style="font:var(--heading-font-style) 800 1.25rem/1.2 var(--heading-font-family);text-transform:uppercase;margin-bottom:1rem;">Your cart is empty</h2><p style="color:rgb(var(--text-color)/0.5);margin-bottom:1.5rem;">Add some products before checking out.</p><a href="'+B+'shop" class="btn-primary" style="display:inline-block;padding:0.75rem 2rem;">CONTINUE SHOPPING</a></div>';
+    return;
+  }
+
+  const subtotal = items.reduce((s,i) => s + (i.price*i.qty), 0);
+  const shipping = subtotal >= 100 ? 0 : 6.90;
+  const total = subtotal + shipping;
+
+  wrapper.innerHTML = `
+    <div class="checkout-form">
+      <h1 class="checkout-title">Checkout</h1>
+      <form id="orderForm">
+        <div class="form-section"><div class="form-section-title">Contact Information</div>
+          <div class="form-row two-col"><div class="form-group"><label>Email *</label><input type="email" id="email" required placeholder="your@email.com"></div><div class="form-group"><label>Phone *</label><input type="tel" id="phone" required placeholder="+90 5XX XXX XX XX"></div></div>
+        </div>
+        <div class="form-section"><div class="form-section-title">Shipping Address</div>
+          <div class="form-row two-col"><div class="form-group"><label>First Name *</label><input type="text" id="firstName" required></div><div class="form-group"><label>Last Name *</label><input type="text" id="lastName" required></div></div>
+          <div class="form-row"><div class="form-group"><label>Address *</label><input type="text" id="address" required></div></div>
+          <div class="form-row two-col"><div class="form-group"><label>Apartment (optional)</label><input type="text" id="address2"></div><div class="form-group"><label>Postal Code *</label><input type="text" id="postalCode" required></div></div>
+          <div class="form-row two-col"><div class="form-group"><label>City *</label><input type="text" id="city" required></div><div class="form-group"><label>Country *</label><select id="country" required><option value="TR" selected>Turkey</option><option value="DE">Germany</option><option value="GB">United Kingdom</option><option value="US">United States</option><option value="FR">France</option><option value="NL">Netherlands</option></select></div></div>
+          <div class="form-row"><div class="form-group"><label>Notes (optional)</label><textarea id="notes" rows="2"></textarea></div></div>
+        </div>
+        <div class="form-section"><div class="form-section-title">Payment Method</div>
+          <div class="payment-methods">
+            <label class="payment-option selected" data-method="card"><input type="radio" name="payment" value="card" checked><div><div class="payment-option-label">Credit / Debit Card</div><div class="payment-option-desc">Visa, Mastercard, Amex — Secure payment via iyzico</div></div></label>
+            <label class="payment-option" data-method="bank"><input type="radio" name="payment" value="bank"><div><div class="payment-option-label">Bank Transfer (EFT/Havale)</div><div class="payment-option-desc">Order ships after payment confirmation</div></div></label>
+            <label class="payment-option" data-method="whatsapp"><input type="radio" name="payment" value="whatsapp"><div><div class="payment-option-label">Order via WhatsApp</div><div class="payment-option-desc">Send order directly via WhatsApp</div></div></label>
+          </div>
+          <div class="bank-details" id="bankDetails"><strong>Over2You</strong><br>IBAN: TR00 0000 0000 0000 0000 0000 00<br>Bank: [Bank Name]<br><br><em>Include your order number in transfer description.</em></div>
+        </div>
+        <button type="submit" class="btn-place-order" id="placeOrderBtn">PLACE ORDER — €${total.toFixed(2)}</button>
+        <button type="button" class="btn-whatsapp" id="whatsappBtn" style="display:none;">ORDER VIA WHATSAPP</button>
+        <div class="secure-badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>SECURE CHECKOUT — 256-BIT SSL ENCRYPTED</div>
+      </form>
+    </div>
+    <div class="order-summary">
+      <div class="order-summary-title">ORDER SUMMARY (${items.reduce((s,i)=>s+i.qty,0)} items)</div>
+      ${items.map(i => '<div class="summary-item"><div class="summary-item-swatch" style="background:'+(i.color||'#eee')+';"></div><div><div class="summary-item-name">'+i.name+'</div><div class="summary-item-variant">Size: '+i.selectedSize+' · Qty: '+i.qty+'</div></div><div class="summary-item-price">€'+(i.price*i.qty).toFixed(2)+'</div></div>').join('')}
+      <div class="summary-totals">
+        <div class="summary-row"><span>Subtotal</span><span>€${subtotal.toFixed(2)}</span></div>
+        <div class="summary-row"><span>Shipping</span><span>${shipping===0?'FREE':'€'+shipping.toFixed(2)}</span></div>
+        <div class="summary-row total"><span>Total</span><span>€${total.toFixed(2)}</span></div>
+      </div>
+    </div>
+  `;
+
+  // Payment method switching
+  document.querySelectorAll('.payment-option').forEach(opt => {
+    opt.addEventListener('click', () => {
+      document.querySelectorAll('.payment-option').forEach(o => o.classList.remove('selected'));
+      opt.classList.add('selected');
+      opt.querySelector('input[type="radio"]').checked = true;
+      const m = opt.dataset.method;
+      document.getElementById('bankDetails').classList.toggle('visible', m==='bank');
+      document.getElementById('placeOrderBtn').style.display = m==='whatsapp'?'none':'block';
+      document.getElementById('whatsappBtn').style.display = m==='whatsapp'?'flex':'none';
+    });
+  });
+
+  // WhatsApp
+  document.getElementById('whatsappBtn').addEventListener('click', () => {
+    const f = document.getElementById('orderForm');
+    const msg = encodeURIComponent('🛒 *New Order — Over2You*\n\n*Customer:* '+f.firstName.value+' '+f.lastName.value+'\n*Phone:* '+f.phone.value+'\n*Items:*\n'+items.map(i=>'• '+i.name+' ('+i.selectedSize+') x'+i.qty).join('\n')+'\n\n*Total:* €'+total.toFixed(2));
+    window.open('https://wa.me/905XXXXXXXXX?text='+msg, '_blank');
+  });
+
+  // Submit
+  document.getElementById('orderForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const f = e.target;
+    let valid = true;
+    f.querySelectorAll('[required]').forEach(inp => { if(!inp.value.trim()){inp.classList.add('error');valid=false;}else{inp.classList.remove('error');} });
+    if (!valid) return;
+    const method = f.querySelector('input[name="payment"]:checked').value;
+    const orderNumber = 'O2Y-' + Date.now().toString(36).toUpperCase();
+    const order = { orderNumber, date:new Date().toISOString(), customer:{email:f.email.value,phone:f.phone.value,firstName:f.firstName.value,lastName:f.lastName.value,address:f.address.value,city:f.city.value,postalCode:f.postalCode.value,country:f.country.value}, items:items.map(i=>({name:i.name,size:i.selectedSize,qty:i.qty,price:i.price})), subtotal,shipping,total, paymentMethod:method };
+    const orders = JSON.parse(localStorage.getItem('over2you_orders')||'[]');
+    orders.push(order); localStorage.setItem('over2you_orders',JSON.stringify(orders));
+    localStorage.removeItem('over2you_cart');
+    window.location.href = B+'confirmation?order='+orderNumber+'&method='+method;
+  });
+});
+</script>

@@ -1,0 +1,37 @@
+---
+import Layout from '../layouts/Layout.astro';
+const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : import.meta.env.BASE_URL + '/');
+---
+<Layout title="Order Confirmed — Over2You">
+  <div style="max-width:600px;margin:0 auto;padding:6rem var(--container-gutter) 6rem;text-align:center;" id="confirmPage"></div>
+</Layout>
+
+<script is:inline>
+document.addEventListener('DOMContentLoaded', () => {
+  const page = document.getElementById('confirmPage');
+  const params = new URLSearchParams(window.location.search);
+  const orderNumber = params.get('order') || 'N/A';
+  const method = params.get('method') || 'card';
+  const B = window.O2Y_BASE;
+
+  const orders = JSON.parse(localStorage.getItem('over2you_orders')||'[]');
+  const order = orders.find(o => o.orderNumber === orderNumber) || orders[orders.length-1];
+
+  page.innerHTML = `
+    <div style="width:64px;height:64px;border-radius:50%;background:#28a745;display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;">
+      <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#fff" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <h1 style="font:var(--heading-font-style) 900 1.5rem/1.2 var(--heading-font-family);text-transform:uppercase;margin-bottom:0.75rem;">${method==='bank'?'ORDER RECEIVED':'ORDER CONFIRMED'}</h1>
+    <p style="color:rgb(var(--text-color)/0.6);margin-bottom:2rem;">
+      ${method==='bank'?'Please complete the bank transfer below.':'Thank you for your purchase!'}
+    </p>
+    <div style="background:#f5f5f5;padding:1.25rem;margin-bottom:2rem;">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:rgb(var(--text-color)/0.5);margin-bottom:0.3rem;">Order Number</div>
+      <div style="font:var(--heading-font-style) 800 1.25rem/1.2 var(--heading-font-family);letter-spacing:0.06em;">${orderNumber}</div>
+    </div>
+    ${method==='bank'?`<div style="text-align:left;background:#fffbe6;border:1px solid #f0d000;padding:1.25rem;margin-bottom:2rem;font-size:var(--text-sm);line-height:1.8;"><strong>⚠ Payment Required</strong><br><br>Transfer <strong>€${order?order.total.toFixed(2):'0.00'}</strong> to:<br>IBAN: TR00 0000 0000 0000 0000 0000 00<br>Reference: <strong>${orderNumber}</strong></div>`:''}
+    ${order?`<div style="text-align:left;border-top:1px solid rgb(var(--border-color));padding-top:1.5rem;margin-bottom:2rem;">${order.items.map(i=>'<div style="display:flex;justify-content:space-between;padding:0.5rem 0;font-size:var(--text-sm);"><span>'+i.name+' ('+i.size+') x'+i.qty+'</span><span>€'+(i.price*i.qty).toFixed(2)+'</span></div>').join('')}<div style="display:flex;justify-content:space-between;padding-top:0.75rem;margin-top:0.5rem;border-top:1px solid rgb(var(--border-color));font-weight:700;">Total: €${order.total.toFixed(2)}</div></div>`:''}
+    <a href="${B}shop" class="btn-primary" style="display:block;text-align:center;padding:0.85rem 2rem;">CONTINUE SHOPPING</a>
+  `;
+});
+</script>
