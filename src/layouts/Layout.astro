@@ -6,7 +6,8 @@ interface Props {
 }
 
 const { title = 'Over2You | OFFICIAL WEBSITE', transparentHeader = false, description = 'Over2You — Premium streetwear and essentials.' } = Astro.props;
-const base = import.meta.env.BASE_URL;
+const rawBase = import.meta.env.BASE_URL;
+const base = rawBase.endsWith('/') ? rawBase : rawBase + '/';
 ---
 <!doctype html>
 <html lang="en" dir="ltr">
