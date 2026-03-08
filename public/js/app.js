@@ -488,16 +488,17 @@ function renderProducts(filter, targetEl) {
     </div>
   `;
 
-  // === Logo Color on Swatch Hover ===
+  // === Logo Color: set to current product color, hover changes to swatch color ===
   const logoEls = document.querySelectorAll('.header .logo-text');
-  const originalLogoColor = logoEls.length ? getComputedStyle(logoEls[0]).color : '';
+  const productColor = product.color;
+  logoEls.forEach(el => el.style.color = productColor);
   document.querySelectorAll('.swatch-product').forEach(swatch => {
     swatch.addEventListener('mouseenter', () => {
       const c = swatch.style.background || swatch.style.backgroundColor;
       logoEls.forEach(el => el.style.color = c);
     });
     swatch.addEventListener('mouseleave', () => {
-      logoEls.forEach(el => el.style.color = '');
+      logoEls.forEach(el => el.style.color = productColor);
     });
   });
 

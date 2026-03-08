@@ -92,15 +92,17 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
         </div>
       `;
 
-      // Logo color on swatch hover
+      // Logo color: set to current product color, hover changes to swatch color
       const logoEls = document.querySelectorAll('.header .logo-text');
+      const productColor = product.color;
+      logoEls.forEach(el => el.style.color = productColor);
       document.querySelectorAll('.swatch-product').forEach(swatch => {
         swatch.addEventListener('mouseenter', () => {
           const c = swatch.style.background || swatch.style.backgroundColor;
           logoEls.forEach(el => el.style.color = c);
         });
         swatch.addEventListener('mouseleave', () => {
-          logoEls.forEach(el => el.style.color = '');
+          logoEls.forEach(el => el.style.color = productColor);
         });
       });
 
