@@ -47,7 +47,7 @@ let products = [
 ];
 
 // ===== UTILITIES =====
-const BASE = window.O2Y_BASE || '/over2you/';
+const BASE = window.O2Y_BASE || '/';
 
 function getImgBase() {
   return BASE + 'img/';
