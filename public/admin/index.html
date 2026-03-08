@@ -4,811 +4,744 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Over2You — Admin CMS</title>
-  <link rel="stylesheet" href="https://unpkg.com/grapesjs@0.21.13/dist/css/grapes.min.css">
-  <script src="https://unpkg.com/grapesjs@0.21.13/dist/grapes.min.js"></script>
-  <script src="https://unpkg.com/grapesjs-preset-webpage@1.0.3/dist/index.js"></script>
-  <script src="https://unpkg.com/grapesjs-blocks-basic@1.0.2/dist/index.js"></script>
   <style>
-    :root { --bg: #fafafa; --card: #fff; --text: #1c1c1c; --muted: #888; --border: #e0e0e0; --accent: #1c1c1c; --accent-light: #f0f0f0; --success: #28a745; --danger: #dc3545; --radius: 8px; }
+    :root { --bg: #fafafa; --card: #fff; --text: #1c1c1c; --muted: #888; --border: #e0e0e0; --accent: #1c1c1c; --accent-light: #f5f5f5; --success: #28a745; --danger: #dc3545; --warn: #ffc107; --radius: 8px; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
 
-    /* Layout */
-    .admin-layout { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+    .admin-layout { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
     @media (max-width: 768px) { .admin-layout { grid-template-columns: 1fr; } .sidebar { display: none; } .sidebar.open { display: flex; position: fixed; z-index: 100; inset: 0; } }
 
-    /* Sidebar */
-    .sidebar { background: var(--text); color: #fff; padding: 1.5rem; display: flex; flex-direction: column; gap: 0.25rem; }
+    .sidebar { background: var(--text); color: #fff; padding: 1.25rem; display: flex; flex-direction: column; gap: 2px; }
     .sidebar-logo { font-size: 18px; font-weight: 900; font-style: italic; letter-spacing: -1px; margin-bottom: 2rem; opacity: 0.9; }
-    .sidebar-link { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0.75rem; border-radius: var(--radius); color: rgba(255,255,255,0.6); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; border: none; background: none; width: 100%; text-align: left; }
-    .sidebar-link:hover { background: rgba(255,255,255,0.1); color: #fff; }
-    .sidebar-link.active { background: rgba(255,255,255,0.15); color: #fff; }
-    .sidebar-link svg { width: 18px; height: 18px; flex-shrink: 0; }
-    .sidebar-bottom { margin-top: auto; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1); }
-    .sidebar-bottom a { color: rgba(255,255,255,0.4); font-size: 12px; }
+    .sidebar-link { display: flex; align-items: center; gap: 0.6rem; padding: 0.55rem 0.7rem; border-radius: 6px; color: rgba(255,255,255,0.55); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; border: none; background: none; width: 100%; text-align: left; }
+    .sidebar-link:hover { background: rgba(255,255,255,0.08); color: #fff; }
+    .sidebar-link.active { background: rgba(255,255,255,0.13); color: #fff; }
+    .sidebar-link svg { width: 17px; height: 17px; flex-shrink: 0; }
+    .sidebar-sep { height: 1px; background: rgba(255,255,255,0.08); margin: 0.75rem 0; }
+    .sidebar-bottom { margin-top: auto; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; gap: 4px; }
+    .sidebar-bottom a { color: rgba(255,255,255,0.4); font-size: 12px; text-decoration: none; padding: 4px 0; }
+    .sidebar-bottom a:hover { color: #fff; }
 
-    /* Main */
-    .main { padding: 2rem; max-width: 1100px; overflow-y: auto; }
-    .main-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
-    .main-title { font-size: 20px; font-weight: 800; }
-    .mobile-menu { display: none; background: none; border: none; cursor: pointer; }
+    .main { padding: 1.75rem 2rem; overflow-y: auto; max-height: 100vh; }
+    .main-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.75rem; }
+    .main-title { font-size: 18px; font-weight: 800; }
+    .mobile-menu { display: none; background: none; border: none; cursor: pointer; font-size: 20px; }
     @media (max-width: 768px) { .mobile-menu { display: block; } }
 
-    /* Cards */
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.5rem; }
-    .card-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 1rem; color: var(--muted); }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1.25rem; }
+    .card-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.75rem; color: var(--muted); }
 
-    /* Forms */
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem; }
+    .form-row.c3 { grid-template-columns: 1fr 1fr 1fr; }
     .form-row.single { grid-template-columns: 1fr; }
-    @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
-    .form-group { display: flex; flex-direction: column; gap: 0.3rem; }
-    .form-group label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
-    .form-group input, .form-group select, .form-group textarea { padding: 0.6rem 0.75rem; border: 1px solid var(--border); border-radius: 4px; font-size: 13px; font-family: inherit; outline: none; transition: border-color 0.2s; }
+    @media (max-width: 600px) { .form-row, .form-row.c3 { grid-template-columns: 1fr; } }
+    .form-group { display: flex; flex-direction: column; gap: 3px; }
+    .form-group label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+    .form-group input, .form-group select, .form-group textarea { padding: 0.55rem 0.7rem; border: 1px solid var(--border); border-radius: 4px; font-size: 13px; font-family: inherit; outline: none; transition: border-color 0.15s; }
     .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--accent); }
-    .form-group textarea { resize: vertical; min-height: 60px; }
+    .form-group textarea { resize: vertical; min-height: 80px; }
 
-    /* Buttons */
-    .btn { padding: 0.55rem 1.25rem; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; border: none; border-radius: 4px; cursor: pointer; transition: opacity 0.2s; display: inline-flex; align-items: center; gap: 0.4rem; }
+    .btn { padding: 0.5rem 1.1rem; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; border: none; border-radius: 4px; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 0.35rem; }
     .btn:hover { opacity: 0.85; }
     .btn-primary { background: var(--accent); color: #fff; }
     .btn-success { background: var(--success); color: #fff; }
     .btn-danger { background: var(--danger); color: #fff; }
     .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
-    .btn-sm { padding: 0.35rem 0.75rem; font-size: 11px; }
-    .btn-group { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .btn-sm { padding: 0.3rem 0.6rem; font-size: 10px; }
+    .btn-group { display: flex; gap: 0.4rem; flex-wrap: wrap; }
 
-    /* Product List */
-    .product-table { width: 100%; border-collapse: collapse; }
-    .product-table th { text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); padding: 0.5rem; border-bottom: 1px solid var(--border); }
-    .product-table td { padding: 0.6rem 0.5rem; border-bottom: 1px solid #f0f0f0; font-size: 13px; vertical-align: middle; }
-    .product-table tr:hover { background: var(--accent-light); }
-    .product-swatch { width: 32px; height: 40px; border-radius: 4px; flex-shrink: 0; }
-    .product-name-cell { display: flex; align-items: center; gap: 0.75rem; }
-    .badge { display: inline-block; padding: 2px 6px; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; border-radius: 3px; }
-    .badge-new { background: var(--accent); color: #fff; }
-    .badge-stock { background: #ffc107; color: #000; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem; }
+    .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; }
+    .stat-value { font-size: 22px; font-weight: 800; }
+    .stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
 
-    /* Tab panels */
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
 
+    /* Product Table — Production */
+    .ptable { width: 100%; border-collapse: collapse; }
+    .ptable th { text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); padding: 0.6rem 0.5rem; border-bottom: 2px solid var(--border); position: sticky; top: 0; background: var(--card); }
+    .ptable td { padding: 0.55rem 0.5rem; border-bottom: 1px solid #f0f0f0; font-size: 13px; vertical-align: middle; }
+    .ptable tr:hover { background: var(--accent-light); }
+    .ptable .swatch { width: 32px; height: 40px; border-radius: 4px; flex-shrink: 0; border: 1px solid rgba(0,0,0,0.08); }
+    .ptable .product-cell { display: flex; align-items: center; gap: 0.6rem; }
+    .ptable .product-name { font-weight: 600; }
+    .ptable .product-id { font-size: 10px; color: var(--muted); }
+    .badge { display: inline-block; padding: 2px 6px; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; border-radius: 3px; }
+    .badge-new { background: var(--accent); color: #fff; }
+    .badge-stock { background: var(--warn); color: #000; }
+    .badge-sale { background: var(--danger); color: #fff; }
+
+    /* Toolbar */
+    .toolbar { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .toolbar input[type="search"] { padding: 0.45rem 0.7rem; border: 1px solid var(--border); border-radius: 4px; font-size: 12px; width: 220px; }
+    .toolbar select { padding: 0.45rem 0.7rem; border: 1px solid var(--border); border-radius: 4px; font-size: 12px; }
+
+    /* Image upload */
+    .img-upload-zone { border: 2px dashed var(--border); border-radius: var(--radius); padding: 1.5rem; text-align: center; cursor: pointer; transition: border-color 0.15s; color: var(--muted); font-size: 12px; }
+    .img-upload-zone:hover, .img-upload-zone.dragover { border-color: var(--accent); color: var(--text); }
+    .img-thumbs { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.75rem; }
+    .img-thumb { width: 64px; height: 80px; border-radius: 4px; object-fit: cover; border: 1px solid var(--border); position: relative; }
+    .img-thumb-wrap { position: relative; }
+    .img-thumb-rm { position: absolute; top: -4px; right: -4px; width: 18px; height: 18px; background: var(--danger); color: #fff; border: none; border-radius: 50%; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
     /* Login */
     .login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem; }
-    .login-box { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 2.5rem; max-width: 400px; width: 100%; text-align: center; }
+    .login-box { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 2.5rem; max-width: 380px; width: 100%; text-align: center; }
     .login-box h1 { font-size: 24px; font-weight: 900; font-style: italic; margin-bottom: 0.5rem; }
-    .login-box p { font-size: 13px; color: var(--muted); margin-bottom: 2rem; }
-    .login-box input { width: 100%; margin-bottom: 1rem; }
-    .login-box .btn { width: 100%; justify-content: center; padding: 0.75rem; }
-
-    /* Toast */
-    .toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--accent); color: #fff; padding: 0.75rem 1.25rem; border-radius: var(--radius); font-size: 13px; font-weight: 600; z-index: 1000; transform: translateY(120%); transition: transform 0.3s; }
-    .toast.show { transform: translateY(0); }
-
-    /* Color picker */
-    .color-preview { display: inline-flex; align-items: center; gap: 0.5rem; }
-    .color-dot { width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--border); }
-    input[type="color"] { width: 40px; height: 32px; padding: 0; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; }
-
-    /* GrapeJS overrides */
-    #gjs { min-height: 500px; }
-    .gjs-one-bg { background-color: #1c1c1c; }
-    .gjs-two-color { color: #ddd; }
-    .gjs-three-bg { background-color: #2c2c2c; }
-    .gjs-four-color, .gjs-four-color-h:hover { color: #28a745; }
-    .gjs-pn-panels { min-height: 40px; }
-    .gjs-cv-canvas { top: 0; width: 100%; height: 100%; }
-
-    /* Stats */
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
-    .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; }
-    .stat-value { font-size: 24px; font-weight: 800; }
-    .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .login-box p { font-size: 12px; color: var(--muted); margin-bottom: 1.5rem; }
+    .login-box input { width: 100%; margin-bottom: 0.75rem; }
+    .login-box .btn { width: 100%; justify-content: center; padding: 0.7rem; }
 
     /* Modal */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 500; display: none; align-items: center; justify-content: center; padding: 1rem; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 500; display: none; align-items: flex-start; justify-content: center; padding: 3rem 1rem; overflow-y: auto; }
     .modal-overlay.open { display: flex; }
-    .modal { background: var(--card); border-radius: var(--radius); max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 2rem; }
-    .modal-title { font-size: 16px; font-weight: 800; margin-bottom: 1.5rem; }
+    .modal { background: var(--card); border-radius: var(--radius); max-width: 680px; width: 100%; padding: 1.75rem; }
+    .modal-title { font-size: 15px; font-weight: 800; margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center; }
+    .modal-title .close-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--muted); }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--accent); color: #fff; padding: 0.65rem 1.1rem; border-radius: 6px; font-size: 12px; font-weight: 600; z-index: 1000; transform: translateY(120%); transition: transform 0.2s; }
+    .toast.show { transform: translateY(0); }
+
+    /* Content Editor */
+    .content-block { border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 1rem; }
+    .content-block-header { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; background: var(--accent-light); border-bottom: 1px solid var(--border); cursor: pointer; }
+    .content-block-header h3 { font-size: 13px; font-weight: 700; }
+    .content-block-body { padding: 1rem; display: none; }
+    .content-block.open .content-block-body { display: block; }
+    .content-block.open .content-block-header .arrow { transform: rotate(180deg); }
+    .arrow { transition: transform 0.15s; font-size: 12px; }
+
+    input[type="color"] { width: 36px; height: 30px; padding: 0; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; }
+    .color-input-wrap { display: flex; align-items: center; gap: 0.5rem; }
+    .color-hex { font-size: 11px; color: var(--muted); font-family: monospace; }
   </style>
 </head>
 <body>
 
-  <!-- Login Screen -->
-  <div class="login-screen" id="loginScreen">
-    <div class="login-box">
-      <h1>OVER2YOU</h1>
-      <p>Admin CMS — Enter your GitHub token to manage the store</p>
-      <div class="form-group">
-        <label>GitHub Personal Access Token</label>
-        <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxx">
-      </div>
-      <div class="form-group" style="margin-bottom:1rem;">
-        <label>Repository (owner/repo)</label>
-        <input type="text" id="ghRepo" value="ahmetinci06/over2you">
-      </div>
-      <button class="btn btn-primary" onclick="doLogin()">LOGIN</button>
-      <p style="font-size:11px;color:var(--muted);margin-top:1rem;">Token needs <strong>repo</strong> scope. <a href="https://github.com/settings/tokens/new?scopes=repo&description=Over2You+CMS" target="_blank">Create one →</a></p>
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <h1>OVER2YOU</h1>
+    <p>Admin CMS — Enter your GitHub token to manage the store</p>
+    <div class="form-group"><label>GitHub Personal Access Token</label><input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxx"></div>
+    <div class="form-group" style="margin-bottom:1rem;"><label>Repository</label><input type="text" id="ghRepo" value="ahmetinci06/over2you"></div>
+    <button class="btn btn-primary" onclick="doLogin()">LOGIN</button>
+    <p style="font-size:10px;color:var(--muted);margin-top:1rem;">Needs <strong>repo</strong> scope. <a href="https://github.com/settings/tokens/new?scopes=repo&description=Over2You+CMS" target="_blank">Create token →</a></p>
+  </div>
+</div>
+
+<div class="admin-layout" id="adminLayout" style="display:none;">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">O2Y ADMIN</div>
+    <button class="sidebar-link active" data-tab="dashboard" onclick="switchTab('dashboard')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </button>
+    <button class="sidebar-link" data-tab="products" onclick="switchTab('products')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
+      Products
+    </button>
+    <button class="sidebar-link" data-tab="pages" onclick="switchTab('pages')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      Pages
+    </button>
+    <button class="sidebar-link" data-tab="settings" onclick="switchTab('settings')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      Settings
+    </button>
+    <button class="sidebar-link" data-tab="orders" onclick="switchTab('orders')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      Orders
+    </button>
+    <div class="sidebar-bottom">
+      <a href="../" target="_blank">← View Store</a>
+      <a href="#" onclick="logout()">Logout</a>
     </div>
-  </div>
+  </aside>
 
-  <!-- Admin Layout -->
-  <div class="admin-layout" id="adminLayout" style="display:none;">
-    <aside class="sidebar" id="sidebar">
-      <div class="sidebar-logo">O2Y CMS</div>
-      <button class="sidebar-link active" data-tab="dashboard" onclick="switchTab('dashboard')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-        Dashboard
-      </button>
-      <button class="sidebar-link" data-tab="products" onclick="switchTab('products')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
-        Products
-      </button>
-      <button class="sidebar-link" data-tab="settings" onclick="switchTab('settings')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-        Settings
-      </button>
-      <button class="sidebar-link" data-tab="orders" onclick="switchTab('orders')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-        Orders
-      </button>
-      <button class="sidebar-link" data-tab="pagebuilder" onclick="switchTab('pagebuilder');initPageBuilder()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="9" y1="9" x2="21" y2="9"/></svg>
-        Page Builder
-      </button>
-      <div class="sidebar-bottom">
-        <a href="../" target="_blank">← View Store</a>
-      </div>
-    </aside>
+  <main class="main">
+    <button class="mobile-menu" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
 
-    <main class="main">
-      <button class="mobile-menu" onclick="document.getElementById('sidebar').classList.toggle('open')">☰ Menu</button>
-
-      <!-- DASHBOARD -->
-      <div class="tab-panel active" id="tab-dashboard">
-        <div class="main-header"><h1 class="main-title">Dashboard</h1></div>
-        <div class="stats-grid" id="statsGrid"></div>
-        <div class="card"><div class="card-title">Quick Actions</div>
-          <div class="btn-group">
-            <button class="btn btn-primary" onclick="switchTab('products');openProductModal()">+ Add Product</button>
-            <button class="btn btn-outline" onclick="switchTab('settings')">Edit Settings</button>
-            <a href="../index.html" target="_blank" class="btn btn-outline">View Store →</a>
-          </div>
+    <!-- DASHBOARD -->
+    <div class="tab-panel active" id="tab-dashboard">
+      <div class="main-header"><h1 class="main-title">Dashboard</h1></div>
+      <div class="stats-grid" id="statsGrid"></div>
+      <div class="card"><div class="card-title">Quick Actions</div>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="switchTab('products');openProductModal()">+ Add Product</button>
+          <button class="btn btn-outline" onclick="switchTab('pages')">Edit Pages</button>
+          <button class="btn btn-outline" onclick="switchTab('settings')">Settings</button>
+          <a href="../" target="_blank" class="btn btn-outline">View Store →</a>
         </div>
-      </div>
-
-      <!-- PRODUCTS -->
-      <div class="tab-panel" id="tab-products">
-        <div class="main-header">
-          <h1 class="main-title">Products</h1>
-          <div class="btn-group">
-            <button class="btn btn-primary" onclick="openProductModal()">+ Add Product</button>
-            <button class="btn btn-outline" onclick="exportProductsJSON()">📥 Export JSON</button>
-            <button class="btn btn-outline" onclick="importProductsJSON()">📤 Import JSON</button>
-          </div>
-        </div>
-        <div class="card" style="padding:0;overflow-x:auto;">
-          <table class="product-table" id="productTable"><thead><tr><th>Product</th><th>Category</th><th>Price</th><th>Sizes</th><th>Badge</th><th></th></tr></thead><tbody id="productTableBody"></tbody></table>
-        </div>
-      </div>
-
-      <!-- SETTINGS -->
-      <div class="tab-panel" id="tab-settings">
-        <div class="main-header">
-          <h1 class="main-title">Store Settings</h1>
-          <button class="btn btn-success" onclick="saveSettings()">Save & Deploy</button>
-        </div>
-        <div class="card"><div class="card-title">Branding</div>
-          <div class="form-row"><div class="form-group"><label>Site Name</label><input id="s_siteName"></div><div class="form-group"><label>Logo Text</label><input id="s_logoText"></div></div>
-          <div class="form-row single"><div class="form-group"><label>Announcement Bar</label><input id="s_announcement"></div></div>
-        </div>
-        <div class="card"><div class="card-title">Contact & Social</div>
-          <div class="form-row"><div class="form-group"><label>Support Email</label><input id="s_supportEmail"></div><div class="form-group"><label>WhatsApp Number</label><input id="s_whatsappNumber" placeholder="905XXXXXXXXX"></div></div>
-          <div class="form-row"><div class="form-group"><label>Instagram URL</label><input id="s_instagram"></div><div class="form-group"><label>TikTok URL</label><input id="s_tiktok"></div></div>
-        </div>
-        <div class="card"><div class="card-title">Shipping</div>
-          <div class="form-row"><div class="form-group"><label>Free Shipping Threshold (€)</label><input type="number" id="s_freeShippingThreshold"></div><div class="form-group"><label>Shipping Cost (€)</label><input type="number" step="0.01" id="s_shippingCost"></div></div>
-        </div>
-        <div class="card"><div class="card-title">Payment — Bank Transfer</div>
-          <div class="form-row"><div class="form-group"><label>Bank Name</label><input id="s_bankName"></div><div class="form-group"><label>Account Holder</label><input id="s_bankHolder"></div></div>
-          <div class="form-row single"><div class="form-group"><label>IBAN</label><input id="s_bankIBAN"></div></div>
-        </div>
-        <div class="card"><div class="card-title">Payment — iyzico</div>
-          <div class="form-row"><div class="form-group"><label>API Key</label><input id="s_iyzicoApiKey" placeholder="sandbox or live key"></div><div class="form-group"><label>Secret Key</label><input type="password" id="s_iyzicoSecretKey"></div></div>
-          <div class="form-row single"><div class="form-group"><label>Base URL</label><select id="s_iyzicoBaseUrl"><option value="https://sandbox-api.iyzipay.com">Sandbox</option><option value="https://api.iyzipay.com">Production</option></select></div></div>
-        </div>
-      </div>
-
-      <!-- ORDERS -->
-      <div class="tab-panel" id="tab-orders">
-        <div class="main-header"><h1 class="main-title">Orders</h1><button class="btn btn-outline" onclick="exportOrdersCSV()">📥 Export CSV</button></div>
-        <div class="card"><p style="color:var(--muted);font-size:13px;">Orders from localStorage will appear here. For production, connect a database.</p>
-          <div id="ordersList" style="margin-top:1rem;"></div>
-        </div>
-      </div>
-
-      <!-- PAGE BUILDER -->
-      <div class="tab-panel" id="tab-pagebuilder">
-        <div class="main-header">
-          <h1 class="main-title">Page Builder</h1>
-          <div class="btn-group">
-            <select id="pb-page-select" class="form-group" style="padding:0.4rem 0.75rem;border:1px solid var(--border);border-radius:4px;font-size:12px;font-weight:600;">
-              <option value="__new__">+ New Page</option>
-            </select>
-            <button class="btn btn-primary" onclick="pbSave()">💾 Save Page</button>
-            <button class="btn btn-outline" onclick="pbExportHTML()">📤 Export HTML</button>
-            <button class="btn btn-outline" onclick="pbPreview()">👁 Preview</button>
-          </div>
-        </div>
-        <div style="display:flex;gap:0;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;height:calc(100vh - 140px);background:#fff;">
-          <div id="gjs" style="flex:1;overflow:auto;"></div>
-        </div>
-      </div>
-    </main>
-  </div>
-
-  <!-- Product Edit Modal -->
-  <div class="modal-overlay" id="productModal">
-    <div class="modal">
-      <div class="modal-title" id="modalTitle">Add Product</div>
-      <input type="hidden" id="p_id">
-      <div class="form-row"><div class="form-group"><label>Product Name</label><input id="p_name" placeholder="Hoodie Lapis Blue"></div><div class="form-group"><label>Category</label><select id="p_category"><option value="hoodies">Hoodies</option><option value="sweatpants">Sweatpants</option><option value="crewnecks">Crewnecks</option><option value="tshirts">T-Shirts</option><option value="accessories">Accessories</option></select></div></div>
-      <div class="form-row"><div class="form-group"><label>Price (€)</label><input type="number" step="0.01" id="p_price"></div><div class="form-group"><label>Badge</label><select id="p_badge"><option value="">None</option><option value="NEW">NEW</option><option value="LAST STOCK">LAST STOCK</option><option value="SALE">SALE</option></select></div></div>
-      <div class="form-row"><div class="form-group"><label>Color Name</label><input id="p_colorName" placeholder="Lapis Blue"></div><div class="form-group"><label>Color</label><div style="display:flex;gap:0.5rem;align-items:center;"><input type="color" id="p_color" value="#2a5a8a"><span id="p_colorHex" style="font-size:12px;color:var(--muted);">#2a5a8a</span></div></div></div>
-      <div class="form-row"><div class="form-group"><label>Color Family</label><select id="p_colorFamily"><option value="black">Black</option><option value="white">White</option><option value="grey">Grey</option><option value="blue">Blue</option><option value="red">Red</option><option value="pink">Pink</option><option value="brown">Brown</option><option value="dark">Dark</option></select></div><div class="form-group"><label>Sizes (comma separated)</label><input id="p_sizes" value="XXS,XS,S,M,L,XL,XXL"></div></div>
-      <div class="form-row single"><div class="form-group"><label>Description</label><textarea id="p_description" rows="3"></textarea></div></div>
-      <div class="btn-group" style="margin-top:1.5rem;justify-content:flex-end;">
-        <button class="btn btn-outline" onclick="closeProductModal()">Cancel</button>
-        <button class="btn btn-primary" onclick="saveProduct()">Save Product</button>
       </div>
     </div>
-  </div>
 
-  <div class="toast" id="toast"></div>
-
-  <script>
-  // ===== STATE =====
-  let ghToken = '', ghRepo = '', products = [], settings = {};
-
-  // ===== AUTH =====
-  function doLogin() {
-    ghToken = document.getElementById('ghToken').value.trim();
-    ghRepo = document.getElementById('ghRepo').value.trim();
-    if (!ghToken || !ghRepo) return;
-    localStorage.setItem('o2y_token', ghToken);
-    localStorage.setItem('o2y_repo', ghRepo);
-    loadAdmin();
-  }
-
-  // Auto-login
-  (function() {
-    const t = localStorage.getItem('o2y_token');
-    const r = localStorage.getItem('o2y_repo');
-    if (t && r) { ghToken = t; ghRepo = r; loadAdmin(); }
-  })();
-
-  async function loadAdmin() {
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('adminLayout').style.display = 'grid';
-    try {
-      products = await fetchFile('data/products.json');
-      settings = await fetchFile('data/settings.json');
-      renderDashboard();
-      renderProducts();
-      renderSettings();
-      renderOrders();
-    } catch(e) {
-      toast('Error loading data: ' + e.message, true);
-    }
-  }
-
-  // ===== GITHUB API =====
-  async function fetchFile(path) {
-    const res = await fetch(`https://api.github.com/repos/${ghRepo}/contents/${path}`, {
-      headers: { 'Authorization': `token ${ghToken}`, 'Accept': 'application/vnd.github.v3+json' }
-    });
-    const data = await res.json();
-    return JSON.parse(atob(data.content));
-  }
-
-  async function saveFile(path, content, message) {
-    // Get current SHA
-    const res = await fetch(`https://api.github.com/repos/${ghRepo}/contents/${path}`, {
-      headers: { 'Authorization': `token ${ghToken}`, 'Accept': 'application/vnd.github.v3+json' }
-    });
-    const data = await res.json();
-    const sha = data.sha;
-    // PUT
-    const saveRes = await fetch(`https://api.github.com/repos/${ghRepo}/contents/${path}`, {
-      method: 'PUT',
-      headers: { 'Authorization': `token ${ghToken}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, content: btoa(unescape(encodeURIComponent(JSON.stringify(content, null, 2)))), sha })
-    });
-    if (!saveRes.ok) throw new Error('Failed to save: ' + saveRes.statusText);
-    return saveRes.json();
-  }
-
-  // ===== TABS =====
-  function switchTab(tab) {
-    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
-    document.getElementById('tab-' + tab).classList.add('active');
-    document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
-  }
-
-  // ===== DASHBOARD =====
-  function renderDashboard() {
-    const categories = [...new Set(products.map(p => p.category))];
-    document.getElementById('statsGrid').innerHTML = `
-      <div class="stat-card"><div class="stat-value">${products.length}</div><div class="stat-label">Products</div></div>
-      <div class="stat-card"><div class="stat-value">${categories.length}</div><div class="stat-label">Categories</div></div>
-      <div class="stat-card"><div class="stat-value">${products.filter(p=>p.badge==='NEW').length}</div><div class="stat-label">New Items</div></div>
-      <div class="stat-card"><div class="stat-value">${settings.currency || 'EUR'}</div><div class="stat-label">Currency</div></div>
-    `;
-  }
-
-  // ===== PRODUCTS =====
-  function renderProducts() {
-    const tbody = document.getElementById('productTableBody');
-    tbody.innerHTML = products.map((p, i) => `
-      <tr>
-        <td><div class="product-name-cell"><div class="product-swatch" style="background:${p.color};border-radius:4px;"></div>${p.name}</div></td>
-        <td>${p.category}</td>
-        <td>€${p.price.toFixed(2)}</td>
-        <td style="font-size:11px;">${p.sizes.join(', ')}</td>
-        <td>${p.badge ? `<span class="badge ${p.badge==='NEW'?'badge-new':'badge-stock'}">${p.badge}</span>` : '—'}</td>
-        <td><div class="btn-group"><button class="btn btn-sm btn-outline" onclick="editProduct(${i})">Edit</button><button class="btn btn-sm btn-danger" onclick="deleteProduct(${i})">×</button></div></td>
-      </tr>
-    `).join('');
-  }
-
-  function openProductModal(product) {
-    document.getElementById('productModal').classList.add('open');
-    document.getElementById('modalTitle').textContent = product ? 'Edit Product' : 'Add Product';
-    if (product) {
-      document.getElementById('p_id').value = product.id;
-      document.getElementById('p_name').value = product.name;
-      document.getElementById('p_category').value = product.category;
-      document.getElementById('p_price').value = product.price;
-      document.getElementById('p_badge').value = product.badge || '';
-      document.getElementById('p_color').value = product.color;
-      document.getElementById('p_colorHex').textContent = product.color;
-      document.getElementById('p_colorName').value = product.colorName || '';
-      document.getElementById('p_colorFamily').value = product.colorFamily || 'dark';
-      document.getElementById('p_sizes').value = product.sizes.join(',');
-      document.getElementById('p_description').value = product.description || '';
-    } else {
-      document.getElementById('p_id').value = '';
-      document.querySelectorAll('#productModal input:not([type=hidden]):not([type=color]), #productModal textarea').forEach(i => i.value = '');
-      document.getElementById('p_sizes').value = 'XXS,XS,S,M,L,XL,XXL';
-      document.getElementById('p_price').value = '84.00';
-    }
-  }
-
-  function closeProductModal() { document.getElementById('productModal').classList.remove('open'); }
-
-  function editProduct(index) { openProductModal(products[index]); }
-
-  async function deleteProduct(index) {
-    if (!confirm(`Delete "${products[index].name}"?`)) return;
-    products.splice(index, 1);
-    try {
-      await saveFile('data/products.json', products, `CMS: delete ${products[index]?.name || 'product'}`);
-      renderProducts(); renderDashboard();
-      toast('Product deleted');
-    } catch(e) { toast('Error: ' + e.message, true); }
-  }
-
-  async function saveProduct() {
-    const id = document.getElementById('p_id').value;
-    const product = {
-      id: id ? parseInt(id) : Math.max(0, ...products.map(p=>p.id)) + 1,
-      name: document.getElementById('p_name').value,
-      price: parseFloat(document.getElementById('p_price').value),
-      category: document.getElementById('p_category').value,
-      sizes: document.getElementById('p_sizes').value.split(',').map(s=>s.trim()),
-      badge: document.getElementById('p_badge').value || null,
-      color: document.getElementById('p_color').value,
-      colorName: document.getElementById('p_colorName').value,
-      colorFamily: document.getElementById('p_colorFamily').value,
-      description: document.getElementById('p_description').value,
-      images: ["col-hoodies.jpg","col-6pm.jpg"]
-    };
-    if (!product.name || !product.price) { toast('Name and price required', true); return; }
-
-    if (id) {
-      const idx = products.findIndex(p => p.id === parseInt(id));
-      if (idx >= 0) products[idx] = product;
-    } else {
-      products.push(product);
-    }
-
-    try {
-      await saveFile('data/products.json', products, `CMS: ${id ? 'update' : 'add'} ${product.name}`);
-      closeProductModal(); renderProducts(); renderDashboard();
-      toast(id ? 'Product updated' : 'Product added');
-    } catch(e) { toast('Error: ' + e.message, true); }
-  }
-
-  // ===== SETTINGS =====
-  function renderSettings() {
-    const fields = ['siteName','logoText','announcement','supportEmail','whatsappNumber','instagram','tiktok','freeShippingThreshold','shippingCost','bankName','bankHolder','bankIBAN'];
-    fields.forEach(f => { const el = document.getElementById('s_' + f); if (el) el.value = settings[f] || ''; });
-    if (settings.iyzico) {
-      document.getElementById('s_iyzicoApiKey').value = settings.iyzico.apiKey || '';
-      document.getElementById('s_iyzicoSecretKey').value = settings.iyzico.secretKey || '';
-      document.getElementById('s_iyzicoBaseUrl').value = settings.iyzico.baseUrl || 'https://sandbox-api.iyzipay.com';
-    }
-  }
-
-  async function saveSettings() {
-    settings.siteName = document.getElementById('s_siteName').value;
-    settings.logoText = document.getElementById('s_logoText').value;
-    settings.announcement = document.getElementById('s_announcement').value;
-    settings.supportEmail = document.getElementById('s_supportEmail').value;
-    settings.whatsappNumber = document.getElementById('s_whatsappNumber').value;
-    settings.instagram = document.getElementById('s_instagram').value;
-    settings.tiktok = document.getElementById('s_tiktok').value;
-    settings.freeShippingThreshold = parseFloat(document.getElementById('s_freeShippingThreshold').value) || 100;
-    settings.shippingCost = parseFloat(document.getElementById('s_shippingCost').value) || 6.90;
-    settings.bankName = document.getElementById('s_bankName').value;
-    settings.bankHolder = document.getElementById('s_bankHolder').value;
-    settings.bankIBAN = document.getElementById('s_bankIBAN').value;
-    settings.iyzico = {
-      apiKey: document.getElementById('s_iyzicoApiKey').value,
-      secretKey: document.getElementById('s_iyzicoSecretKey').value,
-      baseUrl: document.getElementById('s_iyzicoBaseUrl').value
-    };
-    try {
-      await saveFile('data/settings.json', settings, 'CMS: update settings');
-      toast('Settings saved & deploying...');
-    } catch(e) { toast('Error: ' + e.message, true); }
-  }
-
-  // ===== ORDERS =====
-  function renderOrders() {
-    const orders = JSON.parse(localStorage.getItem('over2you_orders') || '[]');
-    const el = document.getElementById('ordersList');
-    if (orders.length === 0) { el.innerHTML = '<p style="color:var(--muted);">No orders yet.</p>'; return; }
-    el.innerHTML = orders.reverse().map(o => `
-      <div style="border:1px solid var(--border);border-radius:var(--radius);padding:1rem;margin-bottom:0.75rem;">
-        <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem;">
-          <strong>${o.orderNumber}</strong><span style="font-size:12px;color:var(--muted);">${new Date(o.date).toLocaleString()}</span>
+    <!-- PRODUCTS (Production) -->
+    <div class="tab-panel" id="tab-products">
+      <div class="main-header">
+        <h1 class="main-title">Products</h1>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="openProductModal()">+ Add Product</button>
+          <button class="btn btn-outline" onclick="exportProductsJSON()">Export</button>
+          <button class="btn btn-outline" onclick="importProductsJSON()">Import</button>
         </div>
-        <div style="font-size:12px;">${o.items.map(i=>`${i.name} (${i.size}) x${i.qty}`).join(', ')}</div>
-        <div style="font-size:13px;font-weight:700;margin-top:0.5rem;">€${o.total.toFixed(2)} — ${o.paymentMethod}</div>
       </div>
-    `).join('');
-  }
+      <div class="toolbar">
+        <input type="search" id="productSearch" placeholder="Search products..." oninput="filterProducts()">
+        <select id="productCatFilter" onchange="filterProducts()">
+          <option value="">All Categories</option>
+        </select>
+        <select id="productBadgeFilter" onchange="filterProducts()">
+          <option value="">All Badges</option>
+          <option value="NEW">NEW</option>
+          <option value="LAST STOCK">LAST STOCK</option>
+          <option value="SALE">SALE</option>
+        </select>
+        <span style="margin-left:auto;font-size:11px;color:var(--muted);" id="productCount"></span>
+      </div>
+      <div class="card" style="padding:0;overflow-x:auto;max-height:calc(100vh - 240px);overflow-y:auto;">
+        <table class="ptable">
+          <thead><tr><th style="width:40px;"><input type="checkbox" id="selectAll" onchange="toggleSelectAll()"></th><th>Product</th><th>Category</th><th>Price</th><th>Sizes</th><th>Stock</th><th>Badge</th><th style="width:100px;"></th></tr></thead>
+          <tbody id="productTableBody"></tbody>
+        </table>
+      </div>
+      <div class="btn-group" style="margin-top:0.75rem;" id="bulkActions" style="display:none;">
+        <button class="btn btn-sm btn-danger" onclick="bulkDelete()">Delete Selected</button>
+        <button class="btn btn-sm btn-outline" onclick="bulkBadge('NEW')">Set NEW</button>
+        <button class="btn btn-sm btn-outline" onclick="bulkBadge('SALE')">Set SALE</button>
+        <button class="btn btn-sm btn-outline" onclick="bulkBadge('')">Clear Badge</button>
+      </div>
+    </div>
 
-  // ===== COLOR PICKER =====
-  document.getElementById('p_color').addEventListener('input', e => {
-    document.getElementById('p_colorHex').textContent = e.target.value;
-  });
+    <!-- PAGES -->
+    <div class="tab-panel" id="tab-pages">
+      <div class="main-header">
+        <h1 class="main-title">Page Content</h1>
+        <button class="btn btn-success" onclick="savePageContent()">Save & Deploy</button>
+      </div>
 
-  // ===== TOAST =====
-  function toast(msg, isError) {
-    const el = document.getElementById('toast');
-    el.textContent = msg;
-    el.style.background = isError ? 'var(--danger)' : 'var(--accent)';
-    el.classList.add('show');
-    setTimeout(() => el.classList.remove('show'), 3000);
-  }
+      <div class="content-block open" id="cb-about">
+        <div class="content-block-header" onclick="this.parentElement.classList.toggle('open')">
+          <h3>📄 About Page</h3><span class="arrow">▼</span>
+        </div>
+        <div class="content-block-body">
+          <div class="form-row single"><div class="form-group"><label>Page Title</label><input id="page_about_title" value="ABOUT OVER2YOU"></div></div>
+          <div class="form-row single"><div class="form-group"><label>Paragraph 1</label><textarea id="page_about_p1" rows="3"></textarea></div></div>
+          <div class="form-row single"><div class="form-group"><label>Paragraph 2</label><textarea id="page_about_p2" rows="3"></textarea></div></div>
+          <div class="form-row single"><div class="form-group"><label>Button Text</label><input id="page_about_btn" value="SHOP NOW"></div></div>
+        </div>
+      </div>
 
-  // ===== LOGOUT =====
-  function logout() {
-    localStorage.removeItem('o2y_token');
-    localStorage.removeItem('o2y_repo');
-    location.reload();
-  }
+      <div class="content-block" id="cb-hero">
+        <div class="content-block-header" onclick="this.parentElement.classList.toggle('open')">
+          <h3>🎯 Hero Slideshow</h3><span class="arrow">▼</span>
+        </div>
+        <div class="content-block-body" id="heroSlidesEditor"></div>
+      </div>
 
-  // ===== IMAGE UPLOAD =====
-  async function uploadImage(file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = async () => {
-        const base64 = reader.result.split(',')[1];
-        const path = 'public/img/' + file.name.replace(/[^a-zA-Z0-9._-]/g, '-');
-        try {
-          // Check if exists
-          let sha;
-          try {
-            const existing = await fetch(`https://api.github.com/repos/${ghRepo}/contents/${path}`, {
-              headers: { 'Authorization': `token ${ghToken}` }
-            });
-            if (existing.ok) { const d = await existing.json(); sha = d.sha; }
-          } catch(e) {}
+      <div class="content-block" id="cb-grid">
+        <div class="content-block-header" onclick="this.parentElement.classList.toggle('open')">
+          <h3>🖼️ Media Grid (Homepage)</h3><span class="arrow">▼</span>
+        </div>
+        <div class="content-block-body" id="mediaGridEditor"></div>
+      </div>
 
-          const body = { message: `CMS: upload ${file.name}`, content: base64 };
-          if (sha) body.sha = sha;
+      <div class="content-block" id="cb-newsletter">
+        <div class="content-block-header" onclick="this.parentElement.classList.toggle('open')">
+          <h3>📧 Newsletter Section</h3><span class="arrow">▼</span>
+        </div>
+        <div class="content-block-body">
+          <div class="form-row single"><div class="form-group"><label>Heading</label><input id="page_newsletter_heading" value="SIGN UP TO THE Over2You NEWSLETTER"></div></div>
+          <div class="form-row single"><div class="form-group"><label>Placeholder Text</label><input id="page_newsletter_placeholder" value="Enter your email"></div></div>
+          <div class="form-row single"><div class="form-group"><label>Button Text</label><input id="page_newsletter_btn" value="SUBSCRIBE"></div></div>
+        </div>
+      </div>
 
-          const res = await fetch(`https://api.github.com/repos/${ghRepo}/contents/${path}`, {
-            method: 'PUT',
-            headers: { 'Authorization': `token ${ghToken}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
-          });
-          if (!res.ok) throw new Error('Upload failed');
-          const data = await res.json();
-          resolve(data.content.download_url);
-        } catch(e) { reject(e); }
-      };
-      reader.readAsDataURL(file);
-    });
-  }
+      <div class="content-block" id="cb-announcement">
+        <div class="content-block-header" onclick="this.parentElement.classList.toggle('open')">
+          <h3>📢 Announcement Bar</h3><span class="arrow">▼</span>
+        </div>
+        <div class="content-block-body">
+          <div class="form-row single"><div class="form-group"><label>Text</label><input id="page_announcement" value=""></div></div>
+        </div>
+      </div>
+    </div>
 
-  // ===== EXPORT ORDERS CSV =====
-  function exportOrdersCSV() {
-    const orders = JSON.parse(localStorage.getItem('over2you_orders') || '[]');
-    if (orders.length === 0) { toast('No orders to export', true); return; }
-    const headers = ['Order #','Date','Name','Email','Phone','Address','City','Country','Items','Subtotal','Shipping','Total','Payment'];
-    const rows = orders.map(o => [
-      o.orderNumber, o.date,
-      o.customer ? o.customer.firstName + ' ' + o.customer.lastName : '',
-      o.customer?.email || '', o.customer?.phone || '',
-      o.customer?.address || '', o.customer?.city || '', o.customer?.country || '',
-      o.items.map(i => `${i.name}(${i.size})x${i.qty}`).join('; '),
-      o.subtotal?.toFixed(2) || '', o.shipping?.toFixed(2) || '', o.total?.toFixed(2) || '',
-      o.paymentMethod || ''
+    <!-- SETTINGS -->
+    <div class="tab-panel" id="tab-settings">
+      <div class="main-header"><h1 class="main-title">Store Settings</h1><button class="btn btn-success" onclick="saveSettings()">Save & Deploy</button></div>
+      <div class="card"><div class="card-title">Branding</div>
+        <div class="form-row"><div class="form-group"><label>Site Name</label><input id="s_siteName"></div><div class="form-group"><label>Logo Text</label><input id="s_logoText"></div></div>
+      </div>
+      <div class="card"><div class="card-title">Contact & Social</div>
+        <div class="form-row"><div class="form-group"><label>Support Email</label><input id="s_supportEmail"></div><div class="form-group"><label>WhatsApp</label><input id="s_whatsappNumber" placeholder="905XXXXXXXXX"></div></div>
+        <div class="form-row"><div class="form-group"><label>Instagram URL</label><input id="s_instagram"></div><div class="form-group"><label>TikTok URL</label><input id="s_tiktok"></div></div>
+      </div>
+      <div class="card"><div class="card-title">Shipping</div>
+        <div class="form-row"><div class="form-group"><label>Free Shipping Threshold (€)</label><input type="number" id="s_freeShippingThreshold"></div><div class="form-group"><label>Shipping Cost (€)</label><input type="number" step="0.01" id="s_shippingCost"></div></div>
+      </div>
+      <div class="card"><div class="card-title">Payment — Bank Transfer</div>
+        <div class="form-row"><div class="form-group"><label>Bank Name</label><input id="s_bankName"></div><div class="form-group"><label>Account Holder</label><input id="s_bankHolder"></div></div>
+        <div class="form-row single"><div class="form-group"><label>IBAN</label><input id="s_bankIBAN"></div></div>
+      </div>
+      <div class="card"><div class="card-title">Payment — iyzico</div>
+        <div class="form-row"><div class="form-group"><label>API Key</label><input id="s_iyzicoApiKey"></div><div class="form-group"><label>Secret Key</label><input type="password" id="s_iyzicoSecretKey"></div></div>
+        <div class="form-row single"><div class="form-group"><label>Base URL</label><select id="s_iyzicoBaseUrl"><option value="https://sandbox-api.iyzipay.com">Sandbox</option><option value="https://api.iyzipay.com">Production</option></select></div></div>
+      </div>
+    </div>
+
+    <!-- ORDERS -->
+    <div class="tab-panel" id="tab-orders">
+      <div class="main-header"><h1 class="main-title">Orders</h1><button class="btn btn-outline" onclick="exportOrdersCSV()">Export CSV</button></div>
+      <div class="card" id="ordersList"><p style="color:var(--muted);font-size:13px;">Orders from localStorage.</p></div>
+    </div>
+  </main>
+</div>
+
+<!-- Product Modal -->
+<div class="modal-overlay" id="productModal">
+  <div class="modal">
+    <div class="modal-title"><span id="modalTitle">Add Product</span><button class="close-btn" onclick="closeProductModal()">×</button></div>
+    <input type="hidden" id="p_id">
+    <div class="form-row"><div class="form-group"><label>Product Name</label><input id="p_name" placeholder="Hoodie Lapis Blue"></div><div class="form-group"><label>Category</label><select id="p_category"><option value="hoodies">Hoodies</option><option value="sweatpants">Sweatpants</option><option value="crewnecks">Crewnecks</option><option value="tshirts">T-Shirts</option><option value="accessories">Accessories</option></select></div></div>
+    <div class="form-row c3"><div class="form-group"><label>Price (€)</label><input type="number" step="0.01" id="p_price" value="84.00"></div><div class="form-group"><label>Compare Price (€)</label><input type="number" step="0.01" id="p_comparePrice" placeholder="Optional"></div><div class="form-group"><label>Badge</label><select id="p_badge"><option value="">None</option><option value="NEW">NEW</option><option value="LAST STOCK">LAST STOCK</option><option value="SALE">SALE</option></select></div></div>
+    <div class="form-row"><div class="form-group"><label>Color Name</label><input id="p_colorName" placeholder="Lapis Blue"></div><div class="form-group"><label>Color</label><div class="color-input-wrap"><input type="color" id="p_color" value="#2a5a8a"><span class="color-hex" id="p_colorHex">#2a5a8a</span></div></div></div>
+    <div class="form-row"><div class="form-group"><label>Color Family</label><select id="p_colorFamily"><option value="black">Black</option><option value="white">White</option><option value="grey">Grey</option><option value="blue">Blue</option><option value="red">Red</option><option value="pink">Pink</option><option value="brown">Brown</option><option value="green">Green</option><option value="dark">Dark</option></select></div><div class="form-group"><label>Sizes</label><input id="p_sizes" value="XXS,XS,S,M,L,XL,XXL"></div></div>
+    <div class="form-row"><div class="form-group"><label>Stock Status</label><select id="p_stock"><option value="in-stock">In Stock</option><option value="low-stock">Low Stock</option><option value="out-of-stock">Out of Stock</option></select></div><div class="form-group"><label>Stock Quantity</label><input type="number" id="p_stockQty" placeholder="∞"></div></div>
+    <div class="form-row single"><div class="form-group"><label>Description</label><textarea id="p_description" rows="3"></textarea></div></div>
+    <div class="form-row single"><div class="form-group"><label>Images</label>
+      <div class="img-upload-zone" id="imgDropZone" onclick="document.getElementById('imgFileInput').click()">
+        📁 Click or drag images here
+        <input type="file" id="imgFileInput" accept="image/*" multiple style="display:none;" onchange="handleImageUpload(this.files)">
+      </div>
+      <div class="img-thumbs" id="imgThumbs"></div>
+    </div></div>
+    <div class="btn-group" style="margin-top:1.25rem;justify-content:flex-end;">
+      <button class="btn btn-outline" onclick="closeProductModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveProduct()" id="saveProductBtn">Save Product</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let ghToken='', ghRepo='', products=[], settings={}, pageContent={};
+let selectedProducts = new Set();
+
+// ===== AUTH =====
+function doLogin() {
+  ghToken = document.getElementById('ghToken').value.trim();
+  ghRepo = document.getElementById('ghRepo').value.trim();
+  if (!ghToken || !ghRepo) return;
+  localStorage.setItem('o2y_token', ghToken);
+  localStorage.setItem('o2y_repo', ghRepo);
+  loadAdmin();
+}
+(function() {
+  const t = localStorage.getItem('o2y_token'), r = localStorage.getItem('o2y_repo');
+  if (t && r) { ghToken = t; ghRepo = r; loadAdmin(); }
+})();
+function logout() { localStorage.removeItem('o2y_token'); localStorage.removeItem('o2y_repo'); location.reload(); }
+
+async function loadAdmin() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('adminLayout').style.display = 'grid';
+  try {
+    [products, settings, pageContent] = await Promise.all([
+      fetchFile('data/products.json').catch(() => []),
+      fetchFile('data/settings.json').catch(() => ({})),
+      fetchFile('data/pages-content.json').catch(() => ({}))
     ]);
-    const csv = [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-    a.download = `over2you-orders-${new Date().toISOString().split('T')[0]}.csv`;
-    a.click(); toast('CSV exported');
+    renderDashboard();
+    renderProducts();
+    renderSettings();
+    renderPageContent();
+    renderOrders();
+  } catch(e) { toast('Error: ' + e.message, true); }
+}
+
+// ===== GITHUB API =====
+async function fetchFile(path) {
+  const r = await fetch(`https://api.github.com/repos/${ghRepo}/contents/${path}`, { headers: { 'Authorization': `token ${ghToken}` } });
+  if (!r.ok) throw new Error('File not found: ' + path);
+  const d = await r.json();
+  return JSON.parse(atob(d.content));
+}
+async function saveFile(path, content, message) {
+  let sha;
+  try {
+    const r = await fetch(`https://api.github.com/repos/${ghRepo}/contents/${path}`, { headers: { 'Authorization': `token ${ghToken}` } });
+    if (r.ok) sha = (await r.json()).sha;
+  } catch(e) {}
+  const body = { message, content: btoa(unescape(encodeURIComponent(JSON.stringify(content, null, 2)))) };
+  if (sha) body.sha = sha;
+  const r = await fetch(`https://api.github.com/repos/${ghRepo}/contents/${path}`, {
+    method: 'PUT', headers: { 'Authorization': `token ${ghToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+  });
+  if (!r.ok) throw new Error('Save failed: ' + r.statusText);
+  return r.json();
+}
+
+// ===== TABS =====
+function switchTab(tab) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+  document.getElementById('tab-' + tab)?.classList.add('active');
+  document.querySelector(`[data-tab="${tab}"]`)?.classList.add('active');
+  document.getElementById('sidebar')?.classList.remove('open');
+}
+
+// ===== DASHBOARD =====
+function renderDashboard() {
+  const cats = [...new Set(products.map(p => p.category))];
+  const total = products.reduce((s,p) => s + p.price, 0);
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat-card"><div class="stat-value">${products.length}</div><div class="stat-label">Products</div></div>
+    <div class="stat-card"><div class="stat-value">${cats.length}</div><div class="stat-label">Categories</div></div>
+    <div class="stat-card"><div class="stat-value">${products.filter(p=>p.badge==='NEW').length}</div><div class="stat-label">New Items</div></div>
+    <div class="stat-card"><div class="stat-value">€${(total/products.length||0).toFixed(0)}</div><div class="stat-label">Avg Price</div></div>
+  `;
+}
+
+// ===== PRODUCTS (Production) =====
+function renderProducts() {
+  // Update category filter
+  const cats = [...new Set(products.map(p => p.category))].sort();
+  const catSelect = document.getElementById('productCatFilter');
+  const curCat = catSelect.value;
+  catSelect.innerHTML = '<option value="">All Categories</option>' + cats.map(c => `<option value="${c}" ${c===curCat?'selected':''}>${c.charAt(0).toUpperCase()+c.slice(1)}</option>`).join('');
+  filterProducts();
+}
+
+function filterProducts() {
+  const q = document.getElementById('productSearch').value.toLowerCase();
+  const cat = document.getElementById('productCatFilter').value;
+  const badge = document.getElementById('productBadgeFilter').value;
+  let filtered = products.filter(p => {
+    if (q && !p.name.toLowerCase().includes(q) && !p.colorName?.toLowerCase().includes(q)) return false;
+    if (cat && p.category !== cat) return false;
+    if (badge && p.badge !== badge) return false;
+    return true;
+  });
+  document.getElementById('productCount').textContent = `${filtered.length} of ${products.length} products`;
+  const tbody = document.getElementById('productTableBody');
+  tbody.innerHTML = filtered.map((p, fi) => {
+    const idx = products.indexOf(p);
+    const stock = p.stock || 'in-stock';
+    const stockDot = stock === 'in-stock' ? '🟢' : stock === 'low-stock' ? '🟡' : '🔴';
+    return `<tr>
+      <td><input type="checkbox" data-idx="${idx}" class="product-cb" ${selectedProducts.has(idx)?'checked':''} onchange="toggleSelect(${idx})"></td>
+      <td><div class="product-cell"><div class="swatch" style="background:${p.color};"></div><div><div class="product-name">${p.name}</div><div class="product-id">#${p.id}</div></div></div></td>
+      <td style="text-transform:capitalize;">${p.category}</td>
+      <td>${p.comparePrice ? `<span style="text-decoration:line-through;color:var(--muted);font-size:11px;">€${p.comparePrice.toFixed(2)}</span> ` : ''}€${p.price.toFixed(2)}</td>
+      <td style="font-size:11px;">${p.sizes.join(', ')}</td>
+      <td>${stockDot} ${p.stockQty != null ? p.stockQty : '∞'}</td>
+      <td>${p.badge ? `<span class="badge badge-${p.badge==='NEW'?'new':p.badge==='SALE'?'sale':'stock'}">${p.badge}</span>` : '—'}</td>
+      <td><div class="btn-group"><button class="btn btn-sm btn-outline" onclick="editProduct(${idx})">Edit</button><button class="btn btn-sm btn-outline" style="color:var(--danger);" onclick="deleteProduct(${idx})">×</button></div></td>
+    </tr>`;
+  }).join('');
+}
+
+function toggleSelect(idx) {
+  if (selectedProducts.has(idx)) selectedProducts.delete(idx); else selectedProducts.add(idx);
+}
+function toggleSelectAll() {
+  const checked = document.getElementById('selectAll').checked;
+  document.querySelectorAll('.product-cb').forEach(cb => {
+    const idx = parseInt(cb.dataset.idx);
+    cb.checked = checked;
+    if (checked) selectedProducts.add(idx); else selectedProducts.delete(idx);
+  });
+}
+async function bulkDelete() {
+  if (!selectedProducts.size) return;
+  if (!confirm(`Delete ${selectedProducts.size} products?`)) return;
+  const idxs = [...selectedProducts].sort((a,b) => b-a);
+  idxs.forEach(i => products.splice(i, 1));
+  selectedProducts.clear();
+  try { await saveFile('data/products.json', products, `CMS: bulk delete ${idxs.length} products`); renderProducts(); renderDashboard(); toast(`${idxs.length} products deleted`); }
+  catch(e) { toast('Error: ' + e.message, true); }
+}
+async function bulkBadge(badge) {
+  if (!selectedProducts.size) return;
+  selectedProducts.forEach(i => { if (products[i]) products[i].badge = badge || null; });
+  try { await saveFile('data/products.json', products, `CMS: bulk badge update`); renderProducts(); toast('Badges updated'); }
+  catch(e) { toast('Error: ' + e.message, true); }
+}
+
+// Product Modal
+let editImages = [];
+function openProductModal(product) {
+  document.getElementById('productModal').classList.add('open');
+  document.getElementById('modalTitle').textContent = product ? 'Edit Product' : 'Add Product';
+  editImages = [];
+  if (product) {
+    document.getElementById('p_id').value = product.id;
+    document.getElementById('p_name').value = product.name;
+    document.getElementById('p_category').value = product.category;
+    document.getElementById('p_price').value = product.price;
+    document.getElementById('p_comparePrice').value = product.comparePrice || '';
+    document.getElementById('p_badge').value = product.badge || '';
+    document.getElementById('p_color').value = product.color;
+    document.getElementById('p_colorHex').textContent = product.color;
+    document.getElementById('p_colorName').value = product.colorName || '';
+    document.getElementById('p_colorFamily').value = product.colorFamily || 'dark';
+    document.getElementById('p_sizes').value = product.sizes.join(',');
+    document.getElementById('p_stock').value = product.stock || 'in-stock';
+    document.getElementById('p_stockQty').value = product.stockQty ?? '';
+    document.getElementById('p_description').value = product.description || '';
+    editImages = [...(product.images || [])];
+  } else {
+    document.getElementById('p_id').value = '';
+    document.querySelectorAll('#productModal input:not([type=hidden]):not([type=color]):not([type=file]), #productModal textarea').forEach(i => i.value = '');
+    document.getElementById('p_sizes').value = 'XXS,XS,S,M,L,XL,XXL';
+    document.getElementById('p_price').value = '84.00';
+    document.getElementById('p_stock').value = 'in-stock';
   }
+  renderImageThumbs();
+}
+function closeProductModal() { document.getElementById('productModal').classList.remove('open'); }
+function editProduct(index) { openProductModal(products[index]); }
 
-  // ===== BULK PRODUCT IMPORT/EXPORT =====
-  function exportProductsJSON() {
-    const blob = new Blob([JSON.stringify(products, null, 2)], { type: 'application/json' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-    a.download = `over2you-products-${new Date().toISOString().split('T')[0]}.json`;
-    a.click(); toast('Products JSON exported');
+async function deleteProduct(index) {
+  if (!confirm(`Delete "${products[index].name}"?`)) return;
+  const name = products[index].name;
+  products.splice(index, 1);
+  try { await saveFile('data/products.json', products, `CMS: delete ${name}`); renderProducts(); renderDashboard(); toast('Deleted: ' + name); }
+  catch(e) { toast('Error: ' + e.message, true); }
+}
+
+async function saveProduct() {
+  const btn = document.getElementById('saveProductBtn');
+  btn.disabled = true; btn.textContent = 'Saving...';
+  const id = document.getElementById('p_id').value;
+  const product = {
+    id: id ? parseInt(id) : Math.max(0, ...products.map(p=>p.id)) + 1,
+    name: document.getElementById('p_name').value,
+    price: parseFloat(document.getElementById('p_price').value),
+    comparePrice: parseFloat(document.getElementById('p_comparePrice').value) || null,
+    category: document.getElementById('p_category').value,
+    sizes: document.getElementById('p_sizes').value.split(',').map(s=>s.trim()).filter(Boolean),
+    badge: document.getElementById('p_badge').value || null,
+    color: document.getElementById('p_color').value,
+    colorName: document.getElementById('p_colorName').value,
+    colorFamily: document.getElementById('p_colorFamily').value,
+    stock: document.getElementById('p_stock').value,
+    stockQty: document.getElementById('p_stockQty').value ? parseInt(document.getElementById('p_stockQty').value) : null,
+    description: document.getElementById('p_description').value,
+    images: editImages.length ? editImages : ['col-hoodies.jpg']
+  };
+  if (!product.name || !product.price) { toast('Name and price required', true); btn.disabled = false; btn.textContent = 'Save Product'; return; }
+
+  if (id) {
+    const idx = products.findIndex(p => p.id === parseInt(id));
+    if (idx >= 0) products[idx] = product;
+  } else {
+    products.push(product);
   }
+  try {
+    await saveFile('data/products.json', products, `CMS: ${id ? 'update' : 'add'} ${product.name}`);
+    closeProductModal(); renderProducts(); renderDashboard();
+    toast(id ? 'Product updated' : 'Product added');
+  } catch(e) { toast('Error: ' + e.message, true); }
+  btn.disabled = false; btn.textContent = 'Save Product';
+}
 
-  async function importProductsJSON() {
-    const input = document.createElement('input'); input.type = 'file'; input.accept = '.json';
-    input.onchange = async (e) => {
-      const file = e.target.files[0]; if (!file) return;
-      const text = await file.text();
-      try {
-        const imported = JSON.parse(text);
-        if (!Array.isArray(imported)) throw new Error('Must be array');
-        products = imported;
-        await saveFile('data/products.json', products, `CMS: bulk import ${imported.length} products`);
-        renderProducts(); renderDashboard();
-        toast(`Imported ${imported.length} products`);
-      } catch(err) { toast('Invalid JSON: ' + err.message, true); }
-    };
-    input.click();
-  }
-
-  // ===== PAGE BUILDER (GrapeJS) =====
-  let pbEditor = null;
-  let pbPages = {};
-  let pbCurrentPage = '__new__';
-
-  function initPageBuilder() {
-    if (pbEditor) return;
-    pbEditor = grapesjs.init({
-      container: '#gjs',
-      height: '100%',
-      width: 'auto',
-      storageManager: false,
-      plugins: ['grapesjs-preset-webpage', 'grapesjs-blocks-basic'],
-      pluginsOpts: {
-        'grapesjs-preset-webpage': {
-          blocks: ['link-block', 'quote', 'text-basic'],
-          modalImportButton: true,
-          modalImportContent: ''
-        },
-        'grapesjs-blocks-basic': {
-          blocks: ['column1', 'column2', 'column3', 'column3-7', 'text', 'link', 'image', 'video', 'map'],
-          flexGrid: true
-        }
-      },
-      canvas: {
-        styles: [
-          'https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fraunces:opsz,wght@9..144,400;9..144,700;9..144,900&display=swap'
-        ]
-      },
-      blockManager: {
-        appendTo: '.gjs-pn-views-container'
-      },
-      panels: { defaults: [] },
-      deviceManager: {
-        devices: [
-          { name: 'Desktop', width: '' },
-          { name: 'Tablet', width: '768px', widthMedia: '992px' },
-          { name: 'Mobile', width: '375px', widthMedia: '480px' }
-        ]
-      }
-    });
-
-    // Add custom e-commerce blocks
-    const bm = pbEditor.BlockManager;
-
-    bm.add('hero-section', {
-      label: '🎯 Hero Section',
-      category: 'E-Commerce',
-      content: `<section style="position:relative;min-height:80vh;display:flex;align-items:center;justify-content:center;background:#0a0f0c;color:#fff;text-align:center;padding:4rem 2rem;">
-        <div style="max-width:700px;">
-          <h1 style="font-family:Fraunces,serif;font-size:4rem;font-weight:900;font-style:italic;margin-bottom:1rem;letter-spacing:-2px;">YOUR HEADLINE</h1>
-          <p style="font-size:1.1rem;opacity:0.7;margin-bottom:2rem;">Subheadline text goes here. Make it compelling.</p>
-          <a href="#" style="display:inline-block;padding:1rem 3rem;background:#fff;color:#000;font-weight:800;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.05em;text-decoration:none;">SHOP NOW</a>
-        </div>
-      </section>`
-    });
-
-    bm.add('product-grid', {
-      label: '🛍️ Product Grid',
-      category: 'E-Commerce',
-      content: `<section style="padding:4rem 2rem;max-width:1200px;margin:0 auto;">
-        <h2 style="font-family:Fraunces,serif;font-size:2rem;font-weight:900;font-style:italic;text-align:center;margin-bottom:2rem;">FEATURED PRODUCTS</h2>
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1.5rem;">
-          ${[1,2,3,4].map(i => `<div style="text-align:center;">
-            <div style="aspect-ratio:3/4;background:#f0f0f0;margin-bottom:0.75rem;border-radius:4px;"></div>
-            <h3 style="font-size:0.85rem;font-weight:700;margin-bottom:0.25rem;">Product Name</h3>
-            <p style="font-size:0.85rem;color:#666;">€84.00</p>
-          </div>`).join('')}
-        </div>
-      </section>`
-    });
-
-    bm.add('banner-cta', {
-      label: '📢 Banner CTA',
-      category: 'E-Commerce',
-      content: `<section style="background:#1c1c1c;color:#fff;padding:3rem 2rem;text-align:center;">
-        <h2 style="font-family:Fraunces,serif;font-size:2.5rem;font-weight:900;font-style:italic;margin-bottom:0.5rem;">SPECIAL OFFER</h2>
-        <p style="opacity:0.7;margin-bottom:1.5rem;">Free shipping on orders over €100</p>
-        <a href="#" style="display:inline-block;padding:0.75rem 2.5rem;border:2px solid #fff;color:#fff;font-weight:700;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;text-decoration:none;">SHOP NOW</a>
-      </section>`
-    });
-
-    bm.add('testimonials', {
-      label: '💬 Testimonials',
-      category: 'E-Commerce',
-      content: `<section style="padding:4rem 2rem;max-width:1000px;margin:0 auto;text-align:center;">
-        <h2 style="font-family:Fraunces,serif;font-size:2rem;font-weight:900;font-style:italic;margin-bottom:2rem;">WHAT PEOPLE SAY</h2>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:2rem;">
-          ${[1,2,3].map(i => `<div style="padding:1.5rem;border:1px solid #e0e0e0;border-radius:8px;">
-            <p style="font-size:0.9rem;line-height:1.6;margin-bottom:1rem;color:#444;">"Amazing quality. I love the fit and feel of every piece."</p>
-            <strong style="font-size:0.8rem;">— Customer ${i}</strong>
-          </div>`).join('')}
-        </div>
-      </section>`
-    });
-
-    bm.add('faq-section', {
-      label: '❓ FAQ',
-      category: 'E-Commerce',
-      content: `<section style="padding:4rem 2rem;max-width:800px;margin:0 auto;">
-        <h2 style="font-family:Fraunces,serif;font-size:2rem;font-weight:900;font-style:italic;text-align:center;margin-bottom:2rem;">FAQ</h2>
-        ${['What is your return policy?', 'How long does shipping take?', 'Do you ship internationally?'].map(q => `
-          <div style="border-bottom:1px solid #e0e0e0;padding:1rem 0;">
-            <h3 style="font-size:0.95rem;font-weight:700;cursor:pointer;">${q}</h3>
-            <p style="font-size:0.85rem;color:#666;margin-top:0.5rem;line-height:1.6;">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore.</p>
-          </div>
-        `).join('')}
-      </section>`
-    });
-
-    bm.add('newsletter', {
-      label: '📧 Newsletter',
-      category: 'E-Commerce',
-      content: `<section style="padding:3rem 2rem;background:#f5f5f5;text-align:center;">
-        <h2 style="font-family:Fraunces,serif;font-size:1.5rem;font-weight:900;font-style:italic;margin-bottom:0.5rem;">JOIN THE CLUB</h2>
-        <p style="font-size:0.85rem;color:#666;margin-bottom:1.5rem;">Get 10% off your first order + early access to drops</p>
-        <div style="display:flex;gap:0.5rem;max-width:450px;margin:0 auto;">
-          <input type="email" placeholder="your@email.com" style="flex:1;padding:0.75rem 1rem;border:1px solid #ddd;font-size:0.85rem;">
-          <button style="padding:0.75rem 2rem;background:#1c1c1c;color:#fff;border:none;font-weight:700;font-size:0.8rem;text-transform:uppercase;cursor:pointer;">SUBSCRIBE</button>
-        </div>
-      </section>`
-    });
-
-    bm.add('icon-boxes', {
-      label: '📦 Icon Boxes',
-      category: 'E-Commerce',
-      content: `<section style="padding:3rem 2rem;display:grid;grid-template-columns:repeat(4,1fr);gap:2rem;max-width:1100px;margin:0 auto;text-align:center;">
-        ${[['🚚','Free Shipping','Orders over €100'],['↩️','Easy Returns','30-day policy'],['💳','Secure Payment','SSL encrypted'],['💬','24/7 Support','Always here']].map(([icon,title,sub]) => `
-          <div>
-            <div style="font-size:2rem;margin-bottom:0.5rem;">${icon}</div>
-            <h3 style="font-size:0.85rem;font-weight:700;margin-bottom:0.25rem;">${title}</h3>
-            <p style="font-size:0.75rem;color:#666;">${sub}</p>
-          </div>
-        `).join('')}
-      </section>`
-    });
-
-    // Add device buttons to panel
-    const pn = pbEditor.Panels;
-    pn.addPanel({
-      id: 'devices-c',
-      content: `<div style="padding:5px;display:flex;gap:5px;">
-        <button class="btn btn-sm btn-outline" onclick="pbEditor.setDevice('Desktop')">🖥</button>
-        <button class="btn btn-sm btn-outline" onclick="pbEditor.setDevice('Tablet')">📱</button>
-        <button class="btn btn-sm btn-outline" onclick="pbEditor.setDevice('Mobile')">📲</button>
-      </div>`,
-      visible: true
-    });
-
-    // Load page list
-    pbLoadPageList();
-  }
-
-  async function pbLoadPageList() {
-    const select = document.getElementById('pb-page-select');
-    select.innerHTML = '<option value="__new__">+ New Page</option>';
+// Image handling
+function renderImageThumbs() {
+  document.getElementById('imgThumbs').innerHTML = editImages.map((img, i) =>
+    `<div class="img-thumb-wrap"><img src="../img/${img}" class="img-thumb" onerror="this.style.background='#eee';this.alt='${img}'"><button class="img-thumb-rm" onclick="editImages.splice(${i},1);renderImageThumbs()">×</button></div>`
+  ).join('');
+}
+async function handleImageUpload(files) {
+  for (const file of files) {
     try {
-      const res = await fetch(`https://api.github.com/repos/${ghRepo}/contents/data/pages`, {
-        headers: { 'Authorization': `token ${ghToken}` }
-      });
-      if (res.ok) {
-        const files = await res.json();
-        pbPages = {};
-        for (const f of files) {
-          if (f.name.endsWith('.json')) {
-            const name = f.name.replace('.json', '');
-            select.innerHTML += `<option value="${name}">${name}</option>`;
-          }
-        }
-      }
-    } catch(e) { /* no pages dir yet, that's ok */ }
-
-    select.onchange = async () => {
-      pbCurrentPage = select.value;
-      if (pbCurrentPage === '__new__') {
-        pbEditor.DomComponents.clear();
-        pbEditor.CssComposer.clear();
-        return;
-      }
+      const url = await uploadImage(file);
+      editImages.push(file.name.replace(/[^a-zA-Z0-9._-]/g, '-'));
+      renderImageThumbs();
+      toast('Image uploaded: ' + file.name);
+    } catch(e) { toast('Upload failed: ' + e.message, true); }
+  }
+}
+async function uploadImage(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const base64 = reader.result.split(',')[1];
+      const path = 'public/img/' + file.name.replace(/[^a-zA-Z0-9._-]/g, '-');
       try {
-        const data = await fetchFile(`data/pages/${pbCurrentPage}.json`);
-        if (data.html) pbEditor.setComponents(data.html);
-        if (data.css) pbEditor.setStyle(data.css);
-        toast('Page loaded: ' + pbCurrentPage);
-      } catch(e) { toast('Error loading page: ' + e.message, true); }
+        let sha;
+        try { const r = await fetch(`https://api.github.com/repos/${ghRepo}/contents/${path}`, { headers: { 'Authorization': `token ${ghToken}` } }); if (r.ok) sha = (await r.json()).sha; } catch(e) {}
+        const body = { message: `CMS: upload ${file.name}`, content: base64 };
+        if (sha) body.sha = sha;
+        const r = await fetch(`https://api.github.com/repos/${ghRepo}/contents/${path}`, {
+          method: 'PUT', headers: { 'Authorization': `token ${ghToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+        });
+        if (!r.ok) throw new Error('Upload failed');
+        resolve((await r.json()).content.download_url);
+      } catch(e) { reject(e); }
     };
-  }
+    reader.readAsDataURL(file);
+  });
+}
 
-  async function pbSave() {
-    if (!pbEditor) { toast('Open Page Builder first', true); return; }
-    let name = pbCurrentPage;
-    if (name === '__new__') {
-      name = prompt('Page name (lowercase, no spaces):');
-      if (!name) return;
-      name = name.toLowerCase().replace(/[^a-z0-9-]/g, '-');
-    }
-    const pageData = {
-      name: name,
-      html: pbEditor.getHtml(),
-      css: pbEditor.getCss(),
-      updatedAt: new Date().toISOString()
-    };
+// Drag & drop
+const dz = document.getElementById('imgDropZone');
+if (dz) {
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+  dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('dragover'); handleImageUpload(e.dataTransfer.files); });
+}
+
+document.getElementById('p_color').addEventListener('input', e => { document.getElementById('p_colorHex').textContent = e.target.value; });
+
+// ===== PAGE CONTENT =====
+function renderPageContent() {
+  const pc = pageContent;
+  document.getElementById('page_about_title').value = pc.aboutTitle || 'ABOUT OVER2YOU';
+  document.getElementById('page_about_p1').value = pc.aboutP1 || 'Over2You was born from the belief that premium essentials should be accessible to everyone. We design timeless pieces using only the finest organic cotton, crafted with care for both you and the planet.';
+  document.getElementById('page_about_p2').value = pc.aboutP2 || 'Every garment is made from 400gsm heavyweight organic cotton with brushed fleece interior. No compromises. No fast fashion. Just pieces you\'ll want to wear every day.';
+  document.getElementById('page_about_btn').value = pc.aboutBtn || 'SHOP NOW';
+  document.getElementById('page_announcement').value = pc.announcement || settings.announcement || '';
+  document.getElementById('page_newsletter_heading').value = pc.newsletterHeading || 'SIGN UP TO THE Over2You NEWSLETTER';
+  document.getElementById('page_newsletter_placeholder').value = pc.newsletterPlaceholder || 'Enter your email';
+  document.getElementById('page_newsletter_btn').value = pc.newsletterBtn || 'SUBSCRIBE';
+
+  // Hero slides
+  const slides = pc.heroSlides || settings.heroSlides || [];
+  const heroEl = document.getElementById('heroSlidesEditor');
+  heroEl.innerHTML = slides.map((s, i) => `
+    <div class="card" style="margin-bottom:0.75rem;">
+      <div class="card-title">Slide ${i+1}</div>
+      <div class="form-row"><div class="form-group"><label>Button Text</label><input class="hero-btn-text" value="${s.buttonText||''}"></div><div class="form-group"><label>Button Link</label><input class="hero-btn-link" value="${s.buttonLink||''}"></div></div>
+    </div>
+  `).join('') || '<p style="color:var(--muted);font-size:12px;">No hero slides configured in settings.</p>';
+
+  // Media grid
+  const grid = pc.mediaGrid || [
+    { title: 'Basics', subtitle: 'OVER2YOU+', link: 'shop' },
+    { title: 'WOMEN', subtitle: 'OVER2YOU', link: 'shop?cat=women' },
+    { title: 'Over2You Active', subtitle: 'O2Y ACTIVE', link: '#' }
+  ];
+  const gridEl = document.getElementById('mediaGridEditor');
+  gridEl.innerHTML = grid.map((g, i) => `
+    <div class="card" style="margin-bottom:0.75rem;">
+      <div class="card-title">Grid Item ${i+1}</div>
+      <div class="form-row c3"><div class="form-group"><label>Title</label><input class="grid-title" value="${g.title||''}"></div><div class="form-group"><label>Subtitle</label><input class="grid-subtitle" value="${g.subtitle||''}"></div><div class="form-group"><label>Link</label><input class="grid-link" value="${g.link||''}"></div></div>
+    </div>
+  `).join('');
+}
+
+async function savePageContent() {
+  pageContent = {
+    aboutTitle: document.getElementById('page_about_title').value,
+    aboutP1: document.getElementById('page_about_p1').value,
+    aboutP2: document.getElementById('page_about_p2').value,
+    aboutBtn: document.getElementById('page_about_btn').value,
+    announcement: document.getElementById('page_announcement').value,
+    newsletterHeading: document.getElementById('page_newsletter_heading').value,
+    newsletterPlaceholder: document.getElementById('page_newsletter_placeholder').value,
+    newsletterBtn: document.getElementById('page_newsletter_btn').value,
+    heroSlides: [...document.querySelectorAll('.hero-btn-text')].map((el, i) => ({
+      buttonText: el.value,
+      buttonLink: document.querySelectorAll('.hero-btn-link')[i]?.value || ''
+    })),
+    mediaGrid: [...document.querySelectorAll('.grid-title')].map((el, i) => ({
+      title: el.value,
+      subtitle: document.querySelectorAll('.grid-subtitle')[i]?.value || '',
+      link: document.querySelectorAll('.grid-link')[i]?.value || ''
+    }))
+  };
+  // Also update announcement in settings
+  settings.announcement = pageContent.announcement;
+  try {
+    await Promise.all([
+      saveFile('data/pages-content.json', pageContent, 'CMS: update page content'),
+      saveFile('data/settings.json', settings, 'CMS: update announcement')
+    ]);
+    toast('Pages saved & deploying...');
+  } catch(e) { toast('Error: ' + e.message, true); }
+}
+
+// ===== SETTINGS =====
+function renderSettings() {
+  const fields = ['siteName','logoText','supportEmail','whatsappNumber','instagram','tiktok','freeShippingThreshold','shippingCost','bankName','bankHolder','bankIBAN'];
+  fields.forEach(f => { const el = document.getElementById('s_' + f); if (el) el.value = settings[f] || ''; });
+  if (settings.iyzico) {
+    document.getElementById('s_iyzicoApiKey').value = settings.iyzico.apiKey || '';
+    document.getElementById('s_iyzicoSecretKey').value = settings.iyzico.secretKey || '';
+    document.getElementById('s_iyzicoBaseUrl').value = settings.iyzico.baseUrl || 'https://sandbox-api.iyzipay.com';
+  }
+}
+async function saveSettings() {
+  settings.siteName = document.getElementById('s_siteName').value;
+  settings.logoText = document.getElementById('s_logoText').value;
+  settings.supportEmail = document.getElementById('s_supportEmail').value;
+  settings.whatsappNumber = document.getElementById('s_whatsappNumber').value;
+  settings.instagram = document.getElementById('s_instagram').value;
+  settings.tiktok = document.getElementById('s_tiktok').value;
+  settings.freeShippingThreshold = parseFloat(document.getElementById('s_freeShippingThreshold').value) || 100;
+  settings.shippingCost = parseFloat(document.getElementById('s_shippingCost').value) || 6.90;
+  settings.bankName = document.getElementById('s_bankName').value;
+  settings.bankHolder = document.getElementById('s_bankHolder').value;
+  settings.bankIBAN = document.getElementById('s_bankIBAN').value;
+  settings.iyzico = { apiKey: document.getElementById('s_iyzicoApiKey').value, secretKey: document.getElementById('s_iyzicoSecretKey').value, baseUrl: document.getElementById('s_iyzicoBaseUrl').value };
+  try { await saveFile('data/settings.json', settings, 'CMS: update settings'); toast('Settings saved & deploying...'); }
+  catch(e) { toast('Error: ' + e.message, true); }
+}
+
+// ===== ORDERS =====
+function renderOrders() {
+  const orders = JSON.parse(localStorage.getItem('over2you_orders') || '[]');
+  const el = document.getElementById('ordersList');
+  if (!orders.length) { el.innerHTML = '<p style="color:var(--muted);font-size:12px;">No orders yet.</p>'; return; }
+  el.innerHTML = orders.reverse().map(o => `
+    <div style="border:1px solid var(--border);border-radius:6px;padding:0.75rem;margin-bottom:0.5rem;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:0.3rem;"><strong style="font-size:13px;">${o.orderNumber}</strong><span style="font-size:11px;color:var(--muted);">${new Date(o.date).toLocaleString()}</span></div>
+      <div style="font-size:11px;color:var(--muted);">${o.items?.map(i=>`${i.name} (${i.size}) ×${i.qty}`).join(', ')||''}</div>
+      <div style="font-size:13px;font-weight:700;margin-top:0.3rem;">€${o.total?.toFixed(2)||'?'} — ${o.paymentMethod||'?'}</div>
+    </div>
+  `).join('');
+}
+
+// ===== EXPORT =====
+function exportProductsJSON() {
+  const blob = new Blob([JSON.stringify(products, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `products-${new Date().toISOString().split('T')[0]}.json`; a.click(); toast('Exported');
+}
+async function importProductsJSON() {
+  const input = document.createElement('input'); input.type = 'file'; input.accept = '.json';
+  input.onchange = async (e) => {
+    const file = e.target.files[0]; if (!file) return;
     try {
-      await saveFile(`data/pages/${name}.json`, pageData, `CMS: save page "${name}"`);
-      pbCurrentPage = name;
-      await pbLoadPageList();
-      document.getElementById('pb-page-select').value = name;
-      toast('Page saved: ' + name);
-    } catch(e) { toast('Error saving: ' + e.message, true); }
-  }
+      const imported = JSON.parse(await file.text());
+      if (!Array.isArray(imported)) throw new Error('Must be array');
+      products = imported;
+      await saveFile('data/products.json', products, `CMS: import ${imported.length} products`);
+      renderProducts(); renderDashboard(); toast(`Imported ${imported.length} products`);
+    } catch(err) { toast('Error: ' + err.message, true); }
+  };
+  input.click();
+}
+function exportOrdersCSV() {
+  const orders = JSON.parse(localStorage.getItem('over2you_orders') || '[]');
+  if (!orders.length) { toast('No orders', true); return; }
+  const h = ['Order #','Date','Name','Email','Items','Total','Payment'];
+  const rows = orders.map(o => [o.orderNumber, o.date, (o.customer?.firstName||'')+' '+(o.customer?.lastName||''), o.customer?.email||'', o.items?.map(i=>`${i.name}(${i.size})x${i.qty}`).join(';')||'', o.total?.toFixed(2)||'', o.paymentMethod||'']);
+  const csv = [h,...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv],{type:'text/csv'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `orders-${new Date().toISOString().split('T')[0]}.csv`; a.click(); toast('CSV exported');
+}
 
-  function pbExportHTML() {
-    if (!pbEditor) return;
-    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>${pbCurrentPage}</title><style>${pbEditor.getCss()}</style></head><body>${pbEditor.getHtml()}</body></html>`;
-    const blob = new Blob([html], { type: 'text/html' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-    a.download = `${pbCurrentPage || 'page'}.html`;
-    a.click(); toast('HTML exported');
-  }
-
-  function pbPreview() {
-    if (!pbEditor) return;
-    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fraunces:opsz,wght@9..144,400;9..144,700;9..144,900&display=swap" rel="stylesheet"><style>${pbEditor.getCss()}</style></head><body>${pbEditor.getHtml()}</body></html>`;
-    const win = window.open('', '_blank');
-    win.document.write(html);
-    win.document.close();
-  }
-  </script>
+function toast(msg, isError) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.background = isError ? 'var(--danger)' : 'var(--accent)';
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+</script>
 </body>
 </html>
