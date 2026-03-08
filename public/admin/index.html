@@ -351,9 +351,9 @@ async function loadAdmin() {
   document.getElementById('adminLayout').style.display = 'grid';
   try {
     [products, settings, pageContent] = await Promise.all([
-      fetchFile('data/products.json').catch(() => []),
-      fetchFile('data/settings.json').catch(() => ({})),
-      fetchFile('data/pages-content.json').catch(() => ({}))
+      fetchFile('public/data/products.json').catch(() => []),
+      fetchFile('public/data/settings.json').catch(() => ({})),
+      fetchFile('public/data/pages-content.json').catch(() => ({}))
     ]);
     renderDashboard();
     renderProducts();
@@ -462,13 +462,13 @@ async function bulkDelete() {
   const idxs = [...selectedProducts].sort((a,b) => b-a);
   idxs.forEach(i => products.splice(i, 1));
   selectedProducts.clear();
-  try { await saveFile('data/products.json', products, `CMS: bulk delete ${idxs.length} products`); renderProducts(); renderDashboard(); toast(`${idxs.length} products deleted`); }
+  try { await saveFile('public/data/products.json', products, `CMS: bulk delete ${idxs.length} products`); renderProducts(); renderDashboard(); toast(`${idxs.length} products deleted`); }
   catch(e) { toast('Error: ' + e.message, true); }
 }
 async function bulkBadge(badge) {
   if (!selectedProducts.size) return;
   selectedProducts.forEach(i => { if (products[i]) products[i].badge = badge || null; });
-  try { await saveFile('data/products.json', products, `CMS: bulk badge update`); renderProducts(); toast('Badges updated'); }
+  try { await saveFile('public/data/products.json', products, `CMS: bulk badge update`); renderProducts(); toast('Badges updated'); }
   catch(e) { toast('Error: ' + e.message, true); }
 }
 
@@ -510,7 +510,7 @@ async function deleteProduct(index) {
   if (!confirm(`Delete "${products[index].name}"?`)) return;
   const name = products[index].name;
   products.splice(index, 1);
-  try { await saveFile('data/products.json', products, `CMS: delete ${name}`); renderProducts(); renderDashboard(); toast('Deleted: ' + name); }
+  try { await saveFile('public/data/products.json', products, `CMS: delete ${name}`); renderProducts(); renderDashboard(); toast('Deleted: ' + name); }
   catch(e) { toast('Error: ' + e.message, true); }
 }
 
@@ -543,7 +543,7 @@ async function saveProduct() {
     products.push(product);
   }
   try {
-    await saveFile('data/products.json', products, `CMS: ${id ? 'update' : 'add'} ${product.name}`);
+    await saveFile('public/data/products.json', products, `CMS: ${id ? 'update' : 'add'} ${product.name}`);
     closeProductModal(); renderProducts(); renderDashboard();
     toast(id ? 'Product updated' : 'Product added');
   } catch(e) { toast('Error: ' + e.message, true); }
@@ -659,8 +659,8 @@ async function savePageContent() {
   settings.announcement = pageContent.announcement;
   try {
     await Promise.all([
-      saveFile('data/pages-content.json', pageContent, 'CMS: update page content'),
-      saveFile('data/settings.json', settings, 'CMS: update announcement')
+      saveFile('public/data/pages-content.json', pageContent, 'CMS: update page content'),
+      saveFile('public/data/settings.json', settings, 'CMS: update announcement')
     ]);
     toast('Pages saved & deploying...');
   } catch(e) { toast('Error: ' + e.message, true); }
@@ -689,7 +689,7 @@ async function saveSettings() {
   settings.bankHolder = document.getElementById('s_bankHolder').value;
   settings.bankIBAN = document.getElementById('s_bankIBAN').value;
   settings.iyzico = { apiKey: document.getElementById('s_iyzicoApiKey').value, secretKey: document.getElementById('s_iyzicoSecretKey').value, baseUrl: document.getElementById('s_iyzicoBaseUrl').value };
-  try { await saveFile('data/settings.json', settings, 'CMS: update settings'); toast('Settings saved & deploying...'); }
+  try { await saveFile('public/data/settings.json', settings, 'CMS: update settings'); toast('Settings saved & deploying...'); }
   catch(e) { toast('Error: ' + e.message, true); }
 }
 
@@ -720,7 +720,7 @@ async function importProductsJSON() {
       const imported = JSON.parse(await file.text());
       if (!Array.isArray(imported)) throw new Error('Must be array');
       products = imported;
-      await saveFile('data/products.json', products, `CMS: import ${imported.length} products`);
+      await saveFile('public/data/products.json', products, `CMS: import ${imported.length} products`);
       renderProducts(); renderDashboard(); toast(`Imported ${imported.length} products`);
     } catch(err) { toast('Error: ' + err.message, true); }
   };
