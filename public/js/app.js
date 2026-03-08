@@ -488,6 +488,19 @@ function renderProducts(filter, targetEl) {
     </div>
   `;
 
+  // === Logo Color on Swatch Hover ===
+  const logoEls = document.querySelectorAll('.header .logo-text');
+  const originalLogoColor = logoEls.length ? getComputedStyle(logoEls[0]).color : '';
+  document.querySelectorAll('.swatch-product').forEach(swatch => {
+    swatch.addEventListener('mouseenter', () => {
+      const c = swatch.style.background || swatch.style.backgroundColor;
+      logoEls.forEach(el => el.style.color = c);
+    });
+    swatch.addEventListener('mouseleave', () => {
+      logoEls.forEach(el => el.style.color = '');
+    });
+  });
+
   // === Size Picker Logic ===
   let selectedSize = null;
   const sizeLabel = document.getElementById('selectedSizeLabel');

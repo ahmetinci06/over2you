@@ -92,6 +92,18 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
         </div>
       `;
 
+      // Logo color on swatch hover
+      const logoEls = document.querySelectorAll('.header .logo-text');
+      document.querySelectorAll('.swatch-product').forEach(swatch => {
+        swatch.addEventListener('mouseenter', () => {
+          const c = swatch.style.background || swatch.style.backgroundColor;
+          logoEls.forEach(el => el.style.color = c);
+        });
+        swatch.addEventListener('mouseleave', () => {
+          logoEls.forEach(el => el.style.color = '');
+        });
+      });
+
       // Size picker
       let selectedSize = null;
       document.querySelectorAll('.size-btn').forEach(btn => {
