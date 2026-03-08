@@ -230,6 +230,10 @@ p {
   color: rgb(var(--text-color));
 }
 
+.header.header--transparent:hover .logo-text {
+  color: rgb(var(--text-color));
+}
+
 .header.header--transparent:hover .header-logo img {
   filter: none;
 }
