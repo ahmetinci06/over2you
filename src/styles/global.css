@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-bg: #000000;
+  --color-brand-card: #111111;
+  --color-brand-border: #222222;
+  --color-brand-hover: #333333;
+  --color-brand-text: #ffffff;
+  --color-brand-muted: #999999;
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    background-color: var(--color-brand-bg);
+    color: var(--color-brand-text);
+    scroll-behavior: smooth;
+  }
+
+  body {
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-white text-black px-8 py-3 text-sm font-semibold uppercase tracking-wider hover:bg-gray-200 transition-colors duration-200;
+  }
+
+  .btn-outline {
+    @apply border border-white text-white px-8 py-3 text-sm font-semibold uppercase tracking-wider hover:bg-white hover:text-black transition-colors duration-200;
+  }
+
+  .badge-new {
+    @apply text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-white text-black;
+  }
+
+  .badge-last-stock {
+    @apply text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-red-600 text-white;
+  }
+
+  .badge-updated {
+    @apply text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-blue-600 text-white;
+  }
+}

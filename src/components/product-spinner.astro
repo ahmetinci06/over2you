@@ -1,0 +1,173 @@
+---
+interface Props {
+  folder: string;
+  imageCount?: number;
+  productName?: string;
+}
+
+const { folder, imageCount = 36, productName = 'Product' } = Astro.props;
+---
+
+<div class="product-spinner relative bg-brand-card aspect-square overflow-hidden cursor-grab active:cursor-grabbing select-none" data-folder={folder} data-count={imageCount}>
+  <!-- Loading indicator -->
+  <div class="spinner-loading absolute inset-0 flex items-center justify-center z-10">
+    <div class="flex flex-col items-center gap-3">
+      <div class="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+      <span class="text-xs text-brand-muted uppercase tracking-wider">360° View Loading...</span>
+    </div>
+  </div>
+
+  <!-- Placeholder 360 canvas -->
+  <canvas class="spinner-canvas w-full h-full hidden" width="800" height="800"></canvas>
+
+  <!-- Drag instruction overlay -->
+  <div class="spinner-hint absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/70 px-4 py-2 rounded-full flex items-center gap-2 z-20 pointer-events-none transition-opacity duration-500">
+    <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+    </svg>
+    <span class="text-xs text-white uppercase tracking-wider">Drag to rotate</span>
+  </div>
+</div>
+
+<script is:inline>
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.product-spinner').forEach((spinner) => {
+      const canvas = spinner.querySelector('.spinner-canvas');
+      const loading = spinner.querySelector('.spinner-loading');
+      const hint = spinner.querySelector('.spinner-hint');
+      const ctx = canvas.getContext('2d');
+      const count = parseInt(spinner.dataset.count || '36');
+
+      const frames = [];
+      let currentFrame = 0;
+      let isDragging = false;
+      let startX = 0;
+      let autoplayInterval = null;
+
+      // Generate placeholder frames with gradient backgrounds
+      function generatePlaceholderFrames() {
+        for (let i = 0; i < count; i++) {
+          const offscreen = document.createElement('canvas');
+          offscreen.width = 800;
+          offscreen.height = 800;
+          const offCtx = offscreen.getContext('2d');
+
+          // Create rotating gradient effect
+          const angle = (i / count) * Math.PI * 2;
+          const cx = 400 + Math.cos(angle) * 100;
+          const cy = 400 + Math.sin(angle) * 100;
+
+          const gradient = offCtx.createRadialGradient(cx, cy, 50, 400, 400, 400);
+          gradient.addColorStop(0, '#444');
+          gradient.addColorStop(0.5, '#222');
+          gradient.addColorStop(1, '#111');
+
+          offCtx.fillStyle = gradient;
+          offCtx.fillRect(0, 0, 800, 800);
+
+          // Draw a simple 3D-like shape that rotates
+          offCtx.save();
+          offCtx.translate(400, 400);
+
+          // Rotating rectangle to simulate product rotation
+          const rotAngle = (i / count) * Math.PI * 2;
+          const scaleX = Math.cos(rotAngle);
+
+          offCtx.fillStyle = '#555';
+          offCtx.fillRect(-120 * Math.abs(scaleX), -180, 240 * Math.abs(scaleX), 360);
+
+          offCtx.strokeStyle = '#777';
+          offCtx.lineWidth = 2;
+          offCtx.strokeRect(-120 * Math.abs(scaleX), -180, 240 * Math.abs(scaleX), 360);
+
+          // Frame number
+          offCtx.restore();
+          offCtx.fillStyle = '#666';
+          offCtx.font = '14px Inter, sans-serif';
+          offCtx.textAlign = 'center';
+          offCtx.fillText(`360° View - Frame ${i + 1}/${count}`, 400, 750);
+
+          frames.push(offscreen);
+        }
+      }
+
+      function render() {
+        if (frames.length === 0) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(frames[currentFrame], 0, 0);
+      }
+
+      function init() {
+        generatePlaceholderFrames();
+        canvas.classList.remove('hidden');
+        loading.classList.add('hidden');
+        render();
+
+        // Autoplay
+        autoplayInterval = setInterval(() => {
+          if (!isDragging) {
+            currentFrame = (currentFrame + 1) % count;
+            render();
+          }
+        }, 100);
+
+        // Hide hint after 3 seconds
+        setTimeout(() => {
+          if (hint) hint.style.opacity = '0';
+        }, 3000);
+      }
+
+      // Mouse events
+      spinner.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        startX = e.clientX;
+        if (autoplayInterval) {
+          clearInterval(autoplayInterval);
+          autoplayInterval = null;
+        }
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        const delta = e.clientX - startX;
+        if (Math.abs(delta) > 5) {
+          const direction = delta > 0 ? 1 : -1;
+          currentFrame = (currentFrame + direction + count) % count;
+          render();
+          startX = e.clientX;
+        }
+      });
+
+      window.addEventListener('mouseup', () => {
+        isDragging = false;
+      });
+
+      // Touch events
+      spinner.addEventListener('touchstart', (e) => {
+        isDragging = true;
+        startX = e.touches[0].clientX;
+        if (autoplayInterval) {
+          clearInterval(autoplayInterval);
+          autoplayInterval = null;
+        }
+      }, { passive: true });
+
+      spinner.addEventListener('touchmove', (e) => {
+        if (!isDragging) return;
+        const delta = e.touches[0].clientX - startX;
+        if (Math.abs(delta) > 5) {
+          const direction = delta > 0 ? 1 : -1;
+          currentFrame = (currentFrame + direction + count) % count;
+          render();
+          startX = e.touches[0].clientX;
+        }
+      }, { passive: true });
+
+      spinner.addEventListener('touchend', () => {
+        isDragging = false;
+      });
+
+      init();
+    });
+  });
+</script>

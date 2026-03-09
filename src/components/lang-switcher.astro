@@ -1,0 +1,121 @@
+<!-- Client-side language switching logic -->
+<script is:inline>
+(function() {
+  const translations = {
+    tr: {
+      'nav.shop': 'Mağaza', 'nav.collections': 'Koleksiyonlar', 'nav.brand': 'Hakkımızda',
+      'nav.shopAll': 'Tüm Ürünler',
+      'col.allProducts': 'Tüm Ürünler', 'col.hoodies': 'Sweatshirt', 'col.sweatpants': 'Eşofman',
+      'col.tshirts': 'T-Shirt', 'col.accessories': 'Aksesuar',
+      'hero.tagline': 'Premium Streetwear — İstanbul', 'hero.cta': 'Alışverişe Başla', 'hero.scroll': 'Aşağı Kaydır',
+      'banner.collection': 'Koleksiyon', 'banner.essentials': 'Temel Parçalar', 'banner.newDrop': 'Yeni Sezon',
+      'banner.hoodies.sub': 'Yeni renkler çevrimiçi', 'banner.tshirts.sub': 'Oversize kesim',
+      'banner.bottoms': 'Alt Giyim', 'banner.bottoms.sub': 'Eşofman & Kargo',
+      'products.newArrivals': 'Yeni Gelenler', 'products.viewAll': 'Tümünü Gör',
+      'products.allProducts': 'Tüm Ürünler', 'products.soldOut': 'Tükendi',
+      'products.addToCart': 'Sepete Ekle', 'products.youMightLike': 'Beğenebileceğiniz',
+      'products.color': 'Renk', 'products.size': 'Beden', 'products.sizeGuide': 'Beden Rehberi',
+      'products.productInfo': 'Ürün Bilgisi', 'products.material': 'Malzeme',
+      'products.careInstructions': 'Bakım Talimatları', 'products.sizeInfo': 'Beden Bilgisi',
+      'products.shipping': 'Kargo & İade',
+      'products.shippingDesc': '1.000 TL üzeri siparişlerde ücretsiz kargo. Türkiye içi standart teslimat 2-4 iş günü.',
+      'products.returnsDesc': 'Teslimat tarihinden itibaren 14 gün içinde iade kabul edilir. Ürünler giyilmemiş ve orijinal etiketleri takılı olmalıdır.',
+      'products.sizeDesc': 'Ürünlerimiz rahat, oversize kesim takip eder. Normal bedeninizi seçmenizi veya daha dar stil için bir beden küçüğünü tercih etmenizi öneririz.',
+      'brand.title': 'Sıra Sende',
+      'brand.intro': 'Over2You basit bir fikirden doğdu: premium streetwear ulaşılmaz olmamalı. İstanbul\'da kurulan markamız, her parçayı özenle tasarlıyor — sokak kültürü estetiğini hak ettiğiniz kaliteyle birleştirerek.',
+      'brand.intro2': 'Her iplik, her dikiş, her tasarım kararı bilinçli. Trendleri takip etmiyoruz — onları biz yaratıyoruz.',
+      'brand.v1.title': 'Önce Kalite', 'brand.v1.desc': 'Premium malzemeler, ağır kumaşlar ve titiz üretim. Her parça uzun ömürlü olacak şekilde üretilir.',
+      'brand.v2.title': 'İstanbul\'da Üretildi', 'brand.v2.desc': 'Yerel olarak tasarlanır ve üretilir. Türk zanaatını desteklerken çevresel etkimizi azaltıyoruz.',
+      'brand.v3.title': 'Senin Kimliğin', 'brand.v3.desc': 'Seni temsil edeni giy. Over2You bir kıyafetten fazlası — kendini ifade etmenin tuvali.',
+      'brand.explore': 'Keşfet', 'brand.more': 'Devamı',
+      'brandBanner.title': 'SIRA SENDE', 'brandBanner.desc': 'Over2You bir markadan fazlası. Bir duruş. İstanbul\'da tasarlanıp üretilen premium kalite streetwear.', 'brandBanner.cta': 'Hikayemiz',
+      'footer.newsletter': 'Haberdar Ol', 'footer.newsletterDesc': 'Erken erişim, özel sezonlar ve daha fazlası için abone ol.',
+      'footer.email': 'E-posta adresin', 'footer.subscribe': 'Abone Ol',
+      'footer.shop': 'Mağaza', 'footer.info': 'Bilgi', 'footer.aboutUs': 'Hakkımızda',
+      'footer.sizeGuide': 'Beden Rehberi', 'footer.shipping': 'Kargo', 'footer.returns': 'İade',
+      'footer.legal': 'Yasal', 'footer.privacy': 'Gizlilik Politikası', 'footer.terms': 'Kullanım Koşulları', 'footer.cookies': 'Çerez Politikası',
+      'footer.followUs': 'Bizi Takip Et', 'footer.rights': 'Tüm hakları saklıdır.',
+      'filter.color': 'Renk', 'filter.size': 'Beden', 'filter.inStockOnly': 'Sadece Stokta', 'filter.filters': 'Filtreler',
+      'breadcrumb.home': 'Ana Sayfa',
+      'table.size': 'Beden', 'table.chest': 'Göğüs (cm)', 'table.length': 'Boy (cm)',
+      'lang.switch': 'EN',
+    },
+    en: {
+      'nav.shop': 'Shop', 'nav.collections': 'Collections', 'nav.brand': 'Brand',
+      'nav.shopAll': 'Shop All',
+      'col.allProducts': 'All Products', 'col.hoodies': 'Hoodies', 'col.sweatpants': 'Sweatpants',
+      'col.tshirts': 'T-Shirts', 'col.accessories': 'Accessories',
+      'hero.tagline': 'Premium Streetwear — Istanbul', 'hero.cta': 'Shop Now', 'hero.scroll': 'Scroll',
+      'banner.collection': 'Collection', 'banner.essentials': 'Essentials', 'banner.newDrop': 'New Drop',
+      'banner.hoodies.sub': 'New colors online', 'banner.tshirts.sub': 'Oversized basics',
+      'banner.bottoms': 'Bottoms', 'banner.bottoms.sub': 'Sweatpants & Cargos',
+      'products.newArrivals': 'New Arrivals', 'products.viewAll': 'View All',
+      'products.allProducts': 'All Products', 'products.soldOut': 'Sold Out',
+      'products.addToCart': 'Add to Cart', 'products.youMightLike': 'You Might Also Like',
+      'products.color': 'Color', 'products.size': 'Size', 'products.sizeGuide': 'Size Guide',
+      'products.productInfo': 'Product Information', 'products.material': 'Material',
+      'products.careInstructions': 'Care Instructions', 'products.sizeInfo': 'Size Information',
+      'products.shipping': 'Shipping & Returns',
+      'products.shippingDesc': 'Free shipping on orders over 1,000 TL. Standard delivery 2-4 business days within Turkey.',
+      'products.returnsDesc': 'Returns accepted within 14 days of delivery. Items must be unworn with original tags attached.',
+      'products.sizeDesc': 'Our garments follow a relaxed, oversized fit. We recommend choosing your regular size for the intended look, or sizing down for a more fitted style.',
+      'brand.title': 'It\'s Your Turn',
+      'brand.intro': 'Over2You was born from a simple idea: premium streetwear shouldn\'t be out of reach. Founded in Istanbul, we craft each piece with intention — blending street culture aesthetics with the quality you deserve.',
+      'brand.intro2': 'Every thread, every stitch, every design choice is deliberate. We don\'t follow trends — we create them.',
+      'brand.v1.title': 'Quality First', 'brand.v1.desc': 'Premium materials, heavyweight fabrics, and meticulous construction. Every piece is built to last.',
+      'brand.v2.title': 'Made in Istanbul', 'brand.v2.desc': 'Designed and produced locally. Supporting Turkish craftsmanship while reducing our environmental impact.',
+      'brand.v3.title': 'Your Identity', 'brand.v3.desc': 'Wear what represents you. Over2You is more than clothing — it\'s a canvas for self-expression.',
+      'brand.explore': 'Explore', 'brand.more': 'More',
+      'brandBanner.title': 'IT\'S YOUR TURN', 'brandBanner.desc': 'Over2You is more than a brand. It\'s a statement. Premium quality streetwear designed and crafted in Istanbul.', 'brandBanner.cta': 'Our Story',
+      'footer.newsletter': 'Stay in the Loop', 'footer.newsletterDesc': 'Subscribe for early access, exclusive drops, and more.',
+      'footer.email': 'Your email', 'footer.subscribe': 'Subscribe',
+      'footer.shop': 'Shop', 'footer.info': 'Info', 'footer.aboutUs': 'About Us',
+      'footer.sizeGuide': 'Size Guide', 'footer.shipping': 'Shipping', 'footer.returns': 'Returns',
+      'footer.legal': 'Legal', 'footer.privacy': 'Privacy Policy', 'footer.terms': 'Terms of Service', 'footer.cookies': 'Cookie Policy',
+      'footer.followUs': 'Follow Us', 'footer.rights': 'All rights reserved.',
+      'filter.color': 'Color', 'filter.size': 'Size', 'filter.inStockOnly': 'In Stock Only', 'filter.filters': 'Filters',
+      'breadcrumb.home': 'Home',
+      'table.size': 'Size', 'table.chest': 'Chest (cm)', 'table.length': 'Length (cm)',
+      'lang.switch': 'TR',
+    }
+  };
+
+  function getLang() {
+    return localStorage.getItem('o2y-lang') || 'tr';
+  }
+
+  function setLang(lang) {
+    localStorage.setItem('o2y-lang', lang);
+    applyTranslations(lang);
+    document.documentElement.lang = lang;
+  }
+
+  function applyTranslations(lang) {
+    const t = translations[lang] || translations.tr;
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (t[key]) {
+        if (el.tagName === 'INPUT') {
+          el.placeholder = t[key];
+        } else {
+          el.textContent = t[key];
+        }
+      }
+    });
+  }
+
+  // Initialize
+  const savedLang = getLang();
+  if (savedLang !== 'tr') {
+    applyTranslations(savedLang);
+    document.documentElement.lang = savedLang;
+  }
+
+  // Language switch button
+  document.getElementById('lang-switch')?.addEventListener('click', () => {
+    const current = getLang();
+    const next = current === 'tr' ? 'en' : 'tr';
+    setLang(next);
+  });
+})();
+</script>

@@ -1,0 +1,120 @@
+---
+import BaseLayout from '../../layouts/base-layout.astro';
+import ProductCard from '../../components/product-card.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const collections = [
+    { slug: 'basics', name: 'All Products', description: 'Shop the full Over2You collection' },
+    { slug: 'hoodies', name: 'Hoodies', description: 'Premium heavyweight hoodies & crewnecks' },
+    { slug: 'sweatpants', name: 'Sweatpants', description: 'Relaxed fit sweatpants & cargos' },
+    { slug: 't-shirts', name: 'T-Shirts', description: 'Essential oversized tees & tanks' },
+    { slug: 'accessories', name: 'Accessories', description: 'Beanies, caps & more' },
+  ];
+
+  return collections.map((col) => ({
+    params: { slug: col.slug },
+    props: { collectionName: col.name, collectionDescription: col.description },
+  }));
+}
+
+const { slug } = Astro.params;
+const { collectionName, collectionDescription } = Astro.props;
+
+const allProducts = await getCollection('products');
+const products = slug === 'basics'
+  ? allProducts
+  : allProducts.filter((p) => p.data.collection === slug);
+
+const availableColors = [...new Set(products.flatMap((p) => p.data.colors))];
+const availableSizes = [...new Set(products.flatMap((p) => p.data.sizes))];
+---
+
+<BaseLayout title={collectionName}>
+  <div class="pt-24 lg:pt-28">
+    <!-- Collection Header -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+      <h1 class="text-3xl md:text-4xl font-bold uppercase tracking-wider">{collectionName}</h1>
+      <p class="text-sm text-brand-muted mt-2">{collectionDescription}</p>
+      <p class="text-xs text-brand-muted mt-1">{products.length} products</p>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="lg:grid lg:grid-cols-[240px_1fr] lg:gap-8">
+        <!-- Filter Sidebar -->
+        <aside class="hidden lg:block">
+          <div class="sticky top-24 space-y-6">
+            <div>
+              <h3 class="text-xs font-semibold uppercase tracking-wider mb-3">Color</h3>
+              <div class="space-y-2">
+                {availableColors.map((color) => (
+                  <label class="flex items-center gap-2 cursor-pointer group">
+                    <input type="checkbox" class="sr-only peer" data-filter="color" value={color} />
+                    <span class="w-4 h-4 border border-brand-border peer-checked:bg-white peer-checked:border-white transition-colors"></span>
+                    <span class="text-sm text-brand-muted group-hover:text-white transition-colors capitalize">{color}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h3 class="text-xs font-semibold uppercase tracking-wider mb-3">Size</h3>
+              <div class="flex flex-wrap gap-2">
+                {availableSizes.map((size) => (
+                  <button
+                    class="text-xs border border-brand-border px-3 py-1.5 hover:border-white hover:text-white transition-colors"
+                    data-filter="size"
+                    data-value={size}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label class="flex items-center gap-2 cursor-pointer group">
+                <input type="checkbox" class="sr-only peer" id="in-stock-toggle" />
+                <span class="w-8 h-4 bg-brand-border rounded-full relative peer-checked:bg-white transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:w-3 after:h-3 after:bg-black after:rounded-full after:transition-transform peer-checked:after:translate-x-4"></span>
+                <span class="text-sm text-brand-muted group-hover:text-white transition-colors">In Stock Only</span>
+              </label>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Mobile Filter Toggle -->
+        <div class="lg:hidden mb-4">
+          <button id="filter-toggle" class="flex items-center gap-2 text-sm text-brand-muted border border-brand-border px-4 py-2">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+            Filters
+          </button>
+        </div>
+
+        <!-- Product Grid -->
+        <div>
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+            {products.map((product) => (
+              <ProductCard
+                name={product.data.name}
+                slug={product.data.slug}
+                price={product.data.price}
+                images={product.data.images}
+                badge={product.data.badge}
+                sizes={product.data.sizes}
+                inStock={product.data.inStock}
+              />
+            ))}
+          </div>
+
+          {products.length === 0 && (
+            <div class="text-center py-20">
+              <p class="text-brand-muted">No products found in this collection.</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  </div>
+</BaseLayout>

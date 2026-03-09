@@ -1,0 +1,59 @@
+---
+interface Props {
+  name: string;
+  slug: string;
+  price: number;
+  images: string[];
+  badge?: string;
+  sizes: string[];
+  inStock: boolean;
+}
+
+const { name, slug, price, images, badge, sizes, inStock } = Astro.props;
+
+const formattedPrice = new Intl.NumberFormat('tr-TR', {
+  minimumFractionDigits: 2,
+}).format(price);
+---
+
+<a href={`/products/${slug}`} class="group block">
+  <div class="relative aspect-[3/4] bg-brand-card overflow-hidden mb-3">
+    <!-- Product Image Placeholder -->
+    <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-brand-card to-brand-hover">
+      <span class="text-sm text-brand-muted uppercase tracking-wider text-center px-4">{name}</span>
+    </div>
+
+    <!-- Badge -->
+    {badge && (
+      <span class={`absolute top-3 left-3 ${
+        badge === 'NEW' ? 'badge-new' :
+        badge === 'LAST STOCK' ? 'badge-last-stock' :
+        'badge-updated'
+      }`}>
+        {badge}
+      </span>
+    )}
+
+    {!inStock && (
+      <div class="absolute inset-0 bg-black/60 flex items-center justify-center">
+        <span class="text-sm uppercase tracking-wider">Sold Out</span>
+      </div>
+    )}
+
+    <!-- Hover Size Selection -->
+    <div class="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+      <div class="flex flex-wrap gap-1 justify-center">
+        {sizes.map((size) => (
+          <span class="text-[10px] border border-white/40 px-2 py-0.5 hover:bg-white hover:text-black transition-colors">
+            {size}
+          </span>
+        ))}
+      </div>
+    </div>
+  </div>
+
+  <div class="space-y-1">
+    <h3 class="text-sm font-medium group-hover:text-gray-300 transition-colors">{name}</h3>
+    <p class="text-sm text-brand-muted">{`\u20BA${formattedPrice}`}</p>
+  </div>
+</a>

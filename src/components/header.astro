@@ -1,0 +1,109 @@
+---
+import { translations, defaultLocale, type Locale } from '../i18n/translations.ts';
+
+const locale = defaultLocale;
+const t = (key: string) => (translations[locale] as any)[key] || key;
+
+const collections = [
+  { name: t('col.allProducts'), slug: 'basics' },
+  { name: t('col.hoodies'), slug: 'hoodies' },
+  { name: t('col.sweatpants'), slug: 'sweatpants' },
+  { name: t('col.tshirts'), slug: 't-shirts' },
+  { name: t('col.accessories'), slug: 'accessories' },
+];
+---
+
+<header id="site-header" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16 lg:h-20">
+      <!-- Logo -->
+      <a href="/" class="text-xl lg:text-2xl font-bold tracking-wider uppercase">
+        Over2You
+      </a>
+
+      <!-- Desktop Nav -->
+      <nav class="hidden lg:flex items-center gap-8">
+        <a href="/collections/basics" class="text-sm uppercase tracking-wider hover:text-gray-300 transition-colors">
+          <span data-i18n="nav.shop">{t('nav.shop')}</span>
+        </a>
+        <div class="relative group">
+          <button class="text-sm uppercase tracking-wider hover:text-gray-300 transition-colors flex items-center gap-1">
+            <span data-i18n="nav.collections">{t('nav.collections')}</span>
+            <svg class="w-3 h-3 transition-transform group-hover:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          <div class="absolute top-full left-0 mt-2 bg-brand-card border border-brand-border min-w-[180px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+            {collections.map((col) => (
+              <a
+                href={`/collections/${col.slug}`}
+                class="block px-4 py-2 text-sm hover:bg-brand-hover transition-colors"
+                data-i18n={`col.${col.slug === 'basics' ? 'allProducts' : col.slug === 't-shirts' ? 'tshirts' : col.slug}`}
+              >
+                {col.name}
+              </a>
+            ))}
+          </div>
+        </div>
+        <a href="/brand" class="text-sm uppercase tracking-wider hover:text-gray-300 transition-colors">
+          <span data-i18n="nav.brand">{t('nav.brand')}</span>
+        </a>
+      </nav>
+
+      <!-- Right side -->
+      <div class="flex items-center gap-4">
+        <!-- Language Switcher -->
+        <button id="lang-switch" class="text-xs font-semibold uppercase tracking-wider border border-brand-border px-2 py-1 hover:border-white hover:text-white transition-colors cursor-pointer" aria-label="Switch language">
+          <span data-i18n="lang.switch">{t('lang.switch')}</span>
+        </button>
+
+        <button class="snipcart-checkout relative cursor-pointer" aria-label="Sepet">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+          </svg>
+          <span class="snipcart-items-count absolute -top-2 -right-2 bg-white text-black text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center"></span>
+        </button>
+
+        <!-- Mobile menu button -->
+        <button id="mobile-menu-btn" class="lg:hidden" aria-label="Menü">
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Menu -->
+  <div id="mobile-menu" class="lg:hidden hidden bg-black border-t border-brand-border">
+    <nav class="px-4 py-4 flex flex-col gap-4">
+      <a href="/collections/basics" class="text-sm uppercase tracking-wider" data-i18n="nav.shopAll">{t('nav.shopAll')}</a>
+      {collections.map((col) => (
+        <a href={`/collections/${col.slug}`} class="text-sm uppercase tracking-wider text-gray-400 pl-4"
+           data-i18n={`col.${col.slug === 'basics' ? 'allProducts' : col.slug === 't-shirts' ? 'tshirts' : col.slug}`}>
+          {col.name}
+        </a>
+      ))}
+      <a href="/brand" class="text-sm uppercase tracking-wider" data-i18n="nav.brand">{t('nav.brand')}</a>
+    </nav>
+  </div>
+</header>
+
+<script is:inline>
+  // Sticky header scroll effect
+  const header = document.getElementById('site-header');
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 50) {
+      header.style.backgroundColor = 'rgba(0, 0, 0, 0.95)';
+      header.style.backdropFilter = 'blur(10px)';
+    } else {
+      header.style.backgroundColor = 'transparent';
+      header.style.backdropFilter = 'none';
+    }
+  });
+
+  // Mobile menu toggle
+  document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+    document.getElementById('mobile-menu').classList.toggle('hidden');
+  });
+</script>

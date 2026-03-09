@@ -1,0 +1,20 @@
+---
+interface Props {
+  title: string;
+  open?: boolean;
+}
+
+const { title, open = false } = Astro.props;
+---
+
+<details class="border-t border-brand-border group" open={open}>
+  <summary class="flex items-center justify-between py-4 cursor-pointer list-none">
+    <span class="text-sm font-medium uppercase tracking-wider">{title}</span>
+    <svg class="w-4 h-4 transition-transform group-open:rotate-45" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4" />
+    </svg>
+  </summary>
+  <div class="pb-4 text-sm text-brand-muted leading-relaxed">
+    <slot />
+  </div>
+</details>

@@ -1,0 +1,72 @@
+---
+import BaseLayout from '../layouts/base-layout.astro';
+
+const brandCards = [
+  { tagKey: 'brand.card.lookbook.tag', titleKey: 'brand.card.lookbook.title', descKey: 'brand.card.lookbook.desc', tag: 'Lookbook', title: 'SS26 Koleksiyon', description: 'Sokak kültürünü premium işçilikle buluşturan son İlkbahar/Yaz koleksiyonumuz.', gradient: 'from-neutral-800 to-neutral-900' },
+  { tagKey: 'brand.card.collab.tag', titleKey: 'brand.card.collab.title', descKey: 'brand.card.collab.desc', tag: 'İş Birliği', title: 'Over2You x İstanbul', description: 'Bize ilham veren şehre bir aşk mektubu. Sınırlı sayıda kapsül koleksiyon.', gradient: 'from-zinc-800 to-zinc-900' },
+  { tagKey: 'brand.card.workshop.tag', titleKey: 'brand.card.workshop.title', descKey: 'brand.card.workshop.desc', tag: 'Sahne Arkası', title: 'Atölyemiz', description: 'Her parça İstanbul atölyemizde tasarlanır ve kalite kontrolünden geçer.', gradient: 'from-stone-800 to-stone-900' },
+  { tagKey: 'brand.card.community.tag', titleKey: 'brand.card.community.title', descKey: 'brand.card.community.desc', tag: 'Topluluk', title: 'Over2You Kolektif', description: 'Kimliğini giyen yaratıcılar, sporcular ve bireylerden oluşan topluluğumuza katıl.', gradient: 'from-gray-800 to-gray-900' },
+  { tagKey: 'brand.card.sustainability.tag', titleKey: 'brand.card.sustainability.title', descKey: 'brand.card.sustainability.desc', tag: 'Sürdürülebilirlik', title: 'Bilinçli Üretim', description: 'Malzemeleri sorumlu kaynaklardan temin eder, çevresel ayak izimizi en aza indirmek için yerel üretim yaparız.', gradient: 'from-neutral-700 to-neutral-900' },
+  { tagKey: 'brand.card.culture.tag', titleKey: 'brand.card.culture.title', descKey: 'brand.card.culture.desc', tag: 'Kültür', title: 'Sokak Stüdyoyla Buluşuyor', description: 'Yeraltı kültürünün titiz tasarımla buluştuğu yer. Over2You tam bu kesişim noktasında yaşıyor.', gradient: 'from-zinc-700 to-zinc-900' },
+];
+---
+
+<BaseLayout title="Hakkımızda">
+  <div class="pt-24 lg:pt-28">
+    <!-- Brand Hero -->
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
+      <div class="max-w-3xl">
+        <h1 class="text-4xl md:text-6xl font-bold uppercase tracking-tighter mb-6" data-i18n="brand.title">
+          Sıra Sende
+        </h1>
+        <p class="text-lg text-brand-muted leading-relaxed" data-i18n="brand.intro">
+          Over2You basit bir fikirden doğdu: premium streetwear ulaşılmaz olmamalı. İstanbul'da kurulan markamız, her parçayı özenle tasarlıyor — sokak kültürü estetiğini hak ettiğiniz kaliteyle birleştirerek.
+        </p>
+        <p class="text-lg text-brand-muted leading-relaxed mt-4" data-i18n="brand.intro2">
+          Her iplik, her dikiş, her tasarım kararı bilinçli. Trendleri takip etmiyoruz — onları biz yaratıyoruz.
+        </p>
+      </div>
+    </section>
+
+    <!-- Brand Values -->
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-px bg-brand-border">
+        <div class="bg-black p-8 md:p-12">
+          <span class="text-4xl font-bold">01</span>
+          <h3 class="text-sm font-semibold uppercase tracking-wider mt-4 mb-2" data-i18n="brand.v1.title">Önce Kalite</h3>
+          <p class="text-sm text-brand-muted" data-i18n="brand.v1.desc">Premium malzemeler, ağır kumaşlar ve titiz üretim. Her parça uzun ömürlü olacak şekilde üretilir.</p>
+        </div>
+        <div class="bg-black p-8 md:p-12">
+          <span class="text-4xl font-bold">02</span>
+          <h3 class="text-sm font-semibold uppercase tracking-wider mt-4 mb-2" data-i18n="brand.v2.title">İstanbul'da Üretildi</h3>
+          <p class="text-sm text-brand-muted" data-i18n="brand.v2.desc">Yerel olarak tasarlanır ve üretilir. Türk zanaatını desteklerken çevresel etkimizi azaltıyoruz.</p>
+        </div>
+        <div class="bg-black p-8 md:p-12">
+          <span class="text-4xl font-bold">03</span>
+          <h3 class="text-sm font-semibold uppercase tracking-wider mt-4 mb-2" data-i18n="brand.v3.title">Senin Kimliğin</h3>
+          <p class="text-sm text-brand-muted" data-i18n="brand.v3.desc">Seni temsil edeni giy. Over2You bir kıyafetten fazlası — kendini ifade etmenin tuvali.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Brand Cards Grid -->
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 class="text-lg font-semibold uppercase tracking-wider mb-8" data-i18n="brand.explore">Keşfet</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {brandCards.map((card) => (
+          <a href="#" class="group block">
+            <div class={`relative aspect-[4/3] bg-gradient-to-br ${card.gradient} overflow-hidden mb-4`}>
+              <div class="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors duration-300"></div>
+            </div>
+            <span class="text-[10px] uppercase tracking-widest text-brand-muted" data-i18n={card.tagKey}>{card.tag}</span>
+            <h3 class="text-base font-semibold mt-1 group-hover:text-gray-300 transition-colors" data-i18n={card.titleKey}>{card.title}</h3>
+            <p class="text-sm text-brand-muted mt-1" data-i18n={card.descKey}>{card.description}</p>
+            <span class="inline-block text-xs uppercase tracking-wider mt-3 border-b border-white pb-0.5 group-hover:border-gray-400 transition-colors" data-i18n="brand.more">
+              Devamı
+            </span>
+          </a>
+        ))}
+      </div>
+    </section>
+  </div>
+</BaseLayout>
