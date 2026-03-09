@@ -1,10 +1,10 @@
 ---
 import BaseLayout from '../layouts/base-layout.astro';
 import ProductCard from '../components/product-card.astro';
-import { getCollection } from 'astro:content';
+import { getAllProducts } from '../lib/products';
 
-const allProducts = await getCollection('products');
-const featuredProducts = allProducts.filter((p) => p.data.badge === 'NEW').slice(0, 4);
+const allProducts = await getAllProducts();
+const featuredProducts = allProducts.filter((p) => p.badge === 'NEW').slice(0, 4);
 ---
 
 <BaseLayout title="Ana Sayfa">
@@ -81,13 +81,13 @@ const featuredProducts = allProducts.filter((p) => p.data.badge === 'NEW').slice
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
       {featuredProducts.map((product) => (
         <ProductCard
-          name={product.data.name}
-          slug={product.data.slug}
-          price={product.data.price}
-          images={product.data.images}
-          badge={product.data.badge}
-          sizes={product.data.sizes}
-          inStock={product.data.inStock}
+          name={product.name}
+          slug={product.slug}
+          price={product.price}
+          images={product.images}
+          badge={product.badge}
+          sizes={product.sizes}
+          inStock={product.in_stock}
         />
       ))}
     </div>
@@ -115,13 +115,13 @@ const featuredProducts = allProducts.filter((p) => p.data.badge === 'NEW').slice
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
       {allProducts.map((product) => (
         <ProductCard
-          name={product.data.name}
-          slug={product.data.slug}
-          price={product.data.price}
-          images={product.data.images}
-          badge={product.data.badge}
-          sizes={product.data.sizes}
-          inStock={product.data.inStock}
+          name={product.name}
+          slug={product.slug}
+          price={product.price}
+          images={product.images}
+          badge={product.badge}
+          sizes={product.sizes}
+          inStock={product.in_stock}
         />
       ))}
     </div>

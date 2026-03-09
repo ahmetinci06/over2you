@@ -1,33 +1,26 @@
 ---
 import BaseLayout from '../../layouts/base-layout.astro';
 import ProductCard from '../../components/product-card.astro';
-import { getCollection } from 'astro:content';
+import { getProductsByCollection, getAllProducts } from '../../lib/products';
 
-export async function getStaticPaths() {
-  const collections = [
-    { slug: 'basics', name: 'All Products', description: 'Shop the full Over2You collection' },
-    { slug: 'hoodies', name: 'Hoodies', description: 'Premium heavyweight hoodies & crewnecks' },
-    { slug: 'sweatpants', name: 'Sweatpants', description: 'Relaxed fit sweatpants & cargos' },
-    { slug: 't-shirts', name: 'T-Shirts', description: 'Essential oversized tees & tanks' },
-    { slug: 'accessories', name: 'Accessories', description: 'Beanies, caps & more' },
-  ];
-
-  return collections.map((col) => ({
-    params: { slug: col.slug },
-    props: { collectionName: col.name, collectionDescription: col.description },
-  }));
-}
+const collectionsMap: Record<string, { name: string; description: string }> = {
+  basics: { name: 'Tüm Ürünler', description: 'Tüm Over2You koleksiyonunu keşfet' },
+  hoodies: { name: 'Sweatshirt', description: 'Premium ağır sweatshirt ve crewneck\'ler' },
+  sweatpants: { name: 'Eşofman', description: 'Rahat kesim eşofman ve kargo pantolonlar' },
+  't-shirts': { name: 'T-Shirt', description: 'Oversize temel tişörtler ve atletler' },
+  accessories: { name: 'Aksesuar', description: 'Bereler, şapkalar ve daha fazlası' },
+};
 
 const { slug } = Astro.params;
-const { collectionName, collectionDescription } = Astro.props;
+if (!slug || !collectionsMap[slug]) return Astro.redirect('/');
 
-const allProducts = await getCollection('products');
-const products = slug === 'basics'
-  ? allProducts
-  : allProducts.filter((p) => p.data.collection === slug);
+const collectionName = collectionsMap[slug].name;
+const collectionDescription = collectionsMap[slug].description;
+
+const products = await getProductsByCollection(slug);
 
 const availableColors = [...new Set(products.flatMap((p) => p.data.colors))];
-const availableSizes = [...new Set(products.flatMap((p) => p.data.sizes))];
+const availableSizes = [...new Set(products.flatMap((p) => p.sizes))];
 ---
 
 <BaseLayout title={collectionName}>
@@ -97,13 +90,13 @@ const availableSizes = [...new Set(products.flatMap((p) => p.data.sizes))];
           <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
             {products.map((product) => (
               <ProductCard
-                name={product.data.name}
-                slug={product.data.slug}
-                price={product.data.price}
-                images={product.data.images}
-                badge={product.data.badge}
-                sizes={product.data.sizes}
-                inStock={product.data.inStock}
+                name={product.name}
+                slug={product.slug}
+                price={product.price}
+                images={product.images}
+                badge={product.badge}
+                sizes={product.sizes}
+                inStock={product.in_stock}
               />
             ))}
           </div>
