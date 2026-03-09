@@ -584,7 +584,7 @@
     "color": "#111111",
     "colorName": "Black",
     "colorFamily": "black",
-    "description": "Classic polo shirt in Black. Breathable piqué cotton.",
+    "description": "Classic polo shirt in Black. Breathable piquÃ© cotton.",
     "images": [
       "col-tshirts.jpg",
       "col-6pm.jpg"
@@ -948,6 +948,32 @@
     "images": [
       "col-hoodies.jpg",
       "col-6pm.jpg"
+    ]
+  },
+  {
+    "id": 41,
+    "name": "ovr2",
+    "price": 81,
+    "comparePrice": null,
+    "category": "hoodies",
+    "sizes": [
+      "XXS",
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "badge": "NEW",
+    "color": "#ff40ff",
+    "colorName": "",
+    "colorFamily": "blue",
+    "stock": "in-stock",
+    "stockQty": null,
+    "description": "400 gsm hoodie",
+    "images": [
+      "col-hoodies.jpg"
     ]
   }
 ]
