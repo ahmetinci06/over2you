@@ -4,7 +4,7 @@
 
 // ===== PRODUCT DATA (fallback — overridden by data/products.json fetch) =====
 let products = [
-  { id: 1, name: "BDG Corduroy Bomber Jacket", price: 120, category: "jackets", sizes: ["S","M","L","XL"], badge: "NEW", color: "#c4a47a", colorName: "Tan", colorFamily: "brown", description: "BDG Jeans corduroy zip-up bomber jacket in tan/khaki. Wide-wale corduroy fabric, full-length front zipper, spread collar, elasticized waistband and cuffs, side pockets. Relaxed oversized fit.", images: ["bdg-jacket-front.png","bdg-jacket-side.png","bdg-jacket-back.png","bdg-jacket-left.png"] },
+  { id: 1, name: "BDG Corduroy Bomber Jacket", price: 120, category: "jackets", sizes: ["S","M","L","XL"], badge: "NEW", color: "#c4a47a", colorName: "Tan", colorFamily: "brown", description: "BDG Jeans corduroy zip-up bomber jacket in tan/khaki. Wide-wale corduroy fabric, full-length front zipper, spread collar, elasticized waistband and cuffs, side pockets. Relaxed oversized fit.", images: ["products/bdg-jacket-front.png","products/bdg-jacket-side.png","products/bdg-jacket-back.png","products/bdg-jacket-left.png"] },
 ];
 
 // ===== UTILITIES =====
