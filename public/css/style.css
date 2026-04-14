@@ -1745,10 +1745,10 @@ p {
 /* 360 Viewer specific */
 .view-360-btn {
   position: absolute;
-  top: 1.5rem;
-  right: 1.5rem;
-  width: 50px;
-  height: 75px;
+  top: 12px;
+  right: 12px;
+  width: 56px;
+  height: 56px;
   border: 1px solid rgb(var(--border-color));
   background: white;
   padding: 4px;
