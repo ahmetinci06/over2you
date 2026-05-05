@@ -9,12 +9,18 @@
 (function () {
   if (customElements.get('carousel-3d')) return;
 
+  /* Slot positions for the cylinder.
+     -1/0/+1 are the visible band (left/center/right) — all on the same
+     vertical line so rotation reads as pure horizontal motion.
+     ±2 is the wrap state (back of the cylinder); collapsed to center with
+     scale 0 + opacity 0 so a slot fades into / out of the center as it
+     rotates past the visible band. No diagonal travel. */
   const POS = {
     '-1': { l: 18, t: 50, s: 0.55, o: 0.95, z: 3 },
     '0':  { l: 50, t: 50, s: 1.00, o: 1.00, z: 6 },
     '1':  { l: 82, t: 50, s: 0.55, o: 0.95, z: 3 },
-    '2':  { l: 50, t: 38, s: 0.26, o: 0.85, z: 1 },
-    '-2': { l: 50, t: 38, s: 0.26, o: 0.85, z: 1 },
+    '2':  { l: 50, t: 50, s: 0.10, o: 0.00, z: 0 },
+    '-2': { l: 50, t: 50, s: 0.10, o: 0.00, z: 0 },
   };
   const TRANSITION =
     'left .7s cubic-bezier(.22,.61,.36,1),' +
