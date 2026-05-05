@@ -337,10 +337,12 @@ function renderProducts(filter, targetEl) {
   `).join('');
 }
 
-// ===== PRODUCT PAGE — Dynamic Rendering =====
+// ===== PRODUCT PAGE — Dynamic Rendering (legacy, superseded by product.astro inline script) =====
 (function() {
   const container = document.querySelector('.product-container');
   if (!container) return;
+  // Skip if the new Astro product page is active — it renders into #productLayout with real images.
+  if (document.getElementById('productLayout')) return;
 
   const params = new URLSearchParams(window.location.search);
   const productId = parseInt(params.get('id')) || 1;
@@ -519,8 +521,8 @@ function renderProducts(filter, targetEl) {
 })();
 
 // ===== LOAD DATA FROM JSON (CMS-managed) =====
+window.productsReady = false;
 (async function loadData() {
-  // base handled by global BASE
   try {
     const [prodRes, settRes] = await Promise.all([
       fetch(BASE + 'data/products.json').catch(() => null),
@@ -531,32 +533,29 @@ function renderProducts(filter, targetEl) {
       if (Array.isArray(data) && data.length > 0) {
         products = data;
         window.products = products;
-        // Re-render if shop grid exists
         const shopGrid = document.getElementById('shopProductGrid');
         if (shopGrid) {
           const params = new URLSearchParams(window.location.search);
           const cat = params.get('cat');
           renderProducts(cat || 'all', shopGrid);
-          // Update count
           const filtered = cat && cat !== 'all' ? products.filter(p => p.category === cat) : products;
           const countEl = document.getElementById('shopCount');
           if (countEl) countEl.textContent = filtered.length + ' ' + (window.o2yT ? o2yT('product.products') : 'ürün');
-        }
-        // Re-render product page if on it
-        if (document.querySelector('.product-container')) {
-          // Product page re-init handled by its own IIFE on load
         }
       }
     }
     if (settRes && settRes.ok) {
       const settings = await settRes.json();
       window.siteSettings = settings;
-      // Apply dynamic settings
       document.querySelectorAll('.logo-text').forEach(el => {
         if (settings.logoText) el.textContent = settings.logoText;
       });
     }
   } catch(e) { /* fallback to hardcoded data */ }
+  finally {
+    window.productsReady = true;
+    window.dispatchEvent(new Event('o2y:products-ready'));
+  }
 })();
 
 // ===== Expose globally =====

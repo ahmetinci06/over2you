@@ -4,12 +4,7 @@
     "name": "BDG Corduroy Bomber Jacket",
     "price": 120,
     "category": "jackets",
-    "sizes": [
-      "S",
-      "M",
-      "L",
-      "XL"
-    ],
+    "sizes": ["S", "M", "L", "XL"],
     "badge": "NEW",
     "color": "#c4a47a",
     "colorName": "Tan",
@@ -17,9 +12,35 @@
     "description": "BDG Jeans corduroy zip-up bomber jacket in tan/khaki. Wide-wale corduroy fabric, full-length front zipper, spread collar, elasticized waistband and cuffs, side pockets. Relaxed oversized fit.",
     "images": [
       "products/bdg-jacket-front.png",
+      "products/bdg-jacket-back.png"
+    ],
+    "images360": [
+      "products/bdg-jacket-front.png",
       "products/bdg-jacket-side.png",
       "products/bdg-jacket-back.png",
       "products/bdg-jacket-left.png"
+    ]
+  },
+  {
+    "id": 2,
+    "name": "BPM Hoodie",
+    "price": 80,
+    "category": "hoodies",
+    "sizes": ["S", "M", "L", "XL"],
+    "badge": "NEW",
+    "color": "#000000",
+    "colorName": "Black",
+    "colorFamily": "black",
+    "description": "BPM oversized hoodie in black. Heavyweight fleece, raglan sleeves, front kangaroo pocket, lined hood with drawcord, small BPM chest logo. Relaxed oversized fit.",
+    "images": [
+      "products/bpm-hoodie-front.png",
+      "products/bpm-hoodie-back.png"
+    ],
+    "images360": [
+      "products/bpm-hoodie-front.png",
+      "products/bpm-hoodie-side.png",
+      "products/bpm-hoodie-back.png",
+      "products/bpm-hoodie-left.png"
     ]
   }
 ]
