@@ -1,0 +1,1021 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Corduroy Bomber — Sand · over2you</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  :root{
+    --bg: #f3efe8;
+    --paper: #f8f5ef;
+    --ink: #1a1714;
+    --muted: #8a847a;
+    --line: #d9d2c4;
+    --line-2: #ebe5d9;
+    --accent: #2b2620;
+    --hot: oklch(62% 0.16 35);
+    --radius: 0px;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  html{background:var(--bg)}
+  body{
+    font-family:'Inter',system-ui,sans-serif;
+    color:var(--ink);
+    background:var(--bg);
+    font-size:14px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
+  .mono{font-family:'JetBrains Mono',ui-monospace,monospace;letter-spacing:0.02em}
+  .serif{font-family:'Fraunces',serif;font-optical-sizing:auto}
+  button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}
+  a{color:inherit;text-decoration:none}
+
+  /* ======= TOP BAR ======= */
+  .topstrip{
+    background:var(--ink); color:#f0ece3;
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px; letter-spacing:0.18em; text-transform:uppercase;
+    padding:8px 0; text-align:center; overflow:hidden;
+  }
+  .topstrip span{display:inline-block;padding:0 18px;opacity:.85}
+
+  .nav{
+    position:sticky; top:0; z-index:50;
+    background:rgba(243,239,232,0.85);
+    backdrop-filter:saturate(140%) blur(10px);
+    -webkit-backdrop-filter:saturate(140%) blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  .nav-inner{
+    display:grid; grid-template-columns:1fr auto 1fr;
+    align-items:center; gap:24px;
+    padding:18px 28px;
+  }
+  .nav-left, .nav-right{display:flex; align-items:center; gap:22px}
+  .nav-right{justify-content:flex-end}
+  .nav a, .nav button{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px; letter-spacing:0.14em; text-transform:uppercase;
+    opacity:.75; transition:opacity .15s;
+  }
+  .nav a:hover, .nav button:hover{opacity:1}
+  .brand{
+    font-family:'Fraunces',serif;
+    font-weight:500; font-size:22px; letter-spacing:-0.01em;
+    font-style:italic;
+  }
+  .brand sup{font-size:9px; letter-spacing:0.2em; font-style:normal; font-family:'JetBrains Mono',monospace; vertical-align:super; margin-left:2px; opacity:.6}
+  .cart-pill{
+    border:1px solid var(--ink);
+    padding:6px 12px; border-radius:999px;
+    display:inline-flex; align-items:center; gap:8px;
+  }
+
+  /* ======= BREADCRUMB ======= */
+  .crumb{
+    padding:18px 28px 0;
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px; letter-spacing:0.16em; text-transform:uppercase;
+    color:var(--muted);
+  }
+  .crumb a:hover{color:var(--ink)}
+
+  /* ======= PRODUCT GRID ======= */
+  .product{
+    display:grid;
+    grid-template-columns:1.5fr 1fr;
+    gap:0;
+    border-top:1px solid var(--line);
+    margin-top:18px;
+  }
+  .gallery{
+    position:relative;
+    border-right:1px solid var(--line);
+    background:var(--paper);
+    min-height:780px;
+    overflow:hidden;
+  }
+  .info{
+    padding:48px 56px;
+    position:relative;
+  }
+  @media (max-width: 980px){
+    .product{grid-template-columns:1fr}
+    .gallery{border-right:0; border-bottom:1px solid var(--line); min-height:560px}
+    .info{padding:32px 22px}
+  }
+
+  /* ======= GALLERY (FLAT MODE) ======= */
+  .flat-stage{
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    transition:opacity .35s ease;
+  }
+  .flat-stage img{
+    max-width:84%; max-height:90%;
+    object-fit:contain;
+    user-select:none; -webkit-user-drag:none;
+  }
+  .thumbs{
+    position:absolute; left:18px; top:18px; bottom:18px;
+    display:flex; flex-direction:column; gap:10px;
+    z-index:5;
+  }
+  .thumb{
+    width:62px; height:78px;
+    border:1px solid var(--line);
+    background:#fff;
+    overflow:hidden;
+    transition:border-color .15s, transform .15s;
+  }
+  .thumb img{width:100%; height:100%; object-fit:cover; opacity:.92}
+  .thumb.on{border-color:var(--ink)}
+  .thumb:hover{transform:translateX(2px)}
+  @media (max-width: 700px){
+    .thumbs{
+      flex-direction:row; left:12px; right:12px; bottom:12px; top:auto;
+      justify-content:center;
+    }
+    .thumb{width:46px; height:58px}
+  }
+
+  .toggle-360{
+    position:absolute; top:18px; right:18px; z-index:6;
+    width:54px; height:54px;
+    border:1px solid var(--ink);
+    background:var(--paper);
+    display:flex; align-items:center; justify-content:center;
+    transition:background .15s, color .15s;
+  }
+  .toggle-360.on{background:var(--ink); color:var(--paper)}
+  .toggle-360 .lbl{
+    font-family:'JetBrains Mono',monospace;
+    font-size:9px; letter-spacing:0.1em;
+    line-height:1;
+  }
+  .toggle-360 .lbl b{display:block; font-weight:600; font-size:11px; margin-top:2px}
+  .toggle-360:hover{background:var(--ink); color:var(--paper)}
+
+  .frame-counter{
+    position:absolute; top:24px; left:50%; transform:translateX(-50%);
+    z-index:5;
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px; letter-spacing:0.18em; text-transform:uppercase;
+    color:var(--muted);
+    pointer-events:none;
+  }
+
+  /* ======= 360 STAGE ======= */
+  .stage360{
+    position:absolute; inset:0;
+    overflow:hidden;
+    background:
+      radial-gradient(ellipse 60% 40% at 50% 80%, rgba(0,0,0,0.06), transparent 70%),
+      var(--paper);
+  }
+  .stage360.hidden{display:none}
+  .stage360.flat{
+    /* used to fade between modes */
+  }
+
+  .carousel{
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .slot{
+    position:absolute;
+    top:50%;
+    left:50%;
+    transition:
+      transform 700ms cubic-bezier(.6,.05,.2,1),
+      opacity 500ms ease,
+      filter 500ms ease;
+    will-change:transform,opacity,filter;
+    transform-origin:center bottom;
+  }
+  .slot img{
+    display:block;
+    height:auto;
+    object-fit:contain;
+    user-select:none; -webkit-user-drag:none;
+    pointer-events:none;
+  }
+  .slot.center{
+    z-index:5;
+    transform:translate(-50%,-50%) scale(1);
+    opacity:1;
+    filter:none;
+    cursor:default;
+  }
+  .slot.left, .slot.right{
+    z-index:3;
+    opacity:.95;
+    filter:saturate(.9);
+    cursor:pointer;
+  }
+  .slot.left  { transform:translate(calc(-50% - 32%),-46%) scale(.55); }
+  .slot.right { transform:translate(calc(-50% + 32%),-46%) scale(.55); }
+  .slot.far-left, .slot.far-right{
+    z-index:2;
+    opacity:.45;
+    filter:saturate(.7) blur(.4px);
+    cursor:pointer;
+  }
+  .slot.far-left  { transform:translate(calc(-50% - 50%),-44%) scale(.32); }
+  .slot.far-right { transform:translate(calc(-50% + 50%),-44%) scale(.32); }
+  .slot.hidden{
+    opacity:0; pointer-events:none;
+    transform:translate(-50%,-50%) scale(.2);
+  }
+  .slot.flip img{ transform:scaleX(-1); }
+
+  .slot-img-wrap{
+    /* size relative to stage so it scales nicely */
+    height:78vh;
+    max-height:780px;
+  }
+  .slot-img-wrap img{ height:100%; width:auto; }
+  @media (max-width: 700px){
+    .slot-img-wrap{height:62vh; max-height:560px}
+  }
+
+  /* nav arrows on 360 */
+  .arrow{
+    position:absolute; top:50%; transform:translateY(-50%);
+    z-index:8;
+    width:44px; height:44px;
+    border:1px solid var(--ink);
+    background:rgba(248,245,239,0.9);
+    backdrop-filter:blur(4px);
+    display:flex; align-items:center; justify-content:center;
+    transition:background .15s, color .15s;
+  }
+  .arrow:hover{background:var(--ink); color:var(--paper)}
+  .arrow.l{left:18px}
+  .arrow.r{right:18px}
+  .arrow svg{width:14px; height:14px}
+
+  /* angle dots */
+  .angle-dial{
+    position:absolute; bottom:24px; left:50%; transform:translateX(-50%);
+    z-index:8;
+    display:flex; align-items:center; gap:14px;
+    background:rgba(248,245,239,0.9);
+    backdrop-filter:blur(4px);
+    border:1px solid var(--line);
+    padding:10px 16px;
+  }
+  .angle-dial .lbl{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px; letter-spacing:0.16em; text-transform:uppercase;
+    color:var(--muted);
+  }
+  .angle-dial .dots{display:flex; gap:8px}
+  .angle-dot{
+    width:10px; height:10px; border-radius:50%;
+    border:1px solid var(--ink);
+    background:transparent;
+    transition:background .15s;
+  }
+  .angle-dot.on{background:var(--ink)}
+  .angle-dial .deg{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px; font-weight:500;
+    min-width:36px; text-align:right;
+  }
+
+  /* ======= INFO COLUMN ======= */
+  .pill-row{display:flex; gap:8px; margin-bottom:18px}
+  .pill{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px; letter-spacing:0.14em; text-transform:uppercase;
+    padding:5px 10px;
+    border:1px solid var(--line);
+    border-radius:999px;
+    color:var(--muted);
+  }
+  .pill.hot{border-color:var(--hot); color:var(--hot)}
+
+  h1.title{
+    font-family:'Fraunces',serif;
+    font-weight:500;
+    font-size:42px;
+    line-height:1.05;
+    letter-spacing:-0.015em;
+    margin:0 0 6px;
+    text-wrap:pretty;
+  }
+  h1.title em{font-style:italic; color:var(--muted); font-weight:400}
+  .sku{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px; letter-spacing:0.18em; text-transform:uppercase;
+    color:var(--muted);
+    margin-bottom:30px;
+  }
+
+  .price-row{
+    display:flex; align-items:baseline; gap:14px;
+    padding:18px 0;
+    border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+    margin-bottom:26px;
+  }
+  .price{font-family:'Fraunces',serif; font-size:28px; font-weight:500}
+  .price-was{color:var(--muted); text-decoration:line-through; font-size:14px}
+  .save{
+    margin-left:auto;
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px; letter-spacing:0.14em; text-transform:uppercase;
+    color:var(--hot);
+  }
+
+  .section-label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px; letter-spacing:0.16em; text-transform:uppercase;
+    color:var(--muted);
+    margin-bottom:10px;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .section-label a{text-decoration:underline; text-underline-offset:3px}
+
+  .swatches{display:flex; gap:10px; margin-bottom:24px}
+  .swatch{
+    width:34px; height:34px; border-radius:50%;
+    border:1px solid var(--line);
+    position:relative;
+    cursor:pointer;
+  }
+  .swatch.on::after{
+    content:""; position:absolute; inset:-5px;
+    border:1px solid var(--ink); border-radius:50%;
+  }
+
+  .sizes{
+    display:grid; grid-template-columns:repeat(6, 1fr);
+    gap:6px; margin-bottom:24px;
+  }
+  .size{
+    border:1px solid var(--line);
+    background:var(--paper);
+    padding:12px 0;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px; letter-spacing:0.1em; text-transform:uppercase;
+    transition:background .12s, color .12s, border-color .12s;
+  }
+  .size:hover{border-color:var(--ink)}
+  .size.on{background:var(--ink); color:var(--paper); border-color:var(--ink)}
+  .size.out{
+    color:var(--muted); text-decoration:line-through;
+    background:transparent; cursor:not-allowed;
+  }
+
+  .cta{
+    width:100%;
+    padding:18px;
+    background:var(--ink); color:var(--paper);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px; letter-spacing:0.18em; text-transform:uppercase;
+    display:flex; justify-content:space-between; align-items:center;
+    transition:transform .12s ease, background .12s;
+  }
+  .cta:hover{background:#000}
+  .cta:active{transform:translateY(1px)}
+  .cta .arrow-i{font-family:inherit}
+
+  .meta-grid{
+    margin-top:32px;
+    display:grid; grid-template-columns:1fr 1fr;
+    gap:14px;
+    padding-top:24px; border-top:1px solid var(--line);
+  }
+  .meta-grid .row{
+    display:flex; justify-content:space-between;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px; letter-spacing:0.04em;
+  }
+  .meta-grid .row span:first-child{color:var(--muted); text-transform:uppercase; letter-spacing:0.12em; font-size:10px}
+
+  .accordion{margin-top:24px; border-top:1px solid var(--line)}
+  .acc-item{border-bottom:1px solid var(--line)}
+  .acc-head{
+    width:100%; text-align:left;
+    padding:18px 0;
+    display:flex; justify-content:space-between; align-items:center;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px; letter-spacing:0.16em; text-transform:uppercase;
+  }
+  .acc-body{
+    overflow:hidden;
+    max-height:0; transition:max-height .25s ease, padding .25s ease;
+    padding:0 0;
+    color:#3d3a35;
+    font-size:13.5px; line-height:1.65;
+  }
+  .acc-item.open .acc-body{max-height:300px; padding:0 0 18px}
+  .acc-head .plus{
+    transition:transform .2s; display:inline-block;
+    width:14px; text-align:center;
+  }
+  .acc-item.open .plus{transform:rotate(45deg)}
+
+  /* ======= LOWER SECTIONS ======= */
+  .also{
+    padding:64px 28px 100px;
+    border-top:1px solid var(--line);
+    margin-top:64px;
+  }
+  .also-head{
+    display:flex; justify-content:space-between; align-items:flex-end;
+    margin-bottom:28px;
+  }
+  .also h2{
+    font-family:'Fraunces',serif; font-weight:500;
+    font-size:30px; letter-spacing:-0.01em; margin:0;
+  }
+  .also h2 em{font-style:italic; color:var(--muted)}
+  .also-grid{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:18px;
+  }
+  @media (max-width: 880px){.also-grid{grid-template-columns:repeat(2,1fr)}}
+  .card{
+    background:var(--paper); border:1px solid var(--line);
+    aspect-ratio: 3/4; position:relative;
+    display:flex; align-items:flex-end; padding:14px;
+  }
+  .card .ph{
+    position:absolute; inset:0;
+    background:
+      repeating-linear-gradient(135deg, rgba(0,0,0,0.04) 0 1px, transparent 1px 8px),
+      linear-gradient(180deg, #efeae0, #e7dfd0);
+  }
+  .card .meta{
+    position:relative; z-index:2;
+    width:100%;
+    display:flex; justify-content:space-between; align-items:flex-end;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+  }
+  .card .name{letter-spacing:0.04em}
+  .card .price-s{color:var(--muted)}
+
+  /* footer */
+  footer{
+    background:var(--ink); color:#cdc6b9;
+    padding:48px 28px 28px;
+  }
+  .foot-grid{display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:32px}
+  @media (max-width:780px){.foot-grid{grid-template-columns:1fr 1fr; gap:24px}}
+  footer h4{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px; letter-spacing:0.18em; text-transform:uppercase;
+    color:#7a7367; margin:0 0 14px;
+  }
+  footer ul{list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px}
+  footer a{color:#cdc6b9; font-size:13px}
+  footer a:hover{color:#fff}
+  .brand-foot{
+    font-family:'Fraunces',serif; font-style:italic;
+    font-size:36px; color:#f0ece3; margin-bottom:12px;
+  }
+  .foot-bottom{
+    margin-top:36px; padding-top:18px;
+    border-top:1px solid #2c2620;
+    display:flex; justify-content:space-between;
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px; letter-spacing:0.14em; text-transform:uppercase;
+    color:#7a7367;
+  }
+</style>
+</head>
+<body>
+  <div class="topstrip"><span>FREE SHIPPING OVER ₺2.500</span><span>·</span><span>STUDIO PICKUP — KADIKÖY</span><span>·</span><span>30 GÜN İADE</span></div>
+
+  <div id="root"></div>
+
+  <script type="application/json" id="product-data">
+  {
+    "name": "Corduroy Bomber",
+    "italic": "Sand",
+    "sku": "O2Y-AW25-CB-03",
+    "price": "₺3.450",
+    "was": "₺3.950",
+    "save": "−13%",
+    "tags": ["NEW DROP", "AW25"],
+    "colors": [
+      {"id":"sand","hex":"#cbb88f","label":"Sand"},
+      {"id":"olive","hex":"#6a6a45","label":"Olive"},
+      {"id":"black","hex":"#1a1714","label":"Ink"}
+    ],
+    "sizes": [
+      {"id":"xs","stock":true},
+      {"id":"s","stock":true},
+      {"id":"m","stock":true},
+      {"id":"l","stock":false},
+      {"id":"xl","stock":true},
+      {"id":"xxl","stock":true}
+    ],
+    "frames": [
+      {"id":"front","src":"assets/model-front.png","label":"FRONT","deg":"0°","flip":false},
+      {"id":"side-r","src":"assets/model-side-left.png","label":"3/4 R","deg":"90°","flip":true},
+      {"id":"back","src":"assets/model-back.png","label":"BACK","deg":"180°","flip":false},
+      {"id":"side-l","src":"assets/model-side-left.png","label":"3/4 L","deg":"270°","flip":false}
+    ]
+  }
+  </script>
+
+  <script type="text/babel" data-presets="env,react">
+  const { useState, useEffect, useMemo, useRef } = React;
+  const PROD = JSON.parse(document.getElementById('product-data').textContent);
+
+  /* ===== TWEAKS ===== */
+  const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+    "accent": "#1a1714",
+    "background": "#f3efe8",
+    "headline": "Corduroy Bomber",
+    "italicSuffix": "Sand",
+    "showThumbs": false,
+    "carouselStyle": "flat-row"
+  }/*EDITMODE-END*/;
+
+  function useTweaks(defaults){
+    const [t, setT] = useState(defaults);
+    const set = (k,v)=>{
+      const next = typeof k==='object' ? {...t,...k} : {...t,[k]:v};
+      setT(next);
+      window.parent.postMessage({type:'__edit_mode_set_keys', edits: typeof k==='object'?k:{[k]:v}}, '*');
+    };
+    return [t, set];
+  }
+
+  function TweaksPanel({tweaks, set, onClose}){
+    return (
+      <div style={{
+        position:'fixed', right:18, bottom:18, zIndex:200,
+        width:280, background:'#fff', border:'1px solid #1a1714',
+        padding:16, fontFamily:"'JetBrains Mono',monospace", fontSize:11,
+        boxShadow:'0 12px 40px rgba(0,0,0,0.18)'
+      }}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14, letterSpacing:'0.16em', textTransform:'uppercase'}}>
+          <b>Tweaks</b>
+          <button onClick={onClose} style={{fontSize:14}}>×</button>
+        </div>
+
+        <label style={{display:'block', marginBottom:10}}>
+          <div style={{color:'#888', marginBottom:4}}>HEADLINE</div>
+          <input value={tweaks.headline} onChange={e=>set('headline',e.target.value)}
+            style={{width:'100%',padding:6,border:'1px solid #ddd',fontFamily:'inherit',fontSize:11}}/>
+        </label>
+
+        <label style={{display:'block', marginBottom:10}}>
+          <div style={{color:'#888', marginBottom:4}}>ITALIC SUFFIX</div>
+          <input value={tweaks.italicSuffix} onChange={e=>set('italicSuffix',e.target.value)}
+            style={{width:'100%',padding:6,border:'1px solid #ddd',fontFamily:'inherit',fontSize:11}}/>
+        </label>
+
+        <label style={{display:'block', marginBottom:10}}>
+          <div style={{color:'#888', marginBottom:4}}>BACKGROUND</div>
+          <input type="color" value={tweaks.background} onChange={e=>set('background',e.target.value)}
+            style={{width:'100%',height:32,border:'1px solid #ddd',background:'none'}}/>
+        </label>
+
+        <div style={{marginBottom:10}}>
+          <div style={{color:'#888', marginBottom:4}}>CAROUSEL STYLE</div>
+          <div style={{display:'flex',gap:6}}>
+            {['trio','five','flat-row'].map(s=>(
+              <button key={s} onClick={()=>set('carouselStyle',s)}
+                style={{
+                  flex:1, padding:'6px 4px', border:'1px solid #1a1714',
+                  background: tweaks.carouselStyle===s ? '#1a1714' : 'transparent',
+                  color: tweaks.carouselStyle===s ? '#fff' : '#1a1714',
+                  fontFamily:'inherit', fontSize:10, textTransform:'uppercase', letterSpacing:'0.08em'
+                }}>{s}</button>
+            ))}
+          </div>
+        </div>
+
+        <label style={{display:'flex',alignItems:'center',gap:8, marginBottom:6}}>
+          <input type="checkbox" checked={tweaks.showThumbs} onChange={e=>set('showThumbs',e.target.checked)}/>
+          <span>SHOW SIDE THUMBS</span>
+        </label>
+      </div>
+    );
+  }
+
+  /* ===== 360 CAROUSEL =====
+     We render 4 angles. Center slot = the active angle.
+     Side & far-side slots show the neighbours so you can click them.
+  */
+  function Carousel360({frames, idx, setIdx, style}){
+    const N = frames.length;
+    const slotFor = (i)=>{
+      // distance in carousel order, signed (-2,-1,0,1,2 ... wrapping)
+      let d = ((i - idx) % N + N) % N;
+      if (d > N/2) d -= N;
+      // d == 0 center, -1 left, 1 right, ±2 far
+      if (style === 'trio'){
+        if (d === 0) return 'center';
+        if (d === -1 || d === N-1) return 'left';
+        if (d === 1 || d === -(N-1)) return 'right';
+        return 'hidden';
+      }
+      // five (default)
+      if (d === 0) return 'center';
+      if (d === -1) return 'left';
+      if (d === 1) return 'right';
+      if (d === -2 || d === 2) return d < 0 ? 'far-left' : 'far-right';
+      return 'hidden';
+    };
+
+    if (style === 'flat-row'){
+      // True 360 ring carousel — front/sides + a single "far back" slot.
+      //
+      // Layout (5 logical positions):
+      //   far-back (top center, smallest, behind everything)
+      //   left  (mid-size, well separated from center)
+      //   center (largest, foreground)
+      //   right (mid-size, well separated from center)
+      //
+      // For a 4-frame ring (N=4) the diametrically opposite frame (d = ±2) is
+      // the SAME image — we render it once at far-back center.
+      const N2 = frames.length;
+      const slotD = (i) => {
+        let d = ((i - idx) % N2 + N2) % N2;
+        if (d > N2/2) d -= N2;
+        return d;
+      };
+
+      // wide spacing — left/right pushed out to ~18 / 82 %, center scale 1.
+      // far-back: top:34%, scale .22, behind everything.
+      const POS = {
+        '-1': { leftPct: 18, topPct: 50, scale: 0.55, opacity: 0.95, z: 3 },
+         '0': { leftPct: 50, topPct: 50, scale: 1.00, opacity: 1.00, z: 6 },
+         '1': { leftPct: 82, topPct: 50, scale: 0.55, opacity: 0.95, z: 3 },
+        // far back — diametrically opposite frame, sits behind active.
+         '2': { leftPct: 50, topPct: 38, scale: 0.26, opacity: 0.85, z: 1 },
+        '-2': { leftPct: 50, topPct: 38, scale: 0.26, opacity: 0.85, z: 1 },
+      };
+      const OFF_LEFT  = { leftPct: -8,  topPct: 50, scale: 0.20, opacity: 0, z: 0 };
+      const OFF_RIGHT = { leftPct: 108, topPct: 50, scale: 0.20, opacity: 0, z: 0 };
+
+      return (
+        <div style={{position:'absolute', inset:0, overflow:'hidden'}}>
+          {/* soft floor shadow that anchors the carousel */}
+          <div style={{
+            position:'absolute', left:'50%', bottom:'10%',
+            width:'70%', height:24, transform:'translateX(-50%)',
+            background:'radial-gradient(ellipse at center, rgba(0,0,0,0.10), transparent 70%)',
+            pointerEvents:'none', zIndex:0
+          }}/>
+          {/* inner stage with breathing room — active image sized at 78% so
+              even with bezier overshoot it never clips top/bottom */}
+          <div style={{position:'absolute', inset:0}}>
+            {frames.map((f,i)=>{
+              const d = slotD(i);
+              const isActive = d === 0;
+              const p = POS[d] !== undefined ? POS[d] : (d < 0 ? OFF_LEFT : OFF_RIGHT);
+
+              return (
+                <button key={f.id}
+                  onClick={()=> !isActive && setIdx(i)}
+                  aria-label={`View ${f.label}`}
+                  style={{
+                    position:'absolute',
+                    left: `${p.leftPct}%`,
+                    top:  `${p.topPct}%`,
+                    transform: `translate(-50%, -50%) scale(${p.scale})`,
+                    transformOrigin: 'center center',
+                    height: '78%',
+                    maxHeight: '78%',
+                    zIndex: p.z,
+                    opacity: p.opacity,
+                    background:'transparent', border:0, padding:0,
+                    cursor: isActive ? 'default' : 'pointer',
+                    pointerEvents: p.opacity === 0 ? 'none' : 'auto',
+                    /* ease-out (no overshoot) avoids clipping at peak of motion */
+                    transition:'left .7s cubic-bezier(.22,.61,.36,1), top .7s cubic-bezier(.22,.61,.36,1), transform .7s cubic-bezier(.22,.61,.36,1), opacity .55s ease'
+                  }}>
+                  <img src={f.src} alt={f.label} style={{
+                    height:'100%', width:'auto',
+                    transform: f.flip ? 'scaleX(-1)' : 'none',
+                    mixBlendMode: 'multiply',
+                    pointerEvents:'none',
+                    display:'block'
+                  }}/>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="carousel">
+        {frames.map((f,i)=>{
+          const cls = slotFor(i);
+          return (
+            <div key={f.id}
+                 className={`slot ${cls} ${f.flip ? 'flip' : ''}`}
+                 onClick={()=> cls!=='center' && cls!=='hidden' && setIdx(i)}
+                 role="button" aria-label={`View ${f.label}`}>
+              <div className="slot-img-wrap">
+                <img src={f.src} alt={f.label} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  /* ===== GALLERY ===== */
+  function Gallery({frames, mode, setMode, idx, setIdx, tweaks}){
+    // Keyboard
+    useEffect(()=>{
+      const onKey = (e)=>{
+        if (mode !== '360') return;
+        if (e.key === 'ArrowRight') setIdx((idx+1) % frames.length);
+        if (e.key === 'ArrowLeft')  setIdx((idx-1+frames.length) % frames.length);
+        if (e.key === 'Escape') setMode('flat');
+      };
+      window.addEventListener('keydown', onKey);
+      return ()=>window.removeEventListener('keydown', onKey);
+    }, [mode, idx, frames.length]);
+
+    const cur = frames[idx];
+
+    return (
+      <div className="gallery">
+        {/* Thumbs (flat mode) */}
+        {mode === 'flat' && tweaks.showThumbs && (
+          <div className="thumbs">
+            {frames.map((f,i)=>(
+              <button key={f.id}
+                className={`thumb ${i===idx ? 'on':''}`}
+                onClick={()=>setIdx(i)}
+                aria-label={`Show ${f.label}`}>
+                <img src={f.src} alt={f.label}
+                  style={{transform: f.flip ? 'scaleX(-1)' : 'none'}}/>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* 360 toggle */}
+        <button className={`toggle-360 ${mode==='360'?'on':''}`}
+          onClick={()=> setMode(mode==='360' ? 'flat':'360')}
+          aria-label="Toggle 360° preview"
+          title="360° preview">
+          {mode==='360' ? (
+            <span className="lbl">CLOSE<b>×</b></span>
+          ) : (
+            <span className="lbl">VIEW<b>360°</b></span>
+          )}
+        </button>
+
+        <div className="frame-counter">
+          {String(idx+1).padStart(2,'0')} / {String(frames.length).padStart(2,'0')} · {cur.label}
+        </div>
+
+        {mode === 'flat' && (
+          <div className="flat-stage">
+            <img src={cur.src} alt={cur.label}
+              style={{transform: cur.flip ? 'scaleX(-1)' : 'none'}}/>
+          </div>
+        )}
+
+        {mode === '360' && (
+          <div className="stage360">
+            <Carousel360 frames={frames} idx={idx} setIdx={setIdx} style={tweaks.carouselStyle}/>
+            <button className="arrow l" onClick={()=>setIdx((idx-1+frames.length)%frames.length)} aria-label="Previous angle">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M15 6l-6 6 6 6"/></svg>
+            </button>
+            <button className="arrow r" onClick={()=>setIdx((idx+1)%frames.length)} aria-label="Next angle">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 6l6 6-6 6"/></svg>
+            </button>
+            <div className="angle-dial">
+              <span className="lbl">Angle</span>
+              <div className="dots">
+                {frames.map((f,i)=>(
+                  <button key={f.id} className={`angle-dot ${i===idx?'on':''}`}
+                    onClick={()=>setIdx(i)} aria-label={`Go to ${f.label}`}/>
+                ))}
+              </div>
+              <span className="deg">{cur.deg}</span>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  /* ===== INFO COLUMN ===== */
+  function Info({tweaks}){
+    const [color, setColor] = useState(PROD.colors[0].id);
+    const [size, setSize]   = useState('m');
+    const [open, setOpen]   = useState({details:true, fit:false, ship:false});
+
+    return (
+      <div className="info">
+        <div className="pill-row">
+          {PROD.tags.map((t,i)=>(
+            <span key={t} className={`pill ${i===0 ? 'hot':''}`}>{t}</span>
+          ))}
+        </div>
+
+        <h1 className="title">{tweaks.headline} <em>{tweaks.italicSuffix}</em></h1>
+        <div className="sku">SKU · {PROD.sku}</div>
+
+        <div className="price-row">
+          <span className="price">{PROD.price}</span>
+          <span className="price-was">{PROD.was}</span>
+          <span className="save">{PROD.save}</span>
+        </div>
+
+        <div className="section-label">
+          <span>Colour · <span style={{color:'var(--ink)'}}>{PROD.colors.find(c=>c.id===color).label}</span></span>
+          <span>{PROD.colors.length} options</span>
+        </div>
+        <div className="swatches">
+          {PROD.colors.map(c=>(
+            <button key={c.id} className={`swatch ${c.id===color?'on':''}`}
+              style={{background:c.hex}}
+              onClick={()=>setColor(c.id)}
+              aria-label={c.label}/>
+          ))}
+        </div>
+
+        <div className="section-label">
+          <span>Size</span>
+          <a href="#">Size guide</a>
+        </div>
+        <div className="sizes">
+          {PROD.sizes.map(s=>(
+            <button key={s.id}
+              className={`size ${s.id===size?'on':''} ${!s.stock?'out':''}`}
+              onClick={()=> s.stock && setSize(s.id)}
+              disabled={!s.stock}>
+              {s.id.toUpperCase()}
+            </button>
+          ))}
+        </div>
+
+        <button className="cta">
+          <span>Add to bag</span>
+          <span className="arrow-i">→</span>
+        </button>
+
+        <div className="meta-grid">
+          <div className="row"><span>Fabric</span><span>14-wale corduroy</span></div>
+          <div className="row"><span>Origin</span><span>Made in İstanbul</span></div>
+          <div className="row"><span>Lining</span><span>Cotton twill</span></div>
+          <div className="row"><span>Care</span><span>Cold wash, hang dry</span></div>
+        </div>
+
+        <div className="accordion">
+          {[
+            {k:'details', t:'Details', body:'Boxy cropped fit. Two-way zip with metal trim. Embroidered \u201Co2y\u201D mark at chest. Side welt pockets, ribbed elastic hem and cuffs. Heavyweight 14-wale corduroy with a soft hand and natural drape.'},
+            {k:'fit',     t:'Fit & Sizing', body:'Model is 186cm and wears size M. The bomber runs true to size with room for layering. For a slimmer silhouette, size down.'},
+            {k:'ship',    t:'Shipping & Returns', body:'Free shipping on Türkiye orders over ₺2.500. International rates calculated at checkout. 30-day returns on unworn items with original tags.'}
+          ].map(it=>(
+            <div key={it.k} className={`acc-item ${open[it.k]?'open':''}`}>
+              <button className="acc-head" onClick={()=>setOpen({...open,[it.k]:!open[it.k]})}>
+                <span>{it.t}</span><span className="plus">+</span>
+              </button>
+              <div className="acc-body">{it.body}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  /* ===== APP ===== */
+  function App(){
+    const [tweaks, setTweaks] = useTweaks(TWEAK_DEFAULTS);
+    const [editMode, setEditMode] = useState(false);
+    const [mode, setMode] = useState('flat'); // flat | 360
+    const [idx, setIdx]   = useState(0);
+
+    // Edit-mode protocol
+    useEffect(()=>{
+      const onMsg = (e)=>{
+        if (e.data?.type === '__activate_edit_mode') setEditMode(true);
+        if (e.data?.type === '__deactivate_edit_mode') setEditMode(false);
+      };
+      window.addEventListener('message', onMsg);
+      window.parent.postMessage({type:'__edit_mode_available'}, '*');
+      return ()=>window.removeEventListener('message', onMsg);
+    }, []);
+
+    // apply background tweak
+    useEffect(()=>{
+      document.documentElement.style.setProperty('--bg', tweaks.background);
+    }, [tweaks.background]);
+
+    return (
+      <>
+        <header className="nav">
+          <div className="nav-inner">
+            <nav className="nav-left">
+              <a href="#">Shop</a>
+              <a href="#">Lookbook</a>
+              <a href="#">Studio</a>
+            </nav>
+            <a className="brand" href="#">over2you<sup>KDK</sup></a>
+            <nav className="nav-right">
+              <a href="#">Search</a>
+              <a href="#">Account</a>
+              <a className="cart-pill" href="#">
+                <span>Bag</span>
+                <span style={{opacity:.6}}>· 0</span>
+              </a>
+            </nav>
+          </div>
+        </header>
+
+        <div className="crumb">
+          <a href="#">Shop</a> <span>/</span> <a href="#">Outerwear</a> <span>/</span> <span style={{color:'var(--ink)'}}>{PROD.name}</span>
+        </div>
+
+        <main className="product">
+          <Gallery
+            frames={PROD.frames}
+            mode={mode} setMode={setMode}
+            idx={idx} setIdx={setIdx}
+            tweaks={tweaks}
+          />
+          <Info tweaks={tweaks}/>
+        </main>
+
+        <section className="also">
+          <div className="also-head">
+            <h2>You might also <em>like</em></h2>
+            <a href="#" style={{fontFamily:"'JetBrains Mono',monospace",fontSize:11,letterSpacing:'0.16em',textTransform:'uppercase',textDecoration:'underline',textUnderlineOffset:3}}>View all</a>
+          </div>
+          <div className="also-grid">
+            {[
+              {n:'Workwear Pant', p:'₺1.890'},
+              {n:'Wool Beanie', p:'₺640'},
+              {n:'Box Tee · Cream', p:'₺520'},
+              {n:'Tapestry Trouser', p:'₺2.140'}
+            ].map(c=>(
+              <div key={c.n} className="card">
+                <div className="ph"/>
+                <div className="meta">
+                  <span className="name">{c.n}</span>
+                  <span className="price-s">{c.p}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <footer>
+          <div className="foot-grid">
+            <div>
+              <div className="brand-foot">over2you</div>
+              <div style={{maxWidth:340, fontSize:13, lineHeight:1.6, color:'#a89f8e'}}>
+                Independent label. Designed and assembled in Kadıköy, İstanbul. Made for everyday wear, built to outlast trends.
+              </div>
+            </div>
+            <div>
+              <h4>Shop</h4>
+              <ul><li><a href="#">New</a></li><li><a href="#">Outerwear</a></li><li><a href="#">Tops</a></li><li><a href="#">Bottoms</a></li></ul>
+            </div>
+            <div>
+              <h4>Studio</h4>
+              <ul><li><a href="#">About</a></li><li><a href="#">Stockists</a></li><li><a href="#">Visit</a></li></ul>
+            </div>
+            <div>
+              <h4>Help</h4>
+              <ul><li><a href="#">Shipping</a></li><li><a href="#">Returns</a></li><li><a href="#">Contact</a></li></ul>
+            </div>
+          </div>
+          <div className="foot-bottom">
+            <span>© 2026 over2you · Kadıköy</span>
+            <span>EN · TRY</span>
+          </div>
+        </footer>
+
+        {editMode && <TweaksPanel tweaks={tweaks} set={setTweaks} onClose={()=>{
+          setEditMode(false);
+          window.parent.postMessage({type:'__edit_mode_dismissed'}, '*');
+        }}/>}
+      </>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+  </script>
+</body>
+</html>
