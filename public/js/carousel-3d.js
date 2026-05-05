@@ -3,8 +3,8 @@
  * Data shape (data-frames JSON):
  *   [{ id, src, label, deg, flip }, ...]
  *
- * Capability gate: renders the 360 toggle only if frames.length === 4.
- * Other lengths get flat-only mode, no toggle.
+ * Capability gate: renders the 360 toggle only if frames.length >= 4.
+ * The cylinder POS table is N=4 tuned; N>4 falls back to off-stage for d>±2.
  */
 (function () {
   if (customElements.get('carousel-3d')) return;
@@ -38,10 +38,12 @@
       this._renderShell();
       this._renderModeView();
       this._bindKeys();
+      this._observeResize();
     }
 
     disconnectedCallback() {
       if (this._keyHandler) window.removeEventListener('keydown', this._keyHandler);
+      if (this._ro) { this._ro.disconnect(); this._ro = null; }
     }
 
     setIdx(i) {
@@ -66,7 +68,7 @@
     }
 
     _renderShell() {
-      const has4 = this.frames.length === 4;
+      const has360 = this.frames.length >= 4;
 
       const slotsHTML = this.frames.map((f, i) => `
         <button class="c3d-slot" type="button" data-slot="${i}" aria-label="View ${f.label}">
@@ -90,7 +92,7 @@
             </button>
             <div class="c3d-counter" aria-live="polite"></div>
           </div>
-          ${has4 ? `
+          ${has360 ? `
             <button class="c3d-toggle" type="button" aria-label="Toggle 360° view" title="360° preview">
               <span class="c3d-lbl"></span>
             </button>
@@ -192,6 +194,14 @@
         else if (e.key === 'Escape') { e.preventDefault(); this.setMode('flat'); }
       };
       window.addEventListener('keydown', this._keyHandler);
+    }
+
+    _observeResize() {
+      if (typeof ResizeObserver === 'undefined') return;
+      this._ro = new ResizeObserver(() => {
+        if (this.mode === '360') this._updateSlotPositions();
+      });
+      this._ro.observe(this);
     }
   }
 

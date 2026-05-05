@@ -3,7 +3,7 @@ import Layout from '../layouts/Layout.astro';
 const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : import.meta.env.BASE_URL + '/');
 ---
 <Layout title="Product — Over2You">
-  <div class="product-container" style="padding:6rem var(--container-gutter) 4rem;max-width:1400px;margin:0 auto;">
+  <div class="pd-page" style="padding:6rem var(--container-gutter) 4rem;max-width:1400px;margin:0 auto;">
     <div class="product-layout" id="productLayout">
       <p style="text-align:center;padding:4rem;color:rgb(var(--text-color)/0.4);">Loading product...</p>
     </div>
@@ -48,7 +48,7 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
       const related = list.filter(r => r.category === product.category && r.id !== product.id).slice(0, 8);
 
       const frames = Array.isArray(product.images360) ? product.images360 : [];
-      const has360 = frames.length === 4 && frames.every(f => f && typeof f === 'object' && f.src);
+      const has360 = frames.length >= 4 && frames.every(f => f && typeof f === 'object' && f.src);
 
       const thumbsSource = has360
         ? frames.map((f, i) => ({ src: f.src, label: f.label || ('View ' + (i+1)), flip: !!f.flip }))
@@ -75,11 +75,11 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
           <span style="color:rgb(var(--text-color)/0.7);">${product.name}</span>
         </div>
         <div class="product-grid-layout">
-          <div class="product-gallery">
+          <div class="pd-gallery">
             <div class="pd-thumbs" id="pdThumbs">${thumbsHTML}</div>
             <div class="pd-stage-wrap">${stageHTML}</div>
           </div>
-          <div class="product-info">
+          <div class="pd-info">
             <h1 style="font:var(--heading-font-style) 800 1.5rem/1.2 var(--heading-font-family);text-transform:uppercase;letter-spacing:0.03em;margin-bottom:0.75rem;">${product.name}</h1>
             <p style="font-size:var(--text-base);margin-bottom:1rem;">€${product.price.toFixed(2)}</p>
             ${product.badge ? `<span style="display:inline-block;padding:3px 8px;font-size:10px;font-weight:700;background:rgb(var(--text-color));color:rgb(var(--background));margin-bottom:1.25rem;">${product.badge}</span>` : ''}
@@ -184,19 +184,27 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
 </Layout>
 
 <style is:global>
-  /* ===== Product page layout ===== */
+  /* ===== Product page layout =====
+     Outer wrapper renamed .pd-page to escape legacy `.product-container { display:grid; 1.2fr 0.8fr }`
+     in style.css that hijacked our layout. .pd-gallery / .pd-info renamed for the same reason. */
+  .pd-page {
+    display: block;
+  }
   .product-grid-layout {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
     gap: 3rem;
     align-items: start;
   }
-  .product-gallery {
+  .pd-gallery {
     display: grid;
     grid-template-columns: 80px minmax(0, 1fr);
     gap: 1rem;
     position: sticky;
     top: 6rem;
+  }
+  .pd-info {
+    position: static;
   }
 
   /* ===== Thumbnail rail ===== */
@@ -255,8 +263,9 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
   .c3d-stage {
     position: relative;
     width: 100%;
-    aspect-ratio: 3 / 4;
-    max-height: 75vh;
+    aspect-ratio: 4 / 5;
+    min-height: 480px;
+    max-height: 80vh;
     background:
       radial-gradient(ellipse 60% 40% at 50% 80%, rgba(0,0,0,0.06), transparent 70%),
       rgb(var(--background));
@@ -400,19 +409,26 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
 
   /* ===== Mobile breakpoint ===== */
   @media (max-width: 768px) {
-    .product-grid-layout { grid-template-columns: 1fr !important; }
-    .product-gallery {
+    .product-grid-layout {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 1.5rem;
+    }
+    .pd-gallery {
       grid-template-columns: minmax(0, 1fr);
       position: static;
+      gap: 0.75rem;
     }
     .pd-thumbs {
       flex-direction: row;
       order: 2;
       justify-content: center;
+      flex-wrap: wrap;
     }
     .pd-thumb { width: 64px; }
     .pd-stage-wrap { order: 1; }
+    .c3d-stage { min-height: 380px; }
     .c3d-toggle { width: 48px; height: 48px; top: 12px; right: 12px; }
     .c3d-arrow { width: 38px; height: 38px; }
+    .c3d-counter { font-size: 9px; }
   }
 </style>
