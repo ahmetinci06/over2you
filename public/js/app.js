@@ -316,12 +316,14 @@ function renderProducts(filter, targetEl) {
     <div class="product-card" data-id="${product.id}">
       <div class="product-card-img">
         <a href="${base}product?id=${product.id}">
-          <div class="product-card-img-placeholder" style="background:${product.color};">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="0.5">
-              <path d="M12 2C8 2 4 4 4 8v12a2 2 0 002 2h12a2 2 0 002-2V8c0-4-4-6-8-6z"/>
-              <path d="M8 2v4M16 2v4"/>
-            </svg>
-          </div>
+          ${(product.images && product.images[0])
+            ? `<img src="${imgBase}${product.images[0]}" alt="${product.name}" loading="lazy">`
+            : `<div class="product-card-img-placeholder" style="background:${product.color};">
+                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="0.5">
+                   <path d="M12 2C8 2 4 4 4 8v12a2 2 0 002 2h12a2 2 0 002-2V8c0-4-4-6-8-6z"/>
+                   <path d="M8 2v4M16 2v4"/>
+                 </svg>
+               </div>`}
         </a>
         ${product.badge ? `<span class="product-badge">${product.badge}</span>` : ''}
         <div class="product-quick-add" onclick="Cart.add(products.find(p=>p.id===${product.id}))">+ QUICK ADD</div>
