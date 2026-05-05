@@ -15,10 +15,10 @@
       "products/bdg-jacket-back.png"
     ],
     "images360": [
-      "products/bdg-jacket-front.png",
-      "products/bdg-jacket-side.png",
-      "products/bdg-jacket-back.png",
-      "products/bdg-jacket-left.png"
+      { "id": "front",  "src": "products/bdg-jacket-front.png", "label": "FRONT", "deg": "0°",   "flip": false },
+      { "id": "side-r", "src": "products/bdg-jacket-side.png",  "label": "3/4 R", "deg": "90°",  "flip": false },
+      { "id": "back",   "src": "products/bdg-jacket-back.png",  "label": "BACK",  "deg": "180°", "flip": false },
+      { "id": "side-l", "src": "products/bdg-jacket-left.png",  "label": "3/4 L", "deg": "270°", "flip": false }
     ]
   },
   {
@@ -37,10 +37,10 @@
       "products/bpm-hoodie-back.png"
     ],
     "images360": [
-      "products/bpm-hoodie-front.png",
-      "products/bpm-hoodie-side.png",
-      "products/bpm-hoodie-back.png",
-      "products/bpm-hoodie-left.png"
+      { "id": "front",  "src": "products/bpm-hoodie-front.png", "label": "FRONT", "deg": "0°",   "flip": false },
+      { "id": "side-r", "src": "products/bpm-hoodie-side.png",  "label": "3/4 R", "deg": "90°",  "flip": false },
+      { "id": "back",   "src": "products/bpm-hoodie-back.png",  "label": "BACK",  "deg": "180°", "flip": false },
+      { "id": "side-l", "src": "products/bpm-hoodie-left.png",  "label": "3/4 L", "deg": "270°", "flip": false }
     ]
   }
 ]
