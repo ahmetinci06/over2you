@@ -86,6 +86,21 @@
     .img-thumb-wrap { position: relative; }
     .img-thumb-rm { position: absolute; top: -4px; right: -4px; width: 18px; height: 18px; background: var(--danger); color: #fff; border: none; border-radius: 50%; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
+    /* 360° angle slot grid (4 fixed slots: front, side-r, back, side-l) */
+    .img360-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-top: 0.5rem; }
+    .img360-slot { aspect-ratio: 3 / 4; border: 2px dashed var(--border); border-radius: 6px; position: relative; cursor: pointer; overflow: hidden; background: #fafafa; transition: border-color 0.15s; }
+    .img360-slot:hover { border-color: var(--accent); }
+    .img360-slot.has-image { border-style: solid; border-color: var(--accent); }
+    .img360-slot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .img360-slot-meta { position: absolute; left: 0; right: 0; top: 0; padding: 4px 6px; background: rgba(255,255,255,0.85); display: flex; justify-content: space-between; align-items: center; font-size: 9px; font-weight: 700; letter-spacing: 0.04em; }
+    .img360-slot-deg { color: var(--muted); }
+    .img360-slot-empty { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--muted); font-size: 10px; }
+    .img360-slot-empty span:first-child { font-size: 22px; margin-bottom: 4px; }
+    .img360-slot-rm { position: absolute; top: 4px; right: 4px; width: 18px; height: 18px; background: var(--danger); color: #fff; border: none; border-radius: 50%; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 2; opacity: 0; transition: opacity 0.15s; }
+    .img360-slot.has-image:hover .img360-slot-rm { opacity: 1; }
+    .img360-hint { font-size: 11px; color: var(--muted); margin-top: 0.5rem; }
+    @media (max-width: 600px) { .img360-grid { grid-template-columns: repeat(2, 1fr); } }
+
     /* Login */
     .login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem; }
     .login-box { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 2.5rem; max-width: 380px; width: 100%; text-align: center; }
@@ -311,12 +326,16 @@
     <div class="form-row"><div class="form-group"><label>Color Family</label><select id="p_colorFamily"><option value="black">Black</option><option value="white">White</option><option value="grey">Grey</option><option value="blue">Blue</option><option value="red">Red</option><option value="pink">Pink</option><option value="brown">Brown</option><option value="green">Green</option><option value="dark">Dark</option></select></div><div class="form-group"><label>Sizes</label><input id="p_sizes" value="XXS,XS,S,M,L,XL,XXL"></div></div>
     <div class="form-row"><div class="form-group"><label>Stock Status</label><select id="p_stock"><option value="in-stock">In Stock</option><option value="low-stock">Low Stock</option><option value="out-of-stock">Out of Stock</option></select></div><div class="form-group"><label>Stock Quantity</label><input type="number" id="p_stockQty" placeholder="∞"></div></div>
     <div class="form-row single"><div class="form-group"><label>Description</label><textarea id="p_description" rows="3"></textarea></div></div>
-    <div class="form-row single"><div class="form-group"><label>Images</label>
+    <div class="form-row single"><div class="form-group"><label>Images (gallery — first is the listing thumbnail)</label>
       <div class="img-upload-zone" id="imgDropZone" onclick="document.getElementById('imgFileInput').click()">
         📁 Click or drag images here
         <input type="file" id="imgFileInput" accept="image/*" multiple style="display:none;" onchange="handleImageUpload(this.files)">
       </div>
       <div class="img-thumbs" id="imgThumbs"></div>
+    </div></div>
+    <div class="form-row single"><div class="form-group"><label>360° View — 4 angle shots (optional)</label>
+      <div class="img360-grid" id="img360Grid"></div>
+      <p class="img360-hint">All 4 slots required for the 360° viewer to enable. Use transparent PNGs.</p>
     </div></div>
     <div class="btn-group" style="margin-top:1.25rem;justify-content:flex-end;">
       <button class="btn btn-outline" onclick="closeProductModal()">Cancel</button>
@@ -330,6 +349,31 @@
 <script>
 let ghToken='', ghRepo='', products=[], settings={}, pageContent={};
 let selectedProducts = new Set();
+
+// 360° angle slot definitions (must match storefront's expectations)
+const SLOT_DEFS = [
+  { id: 'front',  label: 'FRONT', deg: '0°',   flip: false },
+  { id: 'side-r', label: '3/4 R', deg: '90°',  flip: false },
+  { id: 'back',   label: 'BACK',  deg: '180°', flip: false },
+  { id: 'side-l', label: '3/4 L', deg: '270°', flip: true  }
+];
+
+// Pending state for the product modal:
+//   editImages: array of { src: 'products/foo.png', file?: File } — File present when not yet uploaded
+//   edit360Slots: 4 entries (one per SLOT_DEFS), each null OR { src, file?, flip }
+let editImages = [];
+let edit360Slots = [null, null, null, null];
+
+// Turkish-aware slug for predictable filenames
+const TR_MAP = { 'ç':'c','Ç':'c','ğ':'g','Ğ':'g','ı':'i','İ':'i','ö':'o','Ö':'o','ş':'s','Ş':'s','ü':'u','Ü':'u' };
+function slugify(s) {
+  return (s || '').split('').map(c => TR_MAP[c] || c).join('')
+    .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+function getExt(filename) {
+  const m = (filename || '').match(/\.[a-zA-Z0-9]+$/);
+  return m ? m[0].toLowerCase() : '.png';
+}
 
 // ===== AUTH =====
 function doLogin() {
@@ -473,11 +517,11 @@ async function bulkBadge(badge) {
 }
 
 // Product Modal
-let editImages = [];
 function openProductModal(product) {
   document.getElementById('productModal').classList.add('open');
   document.getElementById('modalTitle').textContent = product ? 'Edit Product' : 'Add Product';
   editImages = [];
+  edit360Slots = [null, null, null, null];
   if (product) {
     document.getElementById('p_id').value = product.id;
     document.getElementById('p_name').value = product.name;
@@ -493,7 +537,13 @@ function openProductModal(product) {
     document.getElementById('p_stock').value = product.stock || 'in-stock';
     document.getElementById('p_stockQty').value = product.stockQty ?? '';
     document.getElementById('p_description').value = product.description || '';
-    editImages = [...(product.images || [])];
+    editImages = (product.images || []).map(src => ({ src, file: null }));
+    if (Array.isArray(product.images360) && product.images360.length === 4) {
+      edit360Slots = SLOT_DEFS.map((def, i) => {
+        const f = product.images360[i];
+        return f && f.src ? { src: f.src, file: null, flip: !!f.flip } : null;
+      });
+    }
   } else {
     document.getElementById('p_id').value = '';
     document.querySelectorAll('#productModal input:not([type=hidden]):not([type=color]):not([type=file]), #productModal textarea').forEach(i => i.value = '');
@@ -502,6 +552,7 @@ function openProductModal(product) {
     document.getElementById('p_stock').value = 'in-stock';
   }
   renderImageThumbs();
+  render360Slots();
 }
 function closeProductModal() { document.getElementById('productModal').classList.remove('open'); }
 function editProduct(index) { openProductModal(products[index]); }
@@ -516,72 +567,171 @@ async function deleteProduct(index) {
 
 async function saveProduct() {
   const btn = document.getElementById('saveProductBtn');
-  btn.disabled = true; btn.textContent = 'Saving...';
-  const id = document.getElementById('p_id').value;
-  const product = {
-    id: id ? parseInt(id) : Math.max(0, ...products.map(p=>p.id)) + 1,
-    name: document.getElementById('p_name').value,
-    price: parseFloat(document.getElementById('p_price').value),
-    comparePrice: parseFloat(document.getElementById('p_comparePrice').value) || null,
-    category: document.getElementById('p_category').value,
-    sizes: document.getElementById('p_sizes').value.split(',').map(s=>s.trim()).filter(Boolean),
-    badge: document.getElementById('p_badge').value || null,
-    color: document.getElementById('p_color').value,
-    colorName: document.getElementById('p_colorName').value,
-    colorFamily: document.getElementById('p_colorFamily').value,
-    stock: document.getElementById('p_stock').value,
-    stockQty: document.getElementById('p_stockQty').value ? parseInt(document.getElementById('p_stockQty').value) : null,
-    description: document.getElementById('p_description').value,
-    images: editImages.length ? editImages : ['col-hoodies.jpg']
-  };
-  if (!product.name || !product.price) { toast('Name and price required', true); btn.disabled = false; btn.textContent = 'Save Product'; return; }
+  const name = document.getElementById('p_name').value.trim();
+  const priceVal = parseFloat(document.getElementById('p_price').value);
+  if (!name || !priceVal) { toast('Name and price required', true); return; }
 
-  if (id) {
-    const idx = products.findIndex(p => p.id === parseInt(id));
-    if (idx >= 0) products[idx] = product;
-  } else {
-    products.push(product);
-  }
+  btn.disabled = true; btn.textContent = 'Saving...';
+  const slug = slugify(name);
+  const id = document.getElementById('p_id').value;
+
   try {
-    await saveFile('public/data/products.json', products, `CMS: ${id ? 'update' : 'add'} ${product.name}`);
+    // Phase 1: upload pending images[] files with predictable filenames
+    btn.textContent = 'Uploading images…';
+    const imageSrcs = [];
+    for (let i = 0; i < editImages.length; i++) {
+      const entry = editImages[i];
+      if (entry.file) {
+        const ext = getExt(entry.file.name);
+        const filename = `${slug}-${i + 1}${ext}`;
+        const repoPath = `public/img/products/${filename}`;
+        await uploadFileToGitHub(entry.file, repoPath, `CMS: image ${slug} #${i + 1}`);
+        entry.src = `products/${filename}`;
+        entry.file = null;
+        imageSrcs.push(entry.src);
+      } else if (entry.src) {
+        imageSrcs.push(entry.src);
+      }
+    }
+
+    // Phase 2: upload pending 360 slot files (only if all 4 slots filled)
+    let images360 = [];
+    const allFilled = edit360Slots.every(s => s);
+    if (allFilled) {
+      btn.textContent = 'Uploading 360°…';
+      for (let i = 0; i < SLOT_DEFS.length; i++) {
+        const def = SLOT_DEFS[i];
+        const slot = edit360Slots[i];
+        if (slot.file) {
+          const ext = getExt(slot.file.name);
+          const filename = `${slug}-${def.id}${ext}`;
+          const repoPath = `public/img/products/${filename}`;
+          await uploadFileToGitHub(slot.file, repoPath, `CMS: 360 ${slug} ${def.id}`);
+          slot.src = `products/${filename}`;
+          slot.file = null;
+        }
+        images360.push({
+          id: def.id,
+          src: slot.src,
+          label: def.label,
+          deg: def.deg,
+          flip: typeof slot.flip === 'boolean' ? slot.flip : def.flip
+        });
+      }
+    }
+
+    // Phase 3: assemble product + commit products.json
+    const product = {
+      id: id ? parseInt(id) : Math.max(0, ...products.map(p => p.id)) + 1,
+      name,
+      price: priceVal,
+      comparePrice: parseFloat(document.getElementById('p_comparePrice').value) || null,
+      category: document.getElementById('p_category').value,
+      sizes: document.getElementById('p_sizes').value.split(',').map(s => s.trim()).filter(Boolean),
+      badge: document.getElementById('p_badge').value || null,
+      color: document.getElementById('p_color').value,
+      colorName: document.getElementById('p_colorName').value,
+      colorFamily: document.getElementById('p_colorFamily').value,
+      stock: document.getElementById('p_stock').value,
+      stockQty: document.getElementById('p_stockQty').value ? parseInt(document.getElementById('p_stockQty').value) : null,
+      description: document.getElementById('p_description').value,
+      images: imageSrcs,
+      images360: images360
+    };
+
+    if (id) {
+      const idx = products.findIndex(p => p.id === parseInt(id));
+      if (idx >= 0) products[idx] = product; else products.push(product);
+    } else {
+      products.push(product);
+    }
+    btn.textContent = 'Saving JSON…';
+    await saveFile('public/data/products.json', products, `CMS: ${id ? 'update' : 'add'} ${name}`);
     closeProductModal(); renderProducts(); renderDashboard();
     toast(id ? 'Product updated' : 'Product added');
-  } catch(e) { toast('Error: ' + e.message, true); }
-  btn.disabled = false; btn.textContent = 'Save Product';
-}
-
-// Image handling
-function renderImageThumbs() {
-  document.getElementById('imgThumbs').innerHTML = editImages.map((img, i) =>
-    `<div class="img-thumb-wrap"><img src="../img/${img}" class="img-thumb" onerror="this.style.background='#eee';this.alt='${img}'"><button class="img-thumb-rm" onclick="editImages.splice(${i},1);renderImageThumbs()">×</button></div>`
-  ).join('');
-}
-async function handleImageUpload(files) {
-  for (const file of files) {
-    try {
-      const url = await uploadImage(file);
-      editImages.push(file.name.replace(/[^a-zA-Z0-9._-]/g, '-'));
-      renderImageThumbs();
-      toast('Image uploaded: ' + file.name);
-    } catch(e) { toast('Upload failed: ' + e.message, true); }
+  } catch (e) {
+    toast('Error: ' + e.message, true);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Save Product';
   }
 }
-async function uploadImage(file) {
+
+// ===== IMAGE HANDLING =====
+// Both images[] and images360 use lazy upload: files are previewed locally,
+// uploaded to GitHub on Save with predictable slug-based filenames.
+
+function previewURL(entry) {
+  // Returns a URL we can render in an <img>: either the local file blob or
+  // the existing storefront path.
+  if (!entry) return '';
+  if (entry.file) return URL.createObjectURL(entry.file);
+  if (entry.src) return '../img/' + entry.src;
+  return '';
+}
+
+function renderImageThumbs() {
+  document.getElementById('imgThumbs').innerHTML = editImages.map((entry, i) =>
+    `<div class="img-thumb-wrap"><img src="${previewURL(entry)}" class="img-thumb" onerror="this.style.background='#eee'"><button class="img-thumb-rm" onclick="removeImage(${i})">×</button></div>`
+  ).join('');
+}
+function removeImage(i) { editImages.splice(i, 1); renderImageThumbs(); }
+
+function handleImageUpload(files) {
+  for (const file of files) {
+    if (!file.type || !file.type.startsWith('image/')) continue;
+    editImages.push({ src: null, file });
+  }
+  renderImageThumbs();
+}
+
+function render360Slots() {
+  const grid = document.getElementById('img360Grid');
+  grid.innerHTML = SLOT_DEFS.map((def, i) => {
+    const slot = edit360Slots[i];
+    const has = !!slot;
+    const url = has ? previewURL(slot) : '';
+    return `
+      <div class="img360-slot ${has ? 'has-image' : ''}" onclick="pickSlot(${i})">
+        ${has ? `<img src="${url}" alt="${def.label}"><button class="img360-slot-rm" onclick="event.stopPropagation();clearSlot(${i})">×</button>` : ''}
+        <div class="img360-slot-meta"><span>${def.label}</span><span class="img360-slot-deg">${def.deg}</span></div>
+        ${has ? '' : '<div class="img360-slot-empty"><span>+</span><span>Click to upload</span></div>'}
+      </div>
+    `;
+  }).join('');
+}
+
+function pickSlot(i) {
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = 'image/*';
+  input.onchange = () => {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    edit360Slots[i] = { src: null, file, flip: SLOT_DEFS[i].flip };
+    render360Slots();
+  };
+  input.click();
+}
+function clearSlot(i) { edit360Slots[i] = null; render360Slots(); }
+
+// Upload one file to GitHub at the given repo path. Returns the path on success.
+async function uploadFileToGitHub(file, repoPath, message) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = async () => {
       const base64 = reader.result.split(',')[1];
-      const path = 'public/img/' + file.name.replace(/[^a-zA-Z0-9._-]/g, '-');
       try {
         let sha;
-        try { const r = await fetch(`https://api.github.com/repos/${ghRepo}/contents/${path}`, { headers: { 'Authorization': `token ${ghToken}` } }); if (r.ok) sha = (await r.json()).sha; } catch(e) {}
-        const body = { message: `CMS: upload ${file.name}`, content: base64 };
+        try {
+          const r = await fetch(`https://api.github.com/repos/${ghRepo}/contents/${repoPath}`, { headers: { 'Authorization': `token ${ghToken}` } });
+          if (r.ok) sha = (await r.json()).sha;
+        } catch(e) {}
+        const body = { message, content: base64 };
         if (sha) body.sha = sha;
-        const r = await fetch(`https://api.github.com/repos/${ghRepo}/contents/${path}`, {
+        const r = await fetch(`https://api.github.com/repos/${ghRepo}/contents/${repoPath}`, {
           method: 'PUT', headers: { 'Authorization': `token ${ghToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body)
         });
-        if (!r.ok) throw new Error('Upload failed');
-        resolve((await r.json()).content.download_url);
+        if (!r.ok) throw new Error('Upload failed: ' + r.statusText);
+        resolve(repoPath);
       } catch(e) { reject(e); }
     };
     reader.readAsDataURL(file);
