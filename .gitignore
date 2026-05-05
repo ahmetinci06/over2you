@@ -3,3 +3,5 @@ dist/
 .astro/
 api/.env
 api/node_modules/
+_design/assets/
+_design/uploads/
