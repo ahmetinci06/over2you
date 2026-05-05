@@ -1,13 +1,39 @@
 /* <carousel-3d> — flat ↔ cylinder ring 360 viewer
  *
- * Data shape (data-frames JSON):
- *   [{ id, src, label, deg, flip }, ...]
+ * Accepted data-frames shapes:
+ *   - object array (new schema):  [{ id, src, label, deg, flip }, ...]
+ *   - string array (legacy):      ["products/foo.png", ...]
+ *   - empty:                      [] → renders a "no image" placeholder
  *
- * Capability gate: renders the 360 toggle only if frames.length >= 4.
+ * Per-N rendering:
+ *   N=0      → placeholder, no toggle
+ *   N=1      → flat single image, no toggle
+ *   N=2..3   → flat with idx switching (driven by external thumb rail)
+ *   N>=4     → flat default + 360 toggle, IF data-has-360="true". Otherwise
+ *              flat-only with idx switching (e.g. 4 plain images, no
+ *              dedicated turntable shot).
+ *
  * The cylinder POS table is N=4 tuned; N>4 falls back to off-stage for d>±2.
  */
 (function () {
   if (customElements.get('carousel-3d')) return;
+
+  function normalizeFrames(raw) {
+    let parsed;
+    try { parsed = JSON.parse(raw || '[]'); } catch (e) { return []; }
+    if (!Array.isArray(parsed) || parsed.length === 0) return [];
+    if (typeof parsed[0] === 'object' && parsed[0] && parsed[0].src) return parsed;
+    if (typeof parsed[0] === 'string') {
+      return parsed.map((src, i) => ({
+        id: 'frame-' + i,
+        src: src,
+        label: '',
+        deg: '',
+        flip: false,
+      }));
+    }
+    return [];
+  }
 
   /* Slot positions for the cylinder.
      -1/0/+1 are the visible band (left/center/right) — all on the same
@@ -33,18 +59,33 @@
       if (this._mounted) return;
       this._mounted = true;
 
-      try { this.frames = JSON.parse(this.dataset.frames || '[]'); }
-      catch (e) { this.frames = []; }
+      this.frames = normalizeFrames(this.dataset.frames);
       this.imgBase = this.dataset.imgBase || '';
+      this.has360 = this.dataset.has360 === 'true' && this.frames.length >= 4;
       this.idx = 0;
       this.mode = 'flat';
 
-      if (!this.frames.length) { this.innerHTML = ''; return; }
+      if (!this.frames.length) { this._renderEmpty(); return; }
 
       this._renderShell();
       this._renderModeView();
       this._bindKeys();
       this._observeResize();
+    }
+
+    _renderEmpty() {
+      this.innerHTML = `
+        <div class="c3d-stage c3d-stage-empty" data-mode="empty">
+          <div class="c3d-empty-msg">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <circle cx="9" cy="9" r="2"/>
+              <path d="M21 15l-5-5L5 21"/>
+            </svg>
+            <p>Görsel yok</p>
+          </div>
+        </div>
+      `;
     }
 
     disconnectedCallback() {
@@ -61,6 +102,7 @@
 
     setMode(mode) {
       if (mode !== 'flat' && mode !== '360') return;
+      if (mode === '360' && !this.has360) return;
       this.mode = mode;
       this._renderModeView();
       this._emit('mode-change');
@@ -74,31 +116,33 @@
     }
 
     _renderShell() {
-      const has360 = this.frames.length >= 4;
-
-      const slotsHTML = this.frames.map((f, i) => `
-        <button class="c3d-slot" type="button" data-slot="${i}" aria-label="View ${f.label}">
-          <img src="${this.imgBase}${f.src}" alt="${f.label}"
+      const slotsHTML = this.has360 ? this.frames.map((f, i) => `
+        <button class="c3d-slot" type="button" data-slot="${i}" aria-label="View ${f.label || ('frame ' + (i+1))}">
+          <img src="${this.imgBase}${f.src}" alt="${f.label || ''}"
                draggable="false"
                style="${f.flip ? 'transform:scaleX(-1);' : ''}">
         </button>
-      `).join('');
+      `).join('') : '';
+
+      const ringHTML = this.has360 ? `
+        <div class="c3d-360" hidden>
+          <div class="c3d-floor" aria-hidden="true"></div>
+          ${slotsHTML}
+          <button class="c3d-arrow c3d-arrow-l" type="button" aria-label="Previous angle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 6l-6 6 6 6"/></svg>
+          </button>
+          <button class="c3d-arrow c3d-arrow-r" type="button" aria-label="Next angle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 6l6 6-6 6"/></svg>
+          </button>
+          <div class="c3d-counter" aria-live="polite"></div>
+        </div>
+      ` : '';
 
       this.innerHTML = `
         <div class="c3d-stage" data-mode="flat">
           <div class="c3d-flat"></div>
-          <div class="c3d-360" hidden>
-            <div class="c3d-floor" aria-hidden="true"></div>
-            ${slotsHTML}
-            <button class="c3d-arrow c3d-arrow-l" type="button" aria-label="Previous angle">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 6l-6 6 6 6"/></svg>
-            </button>
-            <button class="c3d-arrow c3d-arrow-r" type="button" aria-label="Next angle">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 6l6 6-6 6"/></svg>
-            </button>
-            <div class="c3d-counter" aria-live="polite"></div>
-          </div>
-          ${has360 ? `
+          ${ringHTML}
+          ${this.has360 ? `
             <button class="c3d-toggle" type="button" aria-label="Toggle 360° view" title="360° preview">
               <span class="c3d-lbl"></span>
             </button>
@@ -131,7 +175,7 @@
       const lbl = this.querySelector('.c3d-toggle .c3d-lbl');
       const counter = this.querySelector('.c3d-counter');
       const cur = this.frames[this.idx];
-      if (!stage || !flat || !ring || !cur) return;
+      if (!stage || !flat || !cur) return;
 
       stage.dataset.mode = this.mode;
 
@@ -141,11 +185,11 @@
           : 'VIEW<b>360°</b>';
       }
 
-      if (this.mode === 'flat') {
-        ring.hidden = true;
+      if (this.mode === 'flat' || !ring) {
+        if (ring) ring.hidden = true;
         flat.hidden = false;
         flat.innerHTML = `
-          <img src="${this.imgBase}${cur.src}" alt="${cur.label}"
+          <img src="${this.imgBase}${cur.src}" alt="${cur.label || ''}"
                draggable="false"
                style="${cur.flip ? 'transform:scaleX(-1);' : ''}">
         `;
@@ -156,8 +200,8 @@
         if (counter) {
           counter.textContent =
             String(this.idx + 1).padStart(2, '0') + ' / ' +
-            String(this.frames.length).padStart(2, '0') + ' · ' +
-            cur.label;
+            String(this.frames.length).padStart(2, '0') +
+            (cur.label ? ' · ' + cur.label : '');
         }
       }
     }

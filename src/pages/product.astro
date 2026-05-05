@@ -47,26 +47,28 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
       const imgBase = B + 'img/';
       const related = list.filter(r => r.category === product.category && r.id !== product.id).slice(0, 8);
 
-      const frames = Array.isArray(product.images360) ? product.images360 : [];
-      const has360 = frames.length >= 4 && frames.every(f => f && typeof f === 'object' && f.src);
+      const frames360 = Array.isArray(product.images360) ? product.images360 : [];
+      const has360 = frames360.length >= 4 && frames360.every(f => f && typeof f === 'object' && f.src);
+
+      const framesData = has360
+        ? frames360
+        : (Array.isArray(product.images) ? product.images : []);
 
       const thumbsSource = has360
-        ? frames.map((f, i) => ({ src: f.src, label: f.label || ('View ' + (i+1)), flip: !!f.flip }))
+        ? frames360.map((f, i) => ({ src: f.src, label: f.label || ('View ' + (i+1)), flip: !!f.flip }))
         : (product.images || []).map((src, i) => ({ src, label: 'View ' + (i+1), flip: false }));
 
-      const thumbsHTML = thumbsSource.map((t, i) => `
+      const N = thumbsSource.length;
+      const showThumbs = N >= 2;
+
+      const thumbsHTML = showThumbs ? thumbsSource.map((t, i) => `
         <button class="pd-thumb${i === 0 ? ' active' : ''}" type="button" data-idx="${i}" aria-label="${t.label}">
           <img src="${imgBase}${t.src}" alt="${t.label}" style="${t.flip ? 'transform:scaleX(-1);' : ''}">
         </button>
-      `).join('');
+      `).join('') : '';
 
-      const stageHTML = has360
-        ? `<carousel-3d data-frames='${attrJSON(frames)}' data-img-base="${imgBase}"></carousel-3d>`
-        : `
-          <div class="pd-flat-fallback" id="pdFlatFallback">
-            <img id="pdFlatImg" src="${imgBase}${thumbsSource[0]?.src || ''}" alt="${product.name}">
-          </div>
-        `;
+      const stageHTML =
+        `<carousel-3d data-frames='${attrJSON(framesData)}' data-img-base="${imgBase}" data-has-360="${has360}"></carousel-3d>`;
 
       layout.innerHTML = `
         <div class="product-breadcrumb" style="font-size:11px;color:rgb(var(--text-color)/0.4);margin-bottom:1.5rem;">
@@ -75,8 +77,8 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
           <span style="color:rgb(var(--text-color)/0.7);">${product.name}</span>
         </div>
         <div class="product-grid-layout">
-          <div class="pd-gallery">
-            <div class="pd-thumbs" id="pdThumbs">${thumbsHTML}</div>
+          <div class="pd-gallery${showThumbs ? '' : ' pd-gallery-no-thumbs'}">
+            ${showThumbs ? `<div class="pd-thumbs" id="pdThumbs">${thumbsHTML}</div>` : ''}
             <div class="pd-stage-wrap">${stageHTML}</div>
           </div>
           <div class="pd-info">
@@ -111,10 +113,10 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
         </div>
       `;
 
-      wireInteractions(product, has360, imgBase, thumbsSource);
+      wireInteractions(product);
     }
 
-    function wireInteractions(product, has360, imgBase, thumbsSource) {
+    function wireInteractions(product) {
       const logoEls = document.querySelectorAll('.header .logo-text');
       logoEls.forEach(el => el.style.color = product.color);
       document.querySelectorAll('.swatch-product').forEach(swatch => {
@@ -126,7 +128,6 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
       });
 
       const carousel = document.querySelector('carousel-3d');
-      const flatImg = document.getElementById('pdFlatImg');
       const thumbs = document.querySelectorAll('.pd-thumb');
 
       thumbs.forEach(t => {
@@ -134,12 +135,9 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
           thumbs.forEach(x => x.classList.remove('active'));
           t.classList.add('active');
           const i = parseInt(t.dataset.idx, 10);
-          if (has360 && carousel && typeof carousel.setIdx === 'function') {
+          if (carousel && typeof carousel.setIdx === 'function') {
             carousel.setIdx(i);
             carousel.setMode('flat');
-          } else if (flatImg && thumbsSource[i]) {
-            flatImg.src = imgBase + thumbsSource[i].src;
-            flatImg.style.transform = thumbsSource[i].flip ? 'scaleX(-1)' : '';
           }
         });
       });
@@ -202,6 +200,9 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
     gap: 1rem;
     position: sticky;
     top: 6rem;
+  }
+  .pd-gallery-no-thumbs {
+    grid-template-columns: minmax(0, 1fr);
   }
   .pd-info {
     position: static;
@@ -270,6 +271,24 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
       radial-gradient(ellipse 60% 40% at 50% 80%, rgba(0,0,0,0.06), transparent 70%),
       rgb(var(--background));
     overflow: hidden;
+  }
+  .c3d-stage-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .c3d-empty-msg {
+    text-align: center;
+    color: rgb(var(--text-color) / 0.35);
+  }
+  .c3d-empty-msg svg {
+    margin: 0 auto 0.75rem;
+    display: block;
+  }
+  .c3d-empty-msg p {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
   }
   .c3d-flat,
   .c3d-360 {
@@ -415,7 +434,8 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
       grid-template-columns: minmax(0, 1fr);
       gap: 1.5rem;
     }
-    .pd-gallery {
+    .pd-gallery,
+    .pd-gallery-no-thumbs {
       grid-template-columns: minmax(0, 1fr);
       position: static;
       gap: 0.75rem;
