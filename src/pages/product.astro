@@ -349,12 +349,16 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
   }
 
   /* Cylinder slots — slot wraps the image; height drives the size,
-     width auto-follows from image's natural aspect to avoid any stretching. */
+     width auto-follows from image's natural aspect to avoid any stretching.
+     width: max-content escapes shrink-to-fit (which used to squash slots
+     anchored near the right edge — slot at left:82% had only 18% of stage
+     width available and shrunk to that, deforming the image's aspect). */
   .c3d-slot {
     position: absolute;
     top: 50%;
     left: 50%;
     height: 88%;
+    width: max-content;
     background: transparent;
     border: 0;
     padding: 0;
