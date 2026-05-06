@@ -68,7 +68,7 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
       `).join('') : '';
 
       const stageHTML =
-        `<carousel-3d data-frames='${attrJSON(framesData)}' data-img-base="${imgBase}" data-has-360="${has360}"></carousel-3d>`;
+        `<carousel-3d data-frames='${attrJSON(framesData)}' data-img-base="${imgBase}" data-has360="${has360}"></carousel-3d>`;
 
       layout.innerHTML = `
         <div class="product-breadcrumb" style="font-size:11px;color:rgb(var(--text-color)/0.4);margin-bottom:1.5rem;">

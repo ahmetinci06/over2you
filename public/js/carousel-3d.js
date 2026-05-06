@@ -9,9 +9,14 @@
  *   N=0      → placeholder, no toggle
  *   N=1      → flat single image, no toggle
  *   N=2..3   → flat with idx switching (driven by external thumb rail)
- *   N>=4     → flat default + 360 toggle, IF data-has-360="true". Otherwise
+ *   N>=4     → flat default + 360 toggle, IF data-has360="true". Otherwise
  *              flat-only with idx switching (e.g. 4 plain images, no
  *              dedicated turntable shot).
+ *
+ * NOTE: attribute is data-has360 (no hyphen before the digit). HTML's dataset
+ *       translation only converts hyphen+lowercase-letter to camelCase, so a
+ *       hyphen before a digit stays in the attribute name and breaks
+ *       dataset.has360 access. data-has-360 was the bug fixed here.
  *
  * The cylinder POS table is N=4 tuned; N>4 falls back to off-stage for d>±2.
  */
@@ -61,6 +66,8 @@
 
       this.frames = normalizeFrames(this.dataset.frames);
       this.imgBase = this.dataset.imgBase || '';
+      // dataset.has360 reads the data-has360 attribute (note: no hyphen before
+      // the digit, otherwise dataset translation breaks — see header comment).
       this.has360 = this.dataset.has360 === 'true' && this.frames.length >= 4;
       this.idx = 0;
       this.mode = 'flat';
