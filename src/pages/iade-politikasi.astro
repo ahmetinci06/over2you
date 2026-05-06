@@ -1,0 +1,77 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+<Layout title="İade Politikası — Over2You" description="Over2You iade ve cayma hakkı politikası.">
+  <div class="legal-page">
+    <div class="legal-warning">
+      <strong>⚠ DİKKAT:</strong> Bu sayfa şablon halindedir. Yayına almadan önce
+      <code>[[...]]</code> içindeki tüm placeholder'lar müşteri bilgileriyle doldurulmalıdır.
+      Yasal incelemeden geçmemiştir, avukat onayı önerilir.
+    </div>
+
+    <h1>İade ve Cayma Hakkı Politikası</h1>
+
+    <h2>1. Cayma Hakkı</h2>
+    <p>Mesafeli Sözleşmeler Yönetmeliği uyarınca, ürünü teslim aldığınız tarihten itibaren
+    <strong>14 (on dört) gün</strong> içinde herhangi bir gerekçe göstermeksizin cayma hakkına sahipsiniz.</p>
+
+    <h2>2. Cayma Süresinin Hesaplanması</h2>
+    <p>Süre, ürünün size veya gösterdiğiniz adresteki kişiye teslim edildiği gün başlar.</p>
+
+    <h2>3. Cayma Bildirimi</h2>
+    <p>Cayma hakkınızı kullanmak için süre içinde [[COMPANY_EMAIL]] adresine açık ve
+    kesin bir bildirim göndermeniz yeterlidir.</p>
+
+    <h2>4. İade Şartları</h2>
+    <ul>
+      <li>Ürün kullanılmamış, etiketleri sökülmemiş olmalı</li>
+      <li>Orijinal ambalajında ve faturasıyla birlikte iade edilmeli</li>
+      <li>Hijyen ürünleri (iç çamaşırı, mayo) ambalajı açılmamış olmalı</li>
+    </ul>
+
+    <h2>5. İade İşlemi</h2>
+    <ul>
+      <li>Cayma bildiriminizden sonra <strong>10 (on) gün</strong> içinde ürünü kargoya verin</li>
+      <li>İade kargo masrafı: müşteriye aittir (anlaşmalı kargo dışında)</li>
+      <li>Ürün tarafımıza ulaştıktan sonra <strong>14 gün</strong> içinde ödemeniz iade edilir</li>
+    </ul>
+
+    <h2>6. İade Adresi</h2>
+    <p>[[COMPANY_NAME]]<br />
+    [[COMPANY_ADDRESS]]</p>
+
+    <h2>7. Geri Ödeme</h2>
+    <p>İade tutarı, ödeme yaptığınız yöntemle geri ödenir:</p>
+    <ul>
+      <li>Kredi kartı: bankaya bağlı olarak 1-15 iş günü</li>
+      <li>Havale/EFT: 3 iş günü içinde belirttiğiniz IBAN'a</li>
+    </ul>
+
+    <h2>8. Cayma Hakkının İstisnaları</h2>
+    <p>Mesafeli Sözleşmeler Yönetmeliği'nin 15. maddesi uyarınca, kişiselleştirilmiş ürünler
+    ve hijyen kuralları gereği iade edilemeyen ürünler cayma hakkı kapsamı dışındadır.</p>
+
+    <h2>9. İletişim</h2>
+    <p>Sorularınız için: [[COMPANY_EMAIL]]</p>
+
+    <p class="legal-effective">Yürürlük tarihi: 2026</p>
+  </div>
+</Layout>
+
+<style is:inline>
+  .legal-page { max-width: 800px; margin: 0 auto; padding: 6rem 1rem 4rem; line-height: 1.7; }
+  .legal-page h1 { font: var(--heading-font-style) 800 1.75rem/1.2 var(--heading-font-family); margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 0.02em; }
+  .legal-page h2 { font: var(--heading-font-style) 700 1.05rem/1.3 var(--heading-font-family); margin: 2rem 0 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  .legal-page p { margin-bottom: 0.85rem; font-size: var(--text-sm); }
+  .legal-page ul { margin: 0 0 1rem 1.25rem; padding: 0; }
+  .legal-page li { margin-bottom: 0.35rem; font-size: var(--text-sm); }
+  .legal-page code { background: rgb(var(--text-color)/0.08); padding: 1px 5px; border-radius: 3px; font-size: 0.9em; }
+  .legal-effective { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid rgb(var(--border-color)/0.2); font-size: 11px; color: rgb(var(--text-color)/0.5); letter-spacing: 0.04em; }
+  .legal-warning { background: #fff3cd; color: #5c4400; padding: 1rem; border-left: 4px solid #ffc107; margin-bottom: 2rem; font-size: 13px; line-height: 1.6; }
+  .legal-warning code { background: rgba(0,0,0,0.08); }
+  @media (max-width: 600px) {
+    .legal-page { padding: 5rem 1rem 3rem; }
+    .legal-page h1 { font-size: 1.4rem; }
+    .legal-page h2 { font-size: 0.95rem; }
+  }
+</style>

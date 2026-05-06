@@ -1,0 +1,83 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+<Layout title="Mesafeli Satış Sözleşmesi — Over2You" description="Over2You mesafeli satış sözleşmesi.">
+  <div class="legal-page">
+    <div class="legal-warning">
+      <strong>⚠ DİKKAT:</strong> Bu sayfa şablon halindedir. Yayına almadan önce
+      <code>[[...]]</code> içindeki tüm placeholder'lar müşteri bilgileriyle doldurulmalıdır.
+      Yasal incelemeden geçmemiştir, avukat onayı önerilir.
+    </div>
+
+    <h1>Mesafeli Satış Sözleşmesi</h1>
+
+    <h2>1. Taraflar</h2>
+    <p><strong>SATICI:</strong></p>
+    <ul>
+      <li>Ünvan: [[COMPANY_NAME]]</li>
+      <li>Adres: [[COMPANY_ADDRESS]]</li>
+      <li>Vergi No: [[COMPANY_TAX_NUMBER]] / [[COMPANY_TAX_OFFICE]]</li>
+      <li>MERSİS: [[COMPANY_MERSIS]]</li>
+      <li>E-posta: [[COMPANY_EMAIL]]</li>
+      <li>Telefon: [[COMPANY_PHONE]]</li>
+    </ul>
+    <p><strong>ALICI:</strong> Sipariş sırasında bilgileri girilen kişi.</p>
+
+    <h2>2. Sözleşmenin Konusu</h2>
+    <p>İşbu sözleşmenin konusu, ALICI'nın SATICI'ya ait web sitesinden elektronik ortamda
+    sipariş verdiği, sözleşmede belirtilen ürünlerin satışı ve teslimine ilişkin
+    6502 sayılı Tüketicinin Korunması Hakkında Kanun ve Mesafeli Sözleşmeler
+    Yönetmeliği kapsamındaki tarafların hak ve yükümlülüklerini düzenlemektedir.</p>
+
+    <h2>3. Ürün Bilgileri</h2>
+    <p>Sipariş edilen ürünlerin türü, miktarı, marka/modeli, satış bedeli ve ödeme şekli,
+    sipariş onay sayfasında belirtilmiştir. Ürün açıklaması, fiyatı ve KDV bilgisi
+    ürün sayfasında yer almaktadır.</p>
+
+    <h2>4. Ödeme ve Teslimat</h2>
+    <ul>
+      <li>Ödeme: kredi/banka kartı, havale/EFT veya WhatsApp aracılığıyla yapılabilir</li>
+      <li>Teslimat süresi: ödemenin onaylanmasından itibaren 1-5 iş günü</li>
+      <li>Kargo: anlaşmalı kargo şirketi ile gönderilir</li>
+      <li>Teslimat adresi: ALICI'nın belirttiği adrestir</li>
+    </ul>
+
+    <h2>5. Cayma Hakkı</h2>
+    <p>ALICI, ürünü teslim aldığı tarihten itibaren <strong>14 (on dört) gün</strong> içinde
+    herhangi bir gerekçe göstermeksizin cayma hakkına sahiptir. Cayma hakkı koşulları
+    İade Politikası sayfasında detaylandırılmıştır.</p>
+
+    <h2>6. Sorumluluklar</h2>
+    <ul>
+      <li>SATICI, ürünü ayıpsız ve sözleşmede belirtilen niteliklerde teslim etmekle yükümlüdür</li>
+      <li>ALICI, ürünü teslim alırken kontrol etmek ve hasar varsa kargo tutanağı tutturmakla yükümlüdür</li>
+    </ul>
+
+    <h2>7. Yetkili Mahkeme</h2>
+    <p>İşbu sözleşmeden doğan uyuşmazlıklarda Tüketici Hakem Heyetleri ve [[COMPANY_TAX_OFFICE]]
+    Tüketici Mahkemeleri yetkilidir.</p>
+
+    <h2>8. Yürürlük</h2>
+    <p>ALICI, siparişi onayladığı anda işbu sözleşmeyi okumuş ve kabul etmiş sayılır.</p>
+
+    <p class="legal-effective">Yürürlük tarihi: 2026</p>
+  </div>
+</Layout>
+
+<style is:inline>
+  .legal-page { max-width: 800px; margin: 0 auto; padding: 6rem 1rem 4rem; line-height: 1.7; }
+  .legal-page h1 { font: var(--heading-font-style) 800 1.75rem/1.2 var(--heading-font-family); margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 0.02em; }
+  .legal-page h2 { font: var(--heading-font-style) 700 1.05rem/1.3 var(--heading-font-family); margin: 2rem 0 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  .legal-page p { margin-bottom: 0.85rem; font-size: var(--text-sm); }
+  .legal-page ul { margin: 0 0 1rem 1.25rem; padding: 0; }
+  .legal-page li { margin-bottom: 0.35rem; font-size: var(--text-sm); }
+  .legal-page code { background: rgb(var(--text-color)/0.08); padding: 1px 5px; border-radius: 3px; font-size: 0.9em; }
+  .legal-effective { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid rgb(var(--border-color)/0.2); font-size: 11px; color: rgb(var(--text-color)/0.5); letter-spacing: 0.04em; }
+  .legal-warning { background: #fff3cd; color: #5c4400; padding: 1rem; border-left: 4px solid #ffc107; margin-bottom: 2rem; font-size: 13px; line-height: 1.6; }
+  .legal-warning code { background: rgba(0,0,0,0.08); }
+  @media (max-width: 600px) {
+    .legal-page { padding: 5rem 1rem 3rem; }
+    .legal-page h1 { font-size: 1.4rem; }
+    .legal-page h2 { font-size: 0.95rem; }
+  }
+</style>

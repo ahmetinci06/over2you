@@ -1,0 +1,82 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+<Layout title="Gizlilik Politikası — Over2You" description="Over2You gizlilik politikası ve KVKK aydınlatma metni.">
+  <div class="legal-page">
+    <div class="legal-warning">
+      <strong>⚠ DİKKAT:</strong> Bu sayfa şablon halindedir. Yayına almadan önce
+      <code>[[...]]</code> içindeki tüm placeholder'lar müşteri bilgileriyle doldurulmalıdır.
+      Yasal incelemeden geçmemiştir, avukat onayı önerilir.
+    </div>
+
+    <h1>Gizlilik Politikası</h1>
+
+    <h2>1. Veri Sorumlusu</h2>
+    <p>[[COMPANY_NAME]] ("Şirket") olarak, kişisel verilerinizin gizliliği bizim için önemlidir.
+    6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") uyarınca, kişisel verilerinizin
+    işlenmesi hakkında sizi bilgilendirmek isteriz.</p>
+
+    <p><strong>Veri Sorumlusu Bilgileri:</strong></p>
+    <ul>
+      <li>Ünvan: [[COMPANY_NAME]]</li>
+      <li>Adres: [[COMPANY_ADDRESS]]</li>
+      <li>Vergi No: [[COMPANY_TAX_NUMBER]] / [[COMPANY_TAX_OFFICE]]</li>
+      <li>MERSİS No: [[COMPANY_MERSIS]]</li>
+      <li>E-posta: [[COMPANY_EMAIL]]</li>
+    </ul>
+
+    <h2>2. İşlenen Kişisel Veriler</h2>
+    <p>Sitemizden alışveriş yaptığınızda aşağıdaki kişisel verileriniz işlenir:</p>
+    <ul>
+      <li>Kimlik bilgileri (ad, soyad)</li>
+      <li>İletişim bilgileri (e-posta, telefon, adres)</li>
+      <li>Müşteri işlem bilgileri (sipariş geçmişi, ödeme bilgileri)</li>
+      <li>Site kullanım bilgileri (IP, çerez verileri)</li>
+    </ul>
+
+    <h2>3. Kişisel Verilerin İşlenme Amaçları</h2>
+    <ul>
+      <li>Sipariş ve teslimat süreçlerinin yürütülmesi</li>
+      <li>Müşteri hizmetlerinin sağlanması</li>
+      <li>Yasal yükümlülüklerin yerine getirilmesi</li>
+      <li>Pazarlama faaliyetleri (onayınız doğrultusunda)</li>
+    </ul>
+
+    <h2>4. Verilerin Aktarılması</h2>
+    <p>Kişisel verileriniz, hizmet aldığımız tedarikçilere (kargo şirketi, ödeme kuruluşu)
+    ve yasal yükümlülükler kapsamında yetkili kurumlara aktarılabilir.</p>
+
+    <h2>5. Veri Saklama Süresi</h2>
+    <p>Kişisel verileriniz, ilgili mevzuatta öngörülen süre boyunca veya işleme amacının
+    gerektirdiği süre kadar saklanır.</p>
+
+    <h2>6. Haklarınız</h2>
+    <p>KVKK'nın 11. maddesi uyarınca, kişisel verileriniz hakkında bilgi alma, düzeltme,
+    silme ve işlenmesine itiraz etme haklarına sahipsiniz. Talepleriniz için
+    [[COMPANY_EMAIL]] adresine başvurabilirsiniz.</p>
+
+    <h2>7. Çerezler</h2>
+    <p>Sitemizde kullanıcı deneyimini iyileştirmek için çerezler kullanılır. Tarayıcı
+    ayarlarınızdan çerezleri yönetebilirsiniz.</p>
+
+    <p class="legal-effective">Yürürlük tarihi: 2026</p>
+  </div>
+</Layout>
+
+<style is:inline>
+  .legal-page { max-width: 800px; margin: 0 auto; padding: 6rem 1rem 4rem; line-height: 1.7; }
+  .legal-page h1 { font: var(--heading-font-style) 800 1.75rem/1.2 var(--heading-font-family); margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 0.02em; }
+  .legal-page h2 { font: var(--heading-font-style) 700 1.05rem/1.3 var(--heading-font-family); margin: 2rem 0 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  .legal-page p { margin-bottom: 0.85rem; font-size: var(--text-sm); }
+  .legal-page ul { margin: 0 0 1rem 1.25rem; padding: 0; }
+  .legal-page li { margin-bottom: 0.35rem; font-size: var(--text-sm); }
+  .legal-page code { background: rgb(var(--text-color)/0.08); padding: 1px 5px; border-radius: 3px; font-size: 0.9em; }
+  .legal-effective { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid rgb(var(--border-color)/0.2); font-size: 11px; color: rgb(var(--text-color)/0.5); letter-spacing: 0.04em; }
+  .legal-warning { background: #fff3cd; color: #5c4400; padding: 1rem; border-left: 4px solid #ffc107; margin-bottom: 2rem; font-size: 13px; line-height: 1.6; }
+  .legal-warning code { background: rgba(0,0,0,0.08); }
+  @media (max-width: 600px) {
+    .legal-page { padding: 5rem 1rem 3rem; }
+    .legal-page h1 { font-size: 1.4rem; }
+    .legal-page h2 { font-size: 0.95rem; }
+  }
+</style>

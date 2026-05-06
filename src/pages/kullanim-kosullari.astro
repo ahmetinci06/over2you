@@ -1,0 +1,63 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+<Layout title="Kullanım Koşulları — Over2You" description="Over2You kullanım koşulları.">
+  <div class="legal-page">
+    <div class="legal-warning">
+      <strong>⚠ DİKKAT:</strong> Bu sayfa şablon halindedir. Yayına almadan önce
+      <code>[[...]]</code> içindeki tüm placeholder'lar müşteri bilgileriyle doldurulmalıdır.
+      Yasal incelemeden geçmemiştir, avukat onayı önerilir.
+    </div>
+
+    <h1>Kullanım Koşulları</h1>
+
+    <h2>1. Genel</h2>
+    <p>Bu site [[COMPANY_NAME]] ("Şirket") tarafından işletilmektedir. Siteyi kullanarak
+    aşağıdaki koşulları kabul etmiş sayılırsınız.</p>
+
+    <h2>2. İçerik ve Fikri Mülkiyet</h2>
+    <p>Sitedeki tüm içerikler (görseller, metinler, logolar) Şirket'e aittir veya lisansı
+    altındadır. İzinsiz kullanılamaz.</p>
+
+    <h2>3. Kullanıcı Yükümlülükleri</h2>
+    <ul>
+      <li>Doğru ve güncel bilgi sağlamak</li>
+      <li>Siteyi yasalara uygun kullanmak</li>
+      <li>Başkalarının haklarına saygı göstermek</li>
+    </ul>
+
+    <h2>4. Sorumluluk Sınırları</h2>
+    <p>Şirket, siteyi olduğu gibi sunar. Teknik kesintiler, bilgi hataları veya üçüncü
+    taraf hizmetlerinden kaynaklanan sorunlardan sorumlu değildir.</p>
+
+    <h2>5. Değişiklikler</h2>
+    <p>Şirket, kullanım koşullarını önceden bildirmeksizin değiştirme hakkını saklı tutar.</p>
+
+    <h2>6. Uyuşmazlık Çözümü</h2>
+    <p>Bu kullanım koşulları Türkiye Cumhuriyeti yasalarına tabidir. Uyuşmazlıklar için
+    [[COMPANY_TAX_OFFICE]] mahkemeleri ve icra daireleri yetkilidir.</p>
+
+    <h2>7. İletişim</h2>
+    <p>Sorularınız için: [[COMPANY_EMAIL]]</p>
+
+    <p class="legal-effective">Yürürlük tarihi: 2026</p>
+  </div>
+</Layout>
+
+<style is:inline>
+  .legal-page { max-width: 800px; margin: 0 auto; padding: 6rem 1rem 4rem; line-height: 1.7; }
+  .legal-page h1 { font: var(--heading-font-style) 800 1.75rem/1.2 var(--heading-font-family); margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 0.02em; }
+  .legal-page h2 { font: var(--heading-font-style) 700 1.05rem/1.3 var(--heading-font-family); margin: 2rem 0 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  .legal-page p { margin-bottom: 0.85rem; font-size: var(--text-sm); }
+  .legal-page ul { margin: 0 0 1rem 1.25rem; padding: 0; }
+  .legal-page li { margin-bottom: 0.35rem; font-size: var(--text-sm); }
+  .legal-page code { background: rgb(var(--text-color)/0.08); padding: 1px 5px; border-radius: 3px; font-size: 0.9em; }
+  .legal-effective { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid rgb(var(--border-color)/0.2); font-size: 11px; color: rgb(var(--text-color)/0.5); letter-spacing: 0.04em; }
+  .legal-warning { background: #fff3cd; color: #5c4400; padding: 1rem; border-left: 4px solid #ffc107; margin-bottom: 2rem; font-size: 13px; line-height: 1.6; }
+  .legal-warning code { background: rgba(0,0,0,0.08); }
+  @media (max-width: 600px) {
+    .legal-page { padding: 5rem 1rem 3rem; }
+    .legal-page h1 { font-size: 1.4rem; }
+    .legal-page h2 { font-size: 0.95rem; }
+  }
+</style>
