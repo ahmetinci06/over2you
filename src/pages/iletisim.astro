@@ -1,0 +1,38 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+<Layout title="İletişim — Over2You" description="Over2You iletişim bilgileri.">
+  <div class="legal-page">
+    <div class="legal-warning">
+      <strong>⚠ DİKKAT:</strong> Bu sayfa şablon halindedir. Yayına almadan önce
+      <code>[[...]]</code> içindeki tüm placeholder'lar müşteri bilgileriyle doldurulmalıdır.
+    </div>
+
+    <h1>İletişim</h1>
+
+    <p>Sorularınız, geri bildirimleriniz veya ürünlerimiz hakkında bilgi almak için
+    bizimle iletişime geçebilirsiniz.</p>
+
+    <p><strong>E-posta:</strong> [[COMPANY_EMAIL]]<br />
+    <strong>Çalışma saatleri:</strong> Pazartesi - Cuma, 09:00 - 18:00</p>
+
+    <p>Genelde 1 iş günü içinde dönüş yapıyoruz.</p>
+  </div>
+</Layout>
+
+<style is:inline>
+  .legal-page { max-width: 800px; margin: 0 auto; padding: 6rem 1rem 4rem; line-height: 1.7; }
+  .legal-page h1 { font: var(--heading-font-style) 800 1.75rem/1.2 var(--heading-font-family); margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 0.02em; }
+  .legal-page h2 { font: var(--heading-font-style) 700 1.05rem/1.3 var(--heading-font-family); margin: 2rem 0 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  .legal-page p { margin-bottom: 0.85rem; font-size: var(--text-sm); }
+  .legal-page ul { margin: 0 0 1rem 1.25rem; padding: 0; }
+  .legal-page li { margin-bottom: 0.35rem; font-size: var(--text-sm); }
+  .legal-page code { background: rgb(var(--text-color)/0.08); padding: 1px 5px; border-radius: 3px; font-size: 0.9em; }
+  .legal-warning { background: #fff3cd; color: #5c4400; padding: 1rem; border-left: 4px solid #ffc107; margin-bottom: 2rem; font-size: 13px; line-height: 1.6; }
+  .legal-warning code { background: rgba(0,0,0,0.08); }
+  @media (max-width: 600px) {
+    .legal-page { padding: 5rem 1rem 3rem; }
+    .legal-page h1 { font-size: 1.4rem; }
+    .legal-page h2 { font-size: 0.95rem; }
+  }
+</style>
