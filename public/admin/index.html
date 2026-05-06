@@ -139,11 +139,11 @@
 <div class="login-screen" id="loginScreen">
   <div class="login-box">
     <h1>OVER2YOU</h1>
-    <p>Admin CMS — Enter your GitHub token to manage the store</p>
-    <div class="form-group"><label>GitHub Personal Access Token</label><input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxx"></div>
-    <div class="form-group" style="margin-bottom:1rem;"><label>Repository</label><input type="text" id="ghRepo" value="ahmetinci06/over2you"></div>
+    <p>Admin CMS — sign in to manage the store</p>
+    <div class="form-group"><label>Username</label><input type="text" id="loginUser" autocomplete="username"></div>
+    <div class="form-group" style="margin-bottom:1rem;"><label>Password</label><input type="password" id="loginPass" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
     <button class="btn btn-primary" onclick="doLogin()">LOGIN</button>
-    <p style="font-size:10px;color:var(--muted);margin-top:1rem;">Needs <strong>repo</strong> scope. <a href="https://github.com/settings/tokens/new?scopes=repo&description=Over2You+CMS" target="_blank">Create token →</a></p>
+    <p id="loginError" style="font-size:11px;color:var(--danger);margin-top:0.75rem;min-height:14px;"></p>
   </div>
 </div>
 
@@ -347,8 +347,15 @@
 <div class="toast" id="toast"></div>
 
 <script>
-let ghToken='', ghRepo='', products=[], settings={}, pageContent={};
+let sessionToken = '', currentUser = '', currentRole = '';
+let products = [], settings = {}, pageContent = {};
 let selectedProducts = new Set();
+
+// Helper: build auth headers for backend /api/* calls
+function authHeaders(extra) {
+  const h = sessionToken ? { 'Authorization': 'Bearer ' + sessionToken } : {};
+  return extra ? Object.assign(h, extra) : h;
+}
 
 // 360° angle slot definitions (must match storefront's expectations)
 const SLOT_DEFS = [
@@ -375,30 +382,64 @@ function getExt(filename) {
   return m ? m[0].toLowerCase() : '.png';
 }
 
-// ===== AUTH =====
-function doLogin() {
-  ghToken = document.getElementById('ghToken').value.trim();
-  ghRepo = document.getElementById('ghRepo').value.trim();
-  if (!ghToken || !ghRepo) return;
-  localStorage.setItem('o2y_token', ghToken);
-  localStorage.setItem('o2y_repo', ghRepo);
-  loadAdmin();
+// ===== AUTH (backend session token, base64 username:role:timestamp, 24h TTL) =====
+async function doLogin() {
+  const username = document.getElementById('loginUser').value.trim();
+  const password = document.getElementById('loginPass').value;
+  const errEl = document.getElementById('loginError');
+  errEl.textContent = '';
+  if (!username || !password) { errEl.textContent = 'Username and password required'; return; }
+  try {
+    const r = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    const d = await r.json();
+    if (!r.ok) { errEl.textContent = d.error || 'Yanlış kullanıcı/şifre'; return; }
+    sessionToken = d.token;
+    currentUser = d.username || username;
+    currentRole = d.role || 'editor';
+    localStorage.setItem('o2y_jwt', sessionToken);
+    localStorage.setItem('o2y_user', currentUser);
+    localStorage.setItem('o2y_role', currentRole);
+    loadAdmin();
+  } catch (e) {
+    errEl.textContent = 'Connection error';
+  }
 }
+
 (function() {
-  const t = localStorage.getItem('o2y_token'), r = localStorage.getItem('o2y_repo');
-  if (t && r) { ghToken = t; ghRepo = r; loadAdmin(); }
+  const t = localStorage.getItem('o2y_jwt');
+  if (t) {
+    sessionToken = t;
+    currentUser = localStorage.getItem('o2y_user') || '';
+    currentRole = localStorage.getItem('o2y_role') || '';
+    loadAdmin();
+  }
 })();
-function logout() { localStorage.removeItem('o2y_token'); localStorage.removeItem('o2y_repo'); location.reload(); }
+
+function logout() {
+  localStorage.removeItem('o2y_jwt');
+  localStorage.removeItem('o2y_user');
+  localStorage.removeItem('o2y_role');
+  sessionToken = ''; currentUser = ''; currentRole = '';
+  location.reload();
+}
 
 async function loadAdmin() {
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('adminLayout').style.display = 'grid';
   try {
-    [products, settings, pageContent] = await Promise.all([
-      fetchFile('public/data/products.json').catch(() => []),
-      fetchFile('public/data/settings.json').catch(() => ({})),
-      fetchFile('public/data/pages-content.json').catch(() => ({}))
+    const [prodRes, settRes, pagesRes] = await Promise.all([
+      fetch('/api/products', { headers: authHeaders() }),
+      fetch('/api/settings', { headers: authHeaders() }),
+      fetch('/data/pages-content.json').catch(() => null)
     ]);
+    if (prodRes.status === 401) { logout(); return; }
+    products = prodRes.ok ? await prodRes.json() : [];
+    settings = settRes.ok ? await settRes.json() : {};
+    pageContent = (pagesRes && pagesRes.ok) ? await pagesRes.json() : {};
     renderDashboard();
     renderProducts();
     renderSettings();
@@ -407,26 +448,25 @@ async function loadAdmin() {
   } catch(e) { toast('Error: ' + e.message, true); }
 }
 
-// ===== GITHUB API =====
-async function fetchFile(path) {
-  const r = await fetch(`https://api.github.com/repos/${ghRepo}/contents/${path}`, { headers: { 'Authorization': `token ${ghToken}` } });
-  if (!r.ok) throw new Error('File not found: ' + path);
-  const d = await r.json();
-  return JSON.parse(atob(d.content));
-}
-async function saveFile(path, content, message) {
-  let sha;
-  try {
-    const r = await fetch(`https://api.github.com/repos/${ghRepo}/contents/${path}`, { headers: { 'Authorization': `token ${ghToken}` } });
-    if (r.ok) sha = (await r.json()).sha;
-  } catch(e) {}
-  const body = { message, content: btoa(unescape(encodeURIComponent(JSON.stringify(content, null, 2)))) };
-  if (sha) body.sha = sha;
-  const r = await fetch(`https://api.github.com/repos/${ghRepo}/contents/${path}`, {
-    method: 'PUT', headers: { 'Authorization': `token ${ghToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body)
-  });
-  if (!r.ok) throw new Error('Save failed: ' + r.statusText);
-  return r.json();
+// ===== BACKEND API HELPERS =====
+// Backend writes products.json + settings.json to BOTH public/data/ and dist/data/
+// — saves are live on prod immediately, no build step required.
+async function api(path, options) {
+  const opts = options || {};
+  const headers = Object.assign({}, opts.headers || {}, authHeaders());
+  if (opts.body && !(opts.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+  }
+  const r = await fetch(path, Object.assign({}, opts, { headers }));
+  if (r.status === 401) { logout(); throw new Error('Session expired'); }
+  if (!r.ok) {
+    let msg;
+    try { msg = (await r.json()).error; } catch (e) { msg = r.statusText; }
+    throw new Error(msg || 'Request failed');
+  }
+  if (r.status === 204) return null;
+  const ct = r.headers.get('content-type') || '';
+  return ct.indexOf('application/json') >= 0 ? r.json() : r.text();
 }
 
 // ===== TABS =====
@@ -503,17 +543,30 @@ function toggleSelectAll() {
 async function bulkDelete() {
   if (!selectedProducts.size) return;
   if (!confirm(`Delete ${selectedProducts.size} products?`)) return;
-  const idxs = [...selectedProducts].sort((a,b) => b-a);
-  idxs.forEach(i => products.splice(i, 1));
-  selectedProducts.clear();
-  try { await saveFile('public/data/products.json', products, `CMS: bulk delete ${idxs.length} products`); renderProducts(); renderDashboard(); toast(`${idxs.length} products deleted`); }
-  catch(e) { toast('Error: ' + e.message, true); }
+  const ids = [...selectedProducts].map(i => products[i]?.id).filter(v => typeof v === 'number');
+  if (!ids.length) return;
+  try {
+    await api('/api/products/bulk-delete', { method: 'POST', body: JSON.stringify({ ids }) });
+    selectedProducts.clear();
+    products = await api('/api/products');
+    renderProducts(); renderDashboard();
+    toast(`${ids.length} products deleted`);
+  } catch(e) { toast('Error: ' + e.message, true); }
 }
 async function bulkBadge(badge) {
   if (!selectedProducts.size) return;
-  selectedProducts.forEach(i => { if (products[i]) products[i].badge = badge || null; });
-  try { await saveFile('public/data/products.json', products, `CMS: bulk badge update`); renderProducts(); toast('Badges updated'); }
-  catch(e) { toast('Error: ' + e.message, true); }
+  const targets = [...selectedProducts].map(i => products[i]).filter(Boolean);
+  try {
+    for (const p of targets) {
+      await api('/api/products/' + p.id, {
+        method: 'PUT',
+        body: JSON.stringify(Object.assign({}, p, { badge: badge || null }))
+      });
+    }
+    products = await api('/api/products');
+    renderProducts();
+    toast('Badges updated');
+  } catch(e) { toast('Error: ' + e.message, true); }
 }
 
 // Product Modal
@@ -558,11 +611,15 @@ function closeProductModal() { document.getElementById('productModal').classList
 function editProduct(index) { openProductModal(products[index]); }
 
 async function deleteProduct(index) {
-  if (!confirm(`Delete "${products[index].name}"?`)) return;
-  const name = products[index].name;
-  products.splice(index, 1);
-  try { await saveFile('public/data/products.json', products, `CMS: delete ${name}`); renderProducts(); renderDashboard(); toast('Deleted: ' + name); }
-  catch(e) { toast('Error: ' + e.message, true); }
+  const p = products[index];
+  if (!p) return;
+  if (!confirm(`Delete "${p.name}"?`)) return;
+  try {
+    await api('/api/products/' + p.id, { method: 'DELETE' });
+    products = await api('/api/products');
+    renderProducts(); renderDashboard();
+    toast('Deleted: ' + p.name);
+  } catch(e) { toast('Error: ' + e.message, true); }
 }
 
 async function saveProduct() {
@@ -584,9 +641,7 @@ async function saveProduct() {
       if (entry.file) {
         const ext = getExt(entry.file.name);
         const filename = `${slug}-${i + 1}${ext}`;
-        const repoPath = `public/img/products/${filename}`;
-        await uploadFileToGitHub(entry.file, repoPath, `CMS: image ${slug} #${i + 1}`);
-        entry.src = `products/${filename}`;
+        entry.src = await uploadImageWithFilename(entry.file, filename);
         entry.file = null;
         imageSrcs.push(entry.src);
       } else if (entry.src) {
@@ -605,9 +660,7 @@ async function saveProduct() {
         if (slot.file) {
           const ext = getExt(slot.file.name);
           const filename = `${slug}-${def.id}${ext}`;
-          const repoPath = `public/img/products/${filename}`;
-          await uploadFileToGitHub(slot.file, repoPath, `CMS: 360 ${slug} ${def.id}`);
-          slot.src = `products/${filename}`;
+          slot.src = await uploadImageWithFilename(slot.file, filename);
           slot.file = null;
         }
         images360.push({
@@ -620,9 +673,8 @@ async function saveProduct() {
       }
     }
 
-    // Phase 3: assemble product + commit products.json
-    const product = {
-      id: id ? parseInt(id) : Math.max(0, ...products.map(p => p.id)) + 1,
+    // Phase 3: send product to backend (POST creates new id, PUT replaces by id)
+    const productBody = {
       name,
       price: priceVal,
       comparePrice: parseFloat(document.getElementById('p_comparePrice').value) || null,
@@ -638,15 +690,13 @@ async function saveProduct() {
       images: imageSrcs,
       images360: images360
     };
-
+    btn.textContent = 'Saving…';
     if (id) {
-      const idx = products.findIndex(p => p.id === parseInt(id));
-      if (idx >= 0) products[idx] = product; else products.push(product);
+      await api('/api/products/' + parseInt(id), { method: 'PUT', body: JSON.stringify(productBody) });
     } else {
-      products.push(product);
+      await api('/api/products', { method: 'POST', body: JSON.stringify(productBody) });
     }
-    btn.textContent = 'Saving JSON…';
-    await saveFile('public/data/products.json', products, `CMS: ${id ? 'update' : 'add'} ${name}`);
+    products = await api('/api/products');
     closeProductModal(); renderProducts(); renderDashboard();
     toast(id ? 'Product updated' : 'Product added');
   } catch (e) {
@@ -713,29 +763,28 @@ function pickSlot(i) {
 }
 function clearSlot(i) { edit360Slots[i] = null; render360Slots(); }
 
-// Upload one file to GitHub at the given repo path. Returns the path on success.
-async function uploadFileToGitHub(file, repoPath, message) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = async () => {
-      const base64 = reader.result.split(',')[1];
-      try {
-        let sha;
-        try {
-          const r = await fetch(`https://api.github.com/repos/${ghRepo}/contents/${repoPath}`, { headers: { 'Authorization': `token ${ghToken}` } });
-          if (r.ok) sha = (await r.json()).sha;
-        } catch(e) {}
-        const body = { message, content: base64 };
-        if (sha) body.sha = sha;
-        const r = await fetch(`https://api.github.com/repos/${ghRepo}/contents/${repoPath}`, {
-          method: 'PUT', headers: { 'Authorization': `token ${ghToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body)
-        });
-        if (!r.ok) throw new Error('Upload failed: ' + r.statusText);
-        resolve(repoPath);
-      } catch(e) { reject(e); }
-    };
-    reader.readAsDataURL(file);
+// Upload one file to backend with a chosen filename (browser renames the File
+// before sending so multer stores it under the predictable name we control).
+// Returns the storage-relative src ("products/<filename>") matching products.json convention.
+async function uploadImageWithFilename(file, filename) {
+  const renamed = new File([file], filename, { type: file.type });
+  const fd = new FormData();
+  fd.append('image', renamed);
+  const r = await fetch('/api/upload', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + sessionToken },
+    body: fd
   });
+  if (r.status === 401) { logout(); throw new Error('Session expired'); }
+  if (!r.ok) {
+    let msg;
+    try { msg = (await r.json()).error; } catch (e) { msg = r.statusText; }
+    throw new Error('Upload failed: ' + (msg || r.statusText));
+  }
+  const d = await r.json();
+  // Backend returns { url: 'img/products/<filename>', filename }.
+  // Storefront convention stores src without the 'img/' prefix.
+  return (d.url || '').replace(/^img\//, '');
 }
 
 // Drag & drop
@@ -786,34 +835,10 @@ function renderPageContent() {
 }
 
 async function savePageContent() {
-  pageContent = {
-    aboutTitle: document.getElementById('page_about_title').value,
-    aboutP1: document.getElementById('page_about_p1').value,
-    aboutP2: document.getElementById('page_about_p2').value,
-    aboutBtn: document.getElementById('page_about_btn').value,
-    announcement: document.getElementById('page_announcement').value,
-    newsletterHeading: document.getElementById('page_newsletter_heading').value,
-    newsletterPlaceholder: document.getElementById('page_newsletter_placeholder').value,
-    newsletterBtn: document.getElementById('page_newsletter_btn').value,
-    heroSlides: [...document.querySelectorAll('.hero-btn-text')].map((el, i) => ({
-      buttonText: el.value,
-      buttonLink: document.querySelectorAll('.hero-btn-link')[i]?.value || ''
-    })),
-    mediaGrid: [...document.querySelectorAll('.grid-title')].map((el, i) => ({
-      title: el.value,
-      subtitle: document.querySelectorAll('.grid-subtitle')[i]?.value || '',
-      link: document.querySelectorAll('.grid-link')[i]?.value || ''
-    }))
-  };
-  // Also update announcement in settings
-  settings.announcement = pageContent.announcement;
-  try {
-    await Promise.all([
-      saveFile('public/data/pages-content.json', pageContent, 'CMS: update page content'),
-      saveFile('public/data/settings.json', settings, 'CMS: update announcement')
-    ]);
-    toast('Pages saved & deploying...');
-  } catch(e) { toast('Error: ' + e.message, true); }
+  // Backend has no /api/pages-content endpoint yet — Pages-tab editing is
+  // disabled in this turn. Form values are still captured locally so a future
+  // turn 3 endpoint can wire them up without UI changes.
+  toast('Pages editing — backend endpoint coming next turn', true);
 }
 
 // ===== SETTINGS =====
@@ -839,8 +864,10 @@ async function saveSettings() {
   settings.bankHolder = document.getElementById('s_bankHolder').value;
   settings.bankIBAN = document.getElementById('s_bankIBAN').value;
   settings.iyzico = { apiKey: document.getElementById('s_iyzicoApiKey').value, secretKey: document.getElementById('s_iyzicoSecretKey').value, baseUrl: document.getElementById('s_iyzicoBaseUrl').value };
-  try { await saveFile('public/data/settings.json', settings, 'CMS: update settings'); toast('Settings saved & deploying...'); }
-  catch(e) { toast('Error: ' + e.message, true); }
+  try {
+    await api('/api/settings', { method: 'PUT', body: JSON.stringify(settings) });
+    toast('Settings saved');
+  } catch(e) { toast('Error: ' + e.message, true); }
 }
 
 // ===== ORDERS =====
@@ -869,8 +896,9 @@ async function importProductsJSON() {
     try {
       const imported = JSON.parse(await file.text());
       if (!Array.isArray(imported)) throw new Error('Must be array');
-      products = imported;
-      await saveFile('public/data/products.json', products, `CMS: import ${imported.length} products`);
+      // Backend PUT /api/products replaces the entire array atomically
+      await api('/api/products', { method: 'PUT', body: JSON.stringify(imported) });
+      products = await api('/api/products');
       renderProducts(); renderDashboard(); toast(`Imported ${imported.length} products`);
     } catch(err) { toast('Error: ' + err.message, true); }
   };
