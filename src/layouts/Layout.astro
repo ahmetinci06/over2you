@@ -56,9 +56,42 @@ const base = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL :
     <div class="mobile-nav-content">
       <ul class="nav-list main-nav-list" id="mainNavList">
         <li><a href={`${base}shop?sort=newest`} class="mobile-nav-link" data-i18n="nav.newIn">YENİ GELENLER</a></li>
-        <li><a href={`${base}shop`} class="mobile-nav-link" data-i18n="nav.shopAll">TÜM ÜRÜNLER</a></li>
+        <li><a href="#" class="mobile-nav-link has-submenu" data-target="shopMenu" data-i18n="nav.shopAll">TÜM ÜRÜNLER <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 18l6-6-6-6"></path></svg></a></li>
         <li><a href={`${base}about`} class="mobile-nav-link" data-i18n="nav.brand">HAKKIMIZDA</a></li>
+        <li>
+          <div class="nav-widget">
+            <span class="nav-widget-title" data-i18n="cat.colors">RENKLER:</span>
+            <div class="color-swatches">
+              {['black','pink','dark','brown','grey','white','red','blue'].map(c => (
+                <a href={`${base}shop?color=${c}`} class="color-swatch" style={`background:${
+                  {black:'#2a2a2a',pink:'#e8b5ce',dark:'#111',brown:'#5c4033',grey:'#808080',white:'#f5f5f5',red:'#c94c4c',blue:'#6495ed'}[c]
+                }`} title={c.charAt(0).toUpperCase()+c.slice(1)}></a>
+              ))}
+            </div>
+          </div>
+          <div class="nav-widget">
+            <span class="nav-widget-title" data-i18n="cat.categories">KATEGORİLER:</span>
+            <div class="category-thumbs">
+              <a href={`${base}shop`} class="cat-thumb"><div class="cat-img-box"><span style="font-weight:900;font-size:10px;">O2Y+</span></div><span data-i18n="nav.shopAll">TÜM ÜRÜNLER</span></a>
+              <a href={`${base}shop?cat=jackets`} class="cat-thumb"><div class="cat-img-box"><span style="font-weight:900;font-size:10px;">JKT</span></div><span>JACKETS</span></a>
+              <a href={`${base}shop?cat=hoodies`} class="cat-thumb"><div class="cat-img-box"><img src={`${base}img/col-hoodies.jpg`} alt="Hoodies" /></div><span data-i18n="cat.hoodies">SWEATSHIRT</span></a>
+              <a href={`${base}shop?cat=sweatpants`} class="cat-thumb"><div class="cat-img-box"><img src={`${base}img/col-sweatpants.jpg`} alt="Sweatpants" /></div><span data-i18n="cat.sweatpants">EŞOFMAN</span></a>
+              <a href={`${base}shop?cat=crewnecks`} class="cat-thumb"><div class="cat-img-box"><img src={`${base}img/col-crewnecks.jpg`} alt="Crewnecks" /></div><span data-i18n="cat.crewnecks">CREWNECK</span></a>
+            </div>
+          </div>
+        </li>
       </ul>
+      <div class="submenu-container" id="shopMenu">
+        <button class="submenu-back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 18l-6-6 6-6"></path></svg> BACK</button>
+        <ul class="nav-list">
+          <li><a href={`${base}shop`} class="mobile-nav-link" data-i18n="nav.shopAll">TÜM ÜRÜNLER</a></li>
+          <li><a href={`${base}shop?cat=jackets`} class="mobile-nav-link">JACKETS</a></li>
+          <li><a href={`${base}shop?cat=hoodies`} class="mobile-nav-link" data-i18n="cat.hoodies">SWEATSHIRT</a></li>
+          <li><a href={`${base}shop?cat=sweatpants`} class="mobile-nav-link" data-i18n="cat.sweatpants">EŞOFMAN</a></li>
+          <li><a href={`${base}shop?cat=crewnecks`} class="mobile-nav-link" data-i18n="cat.crewnecks">CREWNECK</a></li>
+          <li><a href={`${base}shop?cat=tshirts`} class="mobile-nav-link" data-i18n="cat.tshirts">TİŞÖRT</a></li>
+        </ul>
+      </div>
     </div>
   </nav>
 
