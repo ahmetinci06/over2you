@@ -232,8 +232,10 @@
         }
 
         slot.style.left = p.l + '%';
-        slot.style.top = p.t + '%';
-        slot.style.transform = 'translate(-50%, -50%) scale(' + p.s + ')';
+        slot.style.top = 'auto';
+        slot.style.bottom = (100 - p.t) + '%';
+        slot.style.transform = 'translate(-50%, 0) scale(' + p.s + ')';
+        slot.style.transformOrigin = 'center bottom';
         slot.style.opacity = String(p.o);
         slot.style.zIndex = String(p.z);
         slot.style.transition = TRANSITION;
