@@ -326,6 +326,28 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
             const eff = (typeof color.priceOverride === 'number') ? color.priceOverride : product.price;
             priceEl.textContent = '€' + eff.toFixed(2);
           }
+
+          // 5. header logo color — match selected variant
+          document.querySelectorAll('.header .logo-text').forEach(el => {
+            el.style.color = color.hex;
+          });
+
+          // 6. own-images yok hint — pill on stage when fallback path used
+          const stageHost = document.querySelector('.pd-stage-wrap');
+          if (stageHost) {
+            let hint = stageHost.querySelector('.pdp-color-hint');
+            if (!hint) {
+              hint = document.createElement('div');
+              hint.className = 'pdp-color-hint';
+              stageHost.appendChild(hint);
+            }
+            if (!colorHasImages && !color.default) {
+              hint.textContent = color.name.toLowerCase() + ' için fotoğraflar yakında';
+              hint.classList.add('visible');
+            } else {
+              hint.classList.remove('visible');
+            }
+          }
         });
       });
     }
@@ -457,11 +479,20 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
     padding: 2px;
     cursor: pointer;
     position: relative;
-    transition: border-color 0.15s;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
   }
-  .pdp-color-swatch.active { border-color: rgb(var(--text-color)); }
-  .pdp-color-swatch:hover { border-color: rgb(var(--text-color) / 0.5); }
-  .pdp-color-swatch.active:hover { border-color: rgb(var(--text-color)); }
+  /* Active: scale + double-ring (background gap + text-color halo).
+     Border kept transparent so the rings carry the visual weight cleanly. */
+  .pdp-color-swatch.active {
+    transform: scale(1.08);
+    box-shadow:
+      0 0 0 2px rgb(var(--background)),
+      0 0 0 4px rgb(var(--text-color));
+  }
+  .pdp-color-swatch:hover:not(.active) {
+    transform: scale(1.04);
+    border-color: rgb(var(--text-color) / 0.5);
+  }
   .swatch-circle {
     display: block;
     width: 100%;
@@ -480,6 +511,26 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
     pointer-events: none;
   }
   .pdp-color-swatch:hover .swatch-thumb { opacity: 1; }
+
+  /* ===== Color hint pill (fallback feedback) ===== */
+  .pdp-color-hint {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.78);
+    color: #fff;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    pointer-events: none;
+    z-index: 5;
+    white-space: nowrap;
+  }
+  .pdp-color-hint.visible { opacity: 1; }
 
   /* ===== Stock indicator ===== */
   .pdp-stock {
