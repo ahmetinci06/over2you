@@ -83,8 +83,18 @@
     .img-upload-zone:hover, .img-upload-zone.dragover { border-color: var(--accent); color: var(--text); }
     .img-thumbs { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.75rem; }
     .img-thumb { width: 64px; height: 80px; border-radius: 4px; object-fit: cover; border: 1px solid var(--border); position: relative; }
-    .img-thumb-wrap { position: relative; }
+    .img-thumb-wrap { position: relative; cursor: grab; transition: opacity 0.15s, transform 0.15s; }
+    .img-thumb-wrap:active { cursor: grabbing; }
+    .img-thumb-wrap.dragging { opacity: 0.4; }
+    .img-thumb-wrap.drag-over { transform: translateY(-2px); }
+    .img-thumb-wrap.drag-over::before { content: ''; position: absolute; inset: -3px; border: 2px solid var(--accent); border-radius: 6px; pointer-events: none; }
     .img-thumb-rm { position: absolute; top: -4px; right: -4px; width: 18px; height: 18px; background: var(--danger); color: #fff; border: none; border-radius: 50%; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .thumb-order { position: absolute; bottom: -4px; left: -4px; width: 18px; height: 18px; background: var(--accent); color: #fff; border-radius: 50%; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+    /* Sortable visual feedback for per-color image thumbs (uses same classes scoped to .color-thumb) */
+    .color-thumb { cursor: grab; transition: opacity 0.15s, transform 0.15s; }
+    .color-thumb.dragging { opacity: 0.4; }
+    .color-thumb.drag-over { transform: translateY(-2px); }
+    .color-thumb.drag-over::before { content: ''; position: absolute; inset: -3px; border: 2px solid var(--accent); border-radius: 5px; pointer-events: none; z-index: 2; }
 
     /* Color variants list */
     .color-list { display: flex; flex-direction: column; gap: 0.5rem; }
@@ -678,8 +688,12 @@ function renderColorList() {
             📁 Sürükle bırak veya tıkla
             <input type="file" multiple accept="image/*" style="display:none;" onchange="handleColorImages(${i}, this.files); this.value='';" onclick="event.stopPropagation();">
           </div>
-          <div class="color-thumb-row">${(c.colorImages || []).map((entry, ei) => `
-            <div class="color-thumb"><img src="${colorEntryPreview(entry)}" alt=""><button type="button" onclick="removeColorImage(${i}, ${ei})" aria-label="Kaldır">×</button></div>
+          <div class="color-thumb-row" data-color-images-idx="${i}">${(c.colorImages || []).map((entry, ei) => `
+            <div class="color-thumb" draggable="true" data-sort-idx="${ei}" title="Sürükleyerek sırala">
+              <img src="${colorEntryPreview(entry)}" alt="">
+              <button type="button" onclick="event.stopPropagation();removeColorImage(${i}, ${ei})" aria-label="Kaldır">×</button>
+              <span class="thumb-order">${ei + 1}</span>
+            </div>
           `).join('')}</div>
         </fieldset>
         <fieldset>
@@ -949,11 +963,69 @@ function previewURL(entry) {
 }
 
 function renderImageThumbs() {
-  document.getElementById('imgThumbs').innerHTML = editImages.map((entry, i) =>
-    `<div class="img-thumb-wrap"><img src="${previewURL(entry)}" class="img-thumb" onerror="this.style.background='#eee'"><button class="img-thumb-rm" onclick="removeImage(${i})">×</button></div>`
+  const container = document.getElementById('imgThumbs');
+  container.innerHTML = editImages.map((entry, i) =>
+    `<div class="img-thumb-wrap" draggable="true" data-sort-idx="${i}" title="Sürükleyerek sırala">
+      <img src="${previewURL(entry)}" class="img-thumb" onerror="this.style.background='#eee'">
+      <button class="img-thumb-rm" type="button" onclick="event.stopPropagation();removeImage(${i})" aria-label="Kaldır">×</button>
+      <span class="thumb-order">${i + 1}</span>
+    </div>`
   ).join('');
+  makeSortable(container, newOrder => {
+    editImages = newOrder.map(i => editImages[i]);
+    renderImageThumbs();
+  });
 }
 function removeImage(i) { editImages.splice(i, 1); renderImageThumbs(); }
+
+// ===== HTML5 DRAG REORDER (vanilla, no lib) =====
+// Idempotent on container — single delegated listener handles all
+// children with [draggable="true"][data-sort-idx]. onReorder receives
+// the array of original indices in the new visual order.
+function makeSortable(container, onReorder) {
+  if (!container || container.dataset.sortInit === '1') {
+    // Already initialised; just refresh the onReorder callback
+    if (container) container._onReorder = onReorder;
+    return;
+  }
+  container.dataset.sortInit = '1';
+  container._onReorder = onReorder;
+  let dragged = null;
+
+  container.addEventListener('dragstart', e => {
+    const item = e.target.closest('[draggable="true"][data-sort-idx]');
+    if (!item || !container.contains(item)) return;
+    dragged = item;
+    setTimeout(() => item.classList.add('dragging'), 0);
+  });
+  container.addEventListener('dragend', () => {
+    if (dragged) dragged.classList.remove('dragging');
+    container.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+    dragged = null;
+  });
+  container.addEventListener('dragover', e => {
+    e.preventDefault();
+    const target = e.target.closest('[draggable="true"][data-sort-idx]');
+    if (!target || target === dragged) return;
+    container.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+    target.classList.add('drag-over');
+  });
+  container.addEventListener('drop', e => {
+    e.preventDefault();
+    const target = e.target.closest('[draggable="true"][data-sort-idx]');
+    if (!target || !dragged || target === dragged) return;
+    target.classList.remove('drag-over');
+
+    const items = [...container.querySelectorAll('[draggable="true"][data-sort-idx]')];
+    const draggedIdx = items.indexOf(dragged);
+    const targetIdx = items.indexOf(target);
+    container.insertBefore(dragged, draggedIdx > targetIdx ? target : target.nextSibling);
+
+    const newOrder = [...container.querySelectorAll('[draggable="true"][data-sort-idx]')]
+      .map(el => parseInt(el.dataset.sortIdx, 10));
+    if (typeof container._onReorder === 'function') container._onReorder(newOrder);
+  });
+}
 
 function handleImageUpload(files) {
   for (const file of files) {
@@ -1046,6 +1118,16 @@ function attachColorDropZones() {
     initDropZone(zone, files => {
       if (kind === '360') handleColor360(idx, files);
       else handleColorImages(idx, files);
+    });
+  });
+  // Sortable for per-color image rows (360 row stays positional, no reorder)
+  document.querySelectorAll('[data-color-images-idx]').forEach(row => {
+    const colorIdx = parseInt(row.dataset.colorImagesIdx, 10);
+    makeSortable(row, newOrder => {
+      const c = editColors[colorIdx];
+      if (!c || !c.colorImages) return;
+      c.colorImages = newOrder.map(i => c.colorImages[i]);
+      renderColorList();
     });
   });
 }
