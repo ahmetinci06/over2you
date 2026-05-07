@@ -2,7 +2,8 @@
   {
     "id": 1,
     "name": "BDG Corduroy Bomber Jacket",
-    "price": 119,
+    "price": 149,
+    "salePrice": 119,
     "category": "jackets",
     "sizes": [
       "S",
@@ -49,7 +50,6 @@
         "flip": true
       }
     ],
-    "comparePrice": 149,
     "stock": "in-stock",
     "stockQty": null,
     "colors": [
