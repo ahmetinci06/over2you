@@ -139,7 +139,7 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
               <span class="pdp-color-label">RENK: <strong id="activeColorName">${defaultColor.name}</strong></span>
               <div class="swatch-row">
                 ${variantColors.map((c, idx) => `
-                  <button type="button" class="color-swatch${idx === defaultColorIdx ? ' active' : ''}" data-color-idx="${idx}" data-color-id="${c.id}" aria-label="${c.name}" title="${c.name}">
+                  <button type="button" class="pdp-color-swatch${idx === defaultColorIdx ? ' active' : ''}" data-color-idx="${idx}" data-color-id="${c.id}" aria-label="${c.name}" title="${c.name}">
                     <span class="swatch-circle" style="background:${c.hex};"></span>
                     ${(Array.isArray(c.images) && c.images.length > 0) ? `<span class="swatch-thumb" style="background-image:url(${imgBase}${c.images[0]});"></span>` : ''}
                   </button>
@@ -241,7 +241,7 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
     }
 
     function wireColorSwatches(product, variantColors, baseFrames360, imgBase) {
-      const swatches = document.querySelectorAll('.color-swatch');
+      const swatches = document.querySelectorAll('.pdp-color-swatch');
       if (!swatches.length) return;
 
       swatches.forEach(btn => {
@@ -436,7 +436,7 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
     gap: 8px;
     flex-wrap: wrap;
   }
-  .color-swatch {
+  .pdp-color-swatch {
     width: 36px;
     height: 36px;
     border-radius: 50%;
@@ -447,9 +447,9 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
     position: relative;
     transition: border-color 0.15s;
   }
-  .color-swatch.active { border-color: rgb(var(--text-color)); }
-  .color-swatch:hover { border-color: rgb(var(--text-color) / 0.5); }
-  .color-swatch.active:hover { border-color: rgb(var(--text-color)); }
+  .pdp-color-swatch.active { border-color: rgb(var(--text-color)); }
+  .pdp-color-swatch:hover { border-color: rgb(var(--text-color) / 0.5); }
+  .pdp-color-swatch.active:hover { border-color: rgb(var(--text-color)); }
   .swatch-circle {
     display: block;
     width: 100%;
@@ -467,7 +467,7 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
     transition: opacity 0.18s;
     pointer-events: none;
   }
-  .color-swatch:hover .swatch-thumb { opacity: 1; }
+  .pdp-color-swatch:hover .swatch-thumb { opacity: 1; }
 
   /* ===== Stock indicator ===== */
   .pdp-stock {
