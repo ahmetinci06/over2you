@@ -96,6 +96,17 @@
     .color-thumb.drag-over { transform: translateY(-2px); }
     .color-thumb.drag-over::before { content: ''; position: absolute; inset: -3px; border: 2px solid var(--accent); border-radius: 5px; pointer-events: none; z-index: 2; }
 
+    /* Bulk action bar */
+    .bulk-action-bar { background: var(--text); color: #fff; padding: 0.75rem 1rem; border-radius: var(--radius); margin-top: 0.75rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+    .bulk-action-bar[hidden] { display: none; }
+    .bulk-action-bar .bulk-count { font-size: 12px; }
+    .bulk-action-bar .bulk-count strong { font-size: 14px; }
+    .bulk-action-bar__buttons { display: flex; gap: 0.4rem; flex-wrap: wrap; flex: 1; }
+    .bulk-action-bar .btn { background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.25); }
+    .bulk-action-bar .btn:hover { background: rgba(255,255,255,0.18); }
+    .bulk-action-bar .btn-danger { background: var(--danger); border-color: var(--danger); }
+    .bulk-action-bar .btn-danger:hover { background: #c82333; }
+
     /* Form preview */
     .form-preview { margin-top: 1rem; border: 1px solid var(--border); border-radius: var(--radius); background: #fff; overflow: hidden; }
     .form-preview__banner { background: #fff3cd; color: #5c4400; padding: 0.5rem 0.75rem; font-size: 11px; font-weight: 600; border-bottom: 1px solid #ffc107; }
@@ -316,11 +327,16 @@
           <tbody id="productTableBody"></tbody>
         </table>
       </div>
-      <div class="btn-group" style="margin-top:0.75rem;" id="bulkActions" style="display:none;">
-        <button class="btn btn-sm btn-danger" onclick="bulkDelete()">Delete Selected</button>
-        <button class="btn btn-sm btn-outline" onclick="bulkBadge('NEW')">Set NEW</button>
-        <button class="btn btn-sm btn-outline" onclick="bulkBadge('SALE')">Set SALE</button>
-        <button class="btn btn-sm btn-outline" onclick="bulkBadge('')">Clear Badge</button>
+      <div class="bulk-action-bar" id="bulkActions" hidden>
+        <span class="bulk-count"><strong id="bulkSelectedCount">0</strong> ürün seçildi</span>
+        <div class="bulk-action-bar__buttons">
+          <button class="btn btn-sm btn-danger" onclick="bulkDelete()">🗑 Sil</button>
+          <button class="btn btn-sm btn-outline" onclick="openBulkCategory()">📁 Kategori Değiştir</button>
+          <button class="btn btn-sm btn-outline" onclick="bulkBadge('NEW')">Set NEW</button>
+          <button class="btn btn-sm btn-outline" onclick="bulkBadge('SALE')">Set SALE</button>
+          <button class="btn btn-sm btn-outline" onclick="bulkBadge('')">Clear Badge</button>
+          <button class="btn btn-sm btn-outline" onclick="clearSelection()" style="margin-left:auto;">Seçimi Temizle</button>
+        </div>
       </div>
     </div>
 
@@ -522,6 +538,29 @@
         <button class="btn btn-outline" onclick="closeProductModal()">Cancel</button>
         <button class="btn btn-primary" onclick="saveProduct()" id="saveProductBtn">Save Product</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bulk category modal -->
+<div class="modal-overlay" id="bulkCategoryModal" onclick="if(event.target===this) closeBulkCategory();" role="dialog" aria-modal="true">
+  <div class="modal" style="max-width:440px;">
+    <h3 style="font-size:15px;font-weight:800;margin-bottom:0.75rem;">Kategori Değiştir</h3>
+    <p style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:1rem;"><strong id="bulkCategoryCount" style="color:var(--text);">0</strong> ürünün kategorisi değiştirilecek.</p>
+    <div class="form-group">
+      <label>Yeni primary kategori</label>
+      <select id="bulkCategorySelect">
+        <option value="jackets">Jackets</option>
+        <option value="hoodies">Hoodies</option>
+        <option value="sweatpants">Sweatpants</option>
+        <option value="crewnecks">Crewnecks</option>
+        <option value="tshirts">T-Shirts</option>
+        <option value="accessories">Accessories</option>
+      </select>
+    </div>
+    <div class="btn-group" style="justify-content:flex-end;gap:0.5rem;margin-top:1rem;">
+      <button type="button" class="btn btn-outline" onclick="closeBulkCategory()">Vazgeç</button>
+      <button type="button" class="btn btn-primary" onclick="applyBulkCategory()">Uygula</button>
     </div>
   </div>
 </div>
@@ -802,6 +841,7 @@ function renderProducts() {
   filterProducts();
 }
 
+function refreshBulkBarAfterRender() { updateBulkBar(); }
 function filterProducts() {
   const q = document.getElementById('productSearch').value.toLowerCase();
   const cat = document.getElementById('productCatFilter').value;
@@ -813,6 +853,7 @@ function filterProducts() {
     return true;
   });
   document.getElementById('productCount').textContent = `${filtered.length} of ${products.length} products`;
+  if (typeof refreshBulkBarAfterRender === 'function') refreshBulkBarAfterRender();
   const tbody = document.getElementById('productTableBody');
   tbody.innerHTML = filtered.map((p, fi) => {
     const idx = products.indexOf(p);
@@ -833,6 +874,7 @@ function filterProducts() {
 
 function toggleSelect(idx) {
   if (selectedProducts.has(idx)) selectedProducts.delete(idx); else selectedProducts.add(idx);
+  updateBulkBar();
 }
 function toggleSelectAll() {
   const checked = document.getElementById('selectAll').checked;
@@ -841,10 +883,25 @@ function toggleSelectAll() {
     cb.checked = checked;
     if (checked) selectedProducts.add(idx); else selectedProducts.delete(idx);
   });
+  updateBulkBar();
+}
+function clearSelection() {
+  selectedProducts.clear();
+  document.querySelectorAll('.product-cb').forEach(cb => cb.checked = false);
+  const all = document.getElementById('selectAll'); if (all) all.checked = false;
+  updateBulkBar();
+}
+function updateBulkBar() {
+  const bar = document.getElementById('bulkActions');
+  const count = document.getElementById('bulkSelectedCount');
+  if (!bar) return;
+  const n = selectedProducts.size;
+  if (count) count.textContent = String(n);
+  bar.hidden = n === 0;
 }
 async function bulkDelete() {
   if (!selectedProducts.size) return;
-  if (!confirm(`Delete ${selectedProducts.size} products?`)) return;
+  if (!confirm(`${selectedProducts.size} ürün silinsin mi? (geri alınamaz)`)) return;
   const ids = [...selectedProducts].map(i => products[i]?.id).filter(v => typeof v === 'number');
   if (!ids.length) return;
   try {
@@ -852,8 +909,43 @@ async function bulkDelete() {
     selectedProducts.clear();
     products = await api('/api/products');
     renderProducts(); renderDashboard();
-    toast(`${ids.length} products deleted`);
-  } catch(e) { toast('Error: ' + e.message, true); }
+    updateBulkBar();
+    toast(`${ids.length} ürün silindi`);
+  } catch(e) { toast('Hata: ' + e.message, true); }
+}
+
+// Bulk category — opens a modal with the category dropdown, applies via
+// sequential PUT /api/products/:id (no dedicated bulk endpoint added,
+// per turn 11 NO-DO #2 — backend stays untouched).
+function openBulkCategory() {
+  if (!selectedProducts.size) return;
+  document.getElementById('bulkCategoryModal').classList.add('open');
+  document.getElementById('bulkCategoryCount').textContent = String(selectedProducts.size);
+}
+function closeBulkCategory() {
+  document.getElementById('bulkCategoryModal').classList.remove('open');
+}
+async function applyBulkCategory() {
+  const newCat = document.getElementById('bulkCategorySelect').value;
+  if (!newCat) return;
+  const targets = [...selectedProducts].map(i => products[i]).filter(Boolean);
+  closeBulkCategory();
+  try {
+    for (const p of targets) {
+      const updated = Object.assign({}, p, {
+        category: newCat,
+        categories: Array.isArray(p.categories) && p.categories.length > 0
+          ? Array.from(new Set([newCat, ...p.categories.filter(c => c !== newCat)]))
+          : [newCat],
+      });
+      await api('/api/products/' + p.id, { method: 'PUT', body: JSON.stringify(updated) });
+    }
+    products = await api('/api/products');
+    renderProducts();
+    toast(`${targets.length} ürünün kategorisi "${newCat}" olarak güncellendi`);
+  } catch (e) {
+    toast('Hata: ' + e.message, true);
+  }
 }
 async function bulkBadge(badge) {
   if (!selectedProducts.size) return;
