@@ -154,12 +154,18 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
               </div>
             </div>
 
-            <div class="pdp-stock">
-              <span class="pdp-stock-dot" aria-hidden="true"></span>
-              <strong>Stokta</strong> <span>— 3-5 iş günü içinde kargoda</span>
-            </div>
+            ${product.outOfStock
+              ? `<div class="pdp-stock pdp-stock--oos">
+                  <span class="pdp-stock-dot" aria-hidden="true" style="background:#dc3545"></span>
+                  <strong>Stokta Yok</strong> <span>— stok yenilendiğinde haber veririz</span>
+                </div>`
+              : `<div class="pdp-stock">
+                  <span class="pdp-stock-dot" aria-hidden="true"></span>
+                  <strong>Stokta</strong> <span>— ${(typeof product.stockQty === 'number' && product.stockQty > 0 && product.stockQty < 10) ? `son ${product.stockQty} adet` : '3-5 iş günü içinde kargoda'}</span>
+                </div>`
+            }
 
-            <button id="addToCartBtn" style="width:100%;padding:1rem;background:rgb(var(--button-background));color:rgb(var(--button-text-color));border:none;font:var(--heading-font-style) 800 var(--text-sm)/1.65 var(--heading-font-family);text-transform:uppercase;letter-spacing:0.03em;cursor:pointer;transition:all 0.3s;margin-bottom:0.85rem;">ADD TO CART</button>
+            <button id="addToCartBtn" ${product.outOfStock ? 'disabled' : ''} style="width:100%;padding:1rem;background:${product.outOfStock ? 'rgb(var(--text-color)/0.2)' : 'rgb(var(--button-background))'};color:${product.outOfStock ? 'rgb(var(--text-color)/0.5)' : 'rgb(var(--button-text-color))'};border:none;font:var(--heading-font-style) 800 var(--text-sm)/1.65 var(--heading-font-family);text-transform:uppercase;letter-spacing:0.03em;cursor:${product.outOfStock ? 'not-allowed' : 'pointer'};transition:all 0.3s;margin-bottom:0.85rem;">${product.outOfStock ? 'STOKTA YOK' : 'ADD TO CART'}</button>
 
             <div class="pdp-banner">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

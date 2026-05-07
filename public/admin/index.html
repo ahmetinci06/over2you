@@ -96,6 +96,10 @@
     .color-thumb.drag-over { transform: translateY(-2px); }
     .color-thumb.drag-over::before { content: ''; position: absolute; inset: -3px; border: 2px solid var(--accent); border-radius: 5px; pointer-events: none; z-index: 2; }
 
+    .oos-toggle { display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.6rem 0.75rem; background: rgba(220,53,69,0.05); border: 1px solid rgba(220,53,69,0.18); border-radius: 4px; cursor: pointer; font-size: 12px; color: var(--text); user-select: none; }
+    .oos-toggle input { margin-top: 1px; }
+    .oos-toggle strong { color: var(--danger); margin-right: 0.25rem; }
+
     /* Form sections (native <details>) */
     .form-section { border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 0.75rem; overflow: hidden; }
     .form-section > summary { padding: 0.7rem 0.9rem; background: var(--accent-light); font: var(--heading-font-style) 700 12px/1.2 var(--heading-font-family); text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; user-select: none; list-style: none; display: flex; align-items: center; justify-content: space-between; }
@@ -409,6 +413,9 @@
       <div class="form-section-body">
         <div class="form-row"><div class="form-group"><label>Sizes (comma-separated)</label><input id="p_sizes" value="XXS,XS,S,M,L,XL,XXL"></div><div class="form-group"></div></div>
         <div class="form-row"><div class="form-group"><label>Stock Status</label><select id="p_stock"><option value="in-stock">In Stock</option><option value="low-stock">Low Stock</option><option value="out-of-stock">Out of Stock</option></select></div><div class="form-group"><label>Stock Quantity</label><input type="number" id="p_stockQty" placeholder="∞"></div></div>
+        <div class="form-row single"><div class="form-group">
+          <label class="oos-toggle"><input type="checkbox" id="p_outOfStock"> <strong>Stokta yok</strong> — PDP'de "Stokta Yok" gösterilir, ADD TO CART devre dışı</label>
+        </div></div>
       </div>
     </details>
 
@@ -676,6 +683,7 @@ function openProductModal(product) {
     document.getElementById('p_sizes').value = product.sizes.join(',');
     document.getElementById('p_stock').value = product.stock || 'in-stock';
     document.getElementById('p_stockQty').value = product.stockQty ?? '';
+    document.getElementById('p_outOfStock').checked = !!product.outOfStock;
     document.getElementById('p_description').value = product.description || '';
     editImages = (product.images || []).map(src => ({ src, file: null }));
     if (Array.isArray(product.images360) && product.images360.length === 4) {
@@ -987,6 +995,7 @@ async function saveProduct() {
       colorFamily: document.getElementById('p_colorFamily').value,
       stock: document.getElementById('p_stock').value,
       stockQty: document.getElementById('p_stockQty').value ? parseInt(document.getElementById('p_stockQty').value) : null,
+      outOfStock: document.getElementById('p_outOfStock').checked,
       description: document.getElementById('p_description').value,
       images: imageSrcs,
       images360: images360,
