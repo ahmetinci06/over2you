@@ -514,6 +514,18 @@
   </div>
 </div>
 
+<!-- Delete confirmation modal -->
+<div class="modal-overlay" id="deleteConfirmModal" onclick="if(event.target===this) closeDeleteConfirm();" role="dialog" aria-modal="true" aria-labelledby="deleteConfirmTitle">
+  <div class="modal" style="max-width:440px;">
+    <h3 id="deleteConfirmTitle" style="font-size:15px;font-weight:800;margin-bottom:0.75rem;">Ürünü silmek istediğinden emin misin?</h3>
+    <p style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:1.25rem;">"<strong id="deleteProductName" style="color:var(--text);"></strong>" ürünü kalıcı olarak silinecek. Bu işlem geri alınamaz.</p>
+    <div class="btn-group" style="justify-content:flex-end;gap:0.5rem;">
+      <button type="button" class="btn btn-outline" onclick="closeDeleteConfirm()">Vazgeç</button>
+      <button type="button" class="btn btn-danger" onclick="confirmDelete()" autofocus>Evet, Sil</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -567,6 +579,7 @@ document.addEventListener('DOMContentLoaded', () => {
   modal.addEventListener('change', onChange);
 });
 // Guard against losing unsaved changes on tab close / navigation.
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { const m = document.getElementById('deleteConfirmModal'); if (m && m.classList.contains('open')) closeDeleteConfirm(); } });
 window.addEventListener('beforeunload', e => {
   const el = document.getElementById('saveState');
   if (el && el.dataset.state === 'dirty') {
@@ -1013,16 +1026,35 @@ async function duplicateProduct(index) {
   }
 }
 
-async function deleteProduct(index) {
+// deleteProduct: open the custom delete confirmation modal (the actual
+// DELETE request fires from confirmDelete()).
+let pendingDeleteIdx = -1;
+function deleteProduct(index) {
   const p = products[index];
   if (!p) return;
-  if (!confirm(`Delete "${p.name}"?`)) return;
+  pendingDeleteIdx = index;
+  document.getElementById('deleteProductName').textContent = p.name;
+  const m = document.getElementById('deleteConfirmModal');
+  m.classList.add('open');
+}
+function closeDeleteConfirm() {
+  pendingDeleteIdx = -1;
+  document.getElementById('deleteConfirmModal').classList.remove('open');
+}
+async function confirmDelete() {
+  const idx = pendingDeleteIdx;
+  if (idx < 0) return;
+  const p = products[idx];
+  if (!p) { closeDeleteConfirm(); return; }
+  closeDeleteConfirm();
   try {
     await api('/api/products/' + p.id, { method: 'DELETE' });
     products = await api('/api/products');
     renderProducts(); renderDashboard();
-    toast('Deleted: ' + p.name);
-  } catch(e) { toast('Error: ' + e.message, true); }
+    toast('Silindi: ' + p.name);
+  } catch (e) {
+    toast('Hata: ' + e.message, true);
+  }
 }
 
 async function saveProduct() {
