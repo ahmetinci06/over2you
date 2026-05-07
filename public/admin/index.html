@@ -96,6 +96,18 @@
     .color-thumb.drag-over { transform: translateY(-2px); }
     .color-thumb.drag-over::before { content: ''; position: absolute; inset: -3px; border: 2px solid var(--accent); border-radius: 5px; pointer-events: none; z-index: 2; }
 
+    /* Inline validation visual */
+    #productModal input:invalid:not(:placeholder-shown):not([type="color"]),
+    #productModal textarea:invalid:not(:placeholder-shown) {
+      border-color: var(--danger);
+      background: rgba(220, 53, 69, 0.04);
+    }
+    #productModal input:invalid:not(:placeholder-shown):not([type="color"]) ~ .field-error,
+    #productModal textarea:invalid:not(:placeholder-shown) ~ .field-error {
+      display: block;
+    }
+    .field-error { display: none; color: var(--danger); font-size: 11px; margin-top: 0.3rem; line-height: 1.4; }
+
     /* chip-input shared by categories + tags */
     .chip-input { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; padding: 0.4rem 0.5rem; border: 1px solid var(--border); border-radius: 4px; background: #fff; min-height: 36px; }
     .chip-list { display: flex; gap: 0.4rem; flex-wrap: wrap; }
@@ -386,7 +398,7 @@
     <details class="form-section" open>
       <summary>Temel Bilgiler</summary>
       <div class="form-section-body">
-        <div class="form-row"><div class="form-group"><label>Product Name <span class="required-mark">*</span></label><input id="p_name" placeholder="Hoodie Lapis Blue" required minlength="3"></div><div class="form-group"><label>Primary Category</label><select id="p_category"><option value="jackets">Jackets</option><option value="hoodies">Hoodies</option><option value="sweatpants">Sweatpants</option><option value="crewnecks">Crewnecks</option><option value="tshirts">T-Shirts</option><option value="accessories">Accessories</option></select></div></div>
+        <div class="form-row"><div class="form-group"><label>Product Name <span class="required-mark">*</span></label><input id="p_name" placeholder="Hoodie Lapis Blue" required minlength="3"><span class="field-error">En az 3 karakter olmalı.</span></div><div class="form-group"><label>Primary Category</label><select id="p_category"><option value="jackets">Jackets</option><option value="hoodies">Hoodies</option><option value="sweatpants">Sweatpants</option><option value="crewnecks">Crewnecks</option><option value="tshirts">T-Shirts</option><option value="accessories">Accessories</option></select></div></div>
         <div class="form-row single"><div class="form-group">
           <label>Ek kategoriler (chip — primary kategori dahil tüm kategoriler chip listesindekiler. Enter veya virgül ile ekle)</label>
           <div class="chip-input">
@@ -394,7 +406,7 @@
             <input type="text" id="categoryInput" placeholder="Kategori ekle..." onkeydown="handleChipKey('category', event)">
           </div>
         </div></div>
-        <div class="form-row c3"><div class="form-group"><label>Price (€)</label><input type="number" step="0.01" id="p_price" value="84.00"></div><div class="form-group"><label>Compare Price (€)</label><input type="number" step="0.01" id="p_comparePrice" placeholder="Optional"></div><div class="form-group"><label>Badge</label><select id="p_badge"><option value="">None</option><option value="NEW">NEW</option><option value="LAST STOCK">LAST STOCK</option><option value="SALE">SALE</option></select></div></div>
+        <div class="form-row c3"><div class="form-group"><label>Price (€) <span class="required-mark">*</span></label><input type="number" step="0.01" id="p_price" value="84.00" required min="0" placeholder="0.00"><span class="field-error">Fiyat zorunlu, sıfır veya pozitif.</span></div><div class="form-group"><label>Compare Price (€)</label><input type="number" step="0.01" id="p_comparePrice" placeholder="Optional" min="0"></div><div class="form-group"><label>Badge</label><select id="p_badge"><option value="">None</option><option value="NEW">NEW</option><option value="LAST STOCK">LAST STOCK</option><option value="SALE">SALE</option></select></div></div>
         <div class="form-row"><div class="form-group"><label>Color Name (top-level)</label><input id="p_colorName" placeholder="Lapis Blue"></div><div class="form-group"><label>Color (top-level hex)</label><div class="color-input-wrap"><input type="color" id="p_color" value="#2a5a8a"><span class="color-hex" id="p_colorHex">#2a5a8a</span></div></div></div>
         <div class="form-row"><div class="form-group"><label>Color Family</label><select id="p_colorFamily"><option value="black">Black</option><option value="white">White</option><option value="grey">Grey</option><option value="blue">Blue</option><option value="red">Red</option><option value="pink">Pink</option><option value="brown">Brown</option><option value="green">Green</option><option value="dark">Dark</option></select></div><div class="form-group"></div></div>
         <div class="form-row single"><div class="form-group"><label>Description</label><textarea id="p_description" rows="3"></textarea></div></div>
