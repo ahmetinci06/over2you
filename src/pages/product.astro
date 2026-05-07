@@ -89,6 +89,16 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
       const shuffled = otherProducts.slice().sort(() => Math.random() - 0.5);
       const relatedSlice = shuffled.slice(0, 4);
 
+      // Variant colors. New schema: product.colors[] — each entry has
+      // {id, name, hex, default} + optional advanced fields (images,
+      // images360, stock, priceOverride). Legacy products without colors[]
+      // get a synthesized 1-entry array from the top-level color/colorName.
+      const variantColors = (Array.isArray(product.colors) && product.colors.length > 0)
+        ? product.colors
+        : [{ id: 'default', name: product.colorName || '—', hex: product.color || '#000000', default: true }];
+      const defaultColorIdx = Math.max(0, variantColors.findIndex(c => c.default));
+      const defaultColor = variantColors[defaultColorIdx] || variantColors[0];
+
       const framesData = has360
         ? frames360
         : (Array.isArray(product.images) ? product.images : []);
@@ -125,11 +135,15 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
             <p style="font-size:var(--text-base);margin-bottom:1rem;">€${product.price.toFixed(2)}</p>
             ${product.badge ? `<span style="display:inline-block;padding:3px 8px;font-size:10px;font-weight:700;background:rgb(var(--text-color));color:rgb(var(--background));margin-bottom:1.25rem;">${product.badge}</span>` : ''}
 
-            <div style="margin-bottom:1.25rem;">
-              <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:rgb(var(--text-color)/0.5);display:block;margin-bottom:0.5rem;">COLOR: ${product.colorName}</span>
-              <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                ${related.map(r => `<a href="${B}product?id=${r.id}" class="swatch-product" style="width:28px;height:28px;border-radius:50%;background:${r.color};border:2px solid transparent;display:block;" title="${r.colorName}"></a>`).join('')}
-                <a href="${B}product?id=${product.id}" class="swatch-product selected" style="width:28px;height:28px;border-radius:50%;background:${product.color};border:2px solid rgb(var(--text-color));display:block;" title="${product.colorName}"></a>
+            <div class="pdp-color-swatches">
+              <span class="pdp-color-label">RENK: <strong id="activeColorName">${defaultColor.name}</strong></span>
+              <div class="swatch-row">
+                ${variantColors.map((c, idx) => `
+                  <button type="button" class="color-swatch${idx === defaultColorIdx ? ' active' : ''}" data-color-idx="${idx}" data-color-id="${c.id}" aria-label="${c.name}" title="${c.name}">
+                    <span class="swatch-circle" style="background:${c.hex};"></span>
+                    ${(Array.isArray(c.images) && c.images.length > 0) ? `<span class="swatch-thumb" style="background-image:url(${imgBase}${c.images[0]});"></span>` : ''}
+                  </button>
+                `).join('')}
               </div>
             </div>
 
@@ -228,13 +242,10 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
     function wireInteractions(product) {
       const logoEls = document.querySelectorAll('.header .logo-text');
       logoEls.forEach(el => el.style.color = product.color);
-      document.querySelectorAll('.swatch-product').forEach(swatch => {
-        swatch.addEventListener('mouseenter', () => {
-          const c = swatch.style.background || swatch.style.backgroundColor;
-          logoEls.forEach(el => el.style.color = c);
-        });
-        swatch.addEventListener('mouseleave', () => logoEls.forEach(el => el.style.color = product.color));
-      });
+      // Old .swatch-product hover handlers were tied to the now-removed
+      // cross-product swatch row. Cross-product navigation lives in the
+      // BENZER ÜRÜNLER section below the fold. Color-swatch click handlers
+      // for the new variant row are wired in the next commit.
 
       const carousel = document.querySelector('carousel-3d');
       const thumbs = document.querySelectorAll('.pd-thumb');
@@ -323,6 +334,61 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
   .pd-info {
     position: static;
   }
+
+  /* ===== Color swatches (variant) ===== */
+  .pdp-color-swatches {
+    margin-bottom: 1.25rem;
+  }
+  .pdp-color-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: rgb(var(--text-color) / 0.5);
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+  .pdp-color-label strong {
+    color: rgb(var(--text-color));
+    font-weight: 700;
+  }
+  .swatch-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .color-swatch {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    background: none;
+    padding: 2px;
+    cursor: pointer;
+    position: relative;
+    transition: border-color 0.15s;
+  }
+  .color-swatch.active { border-color: rgb(var(--text-color)); }
+  .color-swatch:hover { border-color: rgb(var(--text-color) / 0.5); }
+  .color-swatch.active:hover { border-color: rgb(var(--text-color)); }
+  .swatch-circle {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 1px solid rgb(var(--text-color) / 0.08);
+  }
+  .swatch-thumb {
+    position: absolute;
+    inset: 2px;
+    border-radius: 50%;
+    background-size: cover;
+    background-position: center;
+    opacity: 0;
+    transition: opacity 0.18s;
+    pointer-events: none;
+  }
+  .color-swatch:hover .swatch-thumb { opacity: 1; }
 
   /* ===== Stock indicator ===== */
   .pdp-stock {
