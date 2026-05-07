@@ -611,7 +611,7 @@ function filterProducts() {
       <td style="font-size:11px;">${p.sizes.join(', ')}</td>
       <td>${stockDot} ${p.stockQty != null ? p.stockQty : '∞'}</td>
       <td>${p.badge ? `<span class="badge badge-${p.badge==='NEW'?'new':p.badge==='SALE'?'sale':'stock'}">${p.badge}</span>` : '—'}</td>
-      <td><div class="btn-group"><button class="btn btn-sm btn-outline" onclick="editProduct(${idx})">Edit</button><button class="btn btn-sm btn-outline" style="color:var(--danger);" onclick="deleteProduct(${idx})">×</button></div></td>
+      <td><div class="btn-group"><button class="btn btn-sm btn-outline" onclick="editProduct(${idx})" title="Düzenle">Edit</button><button class="btn btn-sm btn-outline" onclick="duplicateProduct(${idx})" title="Bu ürünün bir kopyasını oluştur">Kopyala</button><button class="btn btn-sm btn-outline" style="color:var(--danger);" onclick="deleteProduct(${idx})" title="Sil">×</button></div></td>
     </tr>`;
   }).join('');
 }
@@ -837,6 +837,24 @@ function clearColor360Slot(i, si) {
 }
 function closeProductModal() { document.getElementById('productModal').classList.remove('open'); }
 function editProduct(index) { openProductModal(products[index]); }
+
+// Duplicate: clone product, drop id (backend assigns new), append " (kopya)"
+// to name so it's distinguishable in the list. POST the copy and refresh.
+async function duplicateProduct(index) {
+  const src = products[index];
+  if (!src) return;
+  const copy = JSON.parse(JSON.stringify(src));
+  delete copy.id;
+  copy.name = (src.name || 'Untitled') + ' (kopya)';
+  try {
+    await api('/api/products', { method: 'POST', body: JSON.stringify(copy) });
+    products = await api('/api/products');
+    renderProducts(); renderDashboard();
+    toast('Kopyalandı: ' + copy.name);
+  } catch (e) {
+    toast('Hata: ' + e.message, true);
+  }
+}
 
 async function deleteProduct(index) {
   const p = products[index];
