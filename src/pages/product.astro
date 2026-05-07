@@ -237,6 +237,85 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
       `;
 
       wireInteractions(product);
+      wireColorSwatches(product, variantColors, frames360, imgBase);
+    }
+
+    function wireColorSwatches(product, variantColors, baseFrames360, imgBase) {
+      const swatches = document.querySelectorAll('.color-swatch');
+      if (!swatches.length) return;
+
+      swatches.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = parseInt(btn.dataset.colorIdx, 10);
+          const color = variantColors[idx];
+          if (!color) return;
+
+          // 1. active UI state + label
+          swatches.forEach(b => b.classList.toggle('active', parseInt(b.dataset.colorIdx, 10) === idx));
+          const nameEl = document.getElementById('activeColorName');
+          if (nameEl) nameEl.textContent = color.name;
+
+          // 2. gallery / 360 — only rebuild if this color has own images
+          const colorHasImages = Array.isArray(color.images) && color.images.length > 0;
+          const colorHas360 = Array.isArray(color.images360) && color.images360.length > 0;
+          if (colorHasImages || colorHas360) {
+            const eImages = colorHasImages ? color.images : (product.images || []);
+            const eFrames360 = colorHas360 ? color.images360 : (baseFrames360 || []);
+            const eHas360 = eFrames360.length >= 4 && eFrames360.every(f => f && typeof f === 'object' && f.src);
+            const eThumbs = eHas360
+              ? eFrames360.map((f, i) => ({ src: f.src, label: f.label || ('View ' + (i+1)), flip: !!f.flip }))
+              : eImages.map((src, i) => ({ src, label: 'View ' + (i+1), flip: false }));
+
+            const thumbsEl = document.getElementById('pdThumbs');
+            if (thumbsEl && eThumbs.length >= 2) {
+              thumbsEl.innerHTML = eThumbs.map((t, i) => `
+                <button class="pd-thumb${i===0?' active':''}" type="button" data-idx="${i}" aria-label="${t.label}">
+                  <img src="${imgBase}${t.src}" alt="${t.label}" style="${t.flip?'transform:scaleX(-1);':''}">
+                </button>
+              `).join('');
+            }
+
+            const stageWrap = document.querySelector('.pd-stage-wrap');
+            if (stageWrap) {
+              const framesData = eHas360 ? eFrames360 : eImages;
+              stageWrap.innerHTML = '<carousel-3d data-frames=\'' + attrJSON(framesData) + '\' data-img-base="' + imgBase + '" data-has360="' + eHas360 + '"></carousel-3d>';
+            }
+
+            // Re-attach thumb click handlers — DOM was rebuilt above.
+            const newCarousel = document.querySelector('carousel-3d');
+            document.querySelectorAll('.pd-thumb').forEach(t => {
+              t.addEventListener('click', () => {
+                document.querySelectorAll('.pd-thumb').forEach(x => x.classList.remove('active'));
+                t.classList.add('active');
+                const i = parseInt(t.dataset.idx, 10);
+                if (newCarousel && typeof newCarousel.setIdx === 'function') {
+                  newCarousel.setIdx(i);
+                  newCarousel.setMode('flat');
+                }
+              });
+            });
+          }
+
+          // 3. stock indicator (only if color carries its own stock count)
+          if (typeof color.stock === 'number') {
+            const stockEl = document.querySelector('.pdp-stock');
+            if (stockEl) {
+              if (color.stock > 0) {
+                stockEl.innerHTML = '<span class="pdp-stock-dot" aria-hidden="true"></span><strong>Stokta</strong> <span>— ' + color.stock + ' adet</span>';
+              } else {
+                stockEl.innerHTML = '<span class="pdp-stock-dot" aria-hidden="true" style="background:#dc3545"></span><strong>Stokta yok</strong>';
+              }
+            }
+          }
+
+          // 4. price override
+          const priceEl = document.querySelector('.pd-info > p');
+          if (priceEl) {
+            const eff = (typeof color.priceOverride === 'number') ? color.priceOverride : product.price;
+            priceEl.textContent = '€' + eff.toFixed(2);
+          }
+        });
+      });
     }
 
     function wireInteractions(product) {
