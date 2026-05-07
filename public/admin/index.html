@@ -96,6 +96,21 @@
     .color-thumb.drag-over { transform: translateY(-2px); }
     .color-thumb.drag-over::before { content: ''; position: absolute; inset: -3px; border: 2px solid var(--accent); border-radius: 5px; pointer-events: none; z-index: 2; }
 
+    /* Save state indicator */
+    .modal-title { gap: 0.75rem; }
+    .save-state { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; padding: 3px 10px; border-radius: 12px; background: rgba(0,0,0,0.04); margin-left: auto; margin-right: 0.5rem; transition: background 0.15s, color 0.15s; }
+    .save-state-dot { width: 8px; height: 8px; border-radius: 50%; background: #999; transition: background 0.15s; }
+    .save-state[data-state="clean"] { color: var(--muted); }
+    .save-state[data-state="dirty"] { background: rgba(255,193,7,0.12); color: #856404; }
+    .save-state[data-state="dirty"] .save-state-dot { background: #ffc107; }
+    .save-state[data-state="saving"] { background: rgba(0,123,255,0.12); color: #004085; }
+    .save-state[data-state="saving"] .save-state-dot { background: #007bff; animation: save-pulse 1s ease-in-out infinite; }
+    .save-state[data-state="success"] { background: rgba(40,167,69,0.12); color: #155724; }
+    .save-state[data-state="success"] .save-state-dot { background: var(--success); }
+    .save-state[data-state="error"] { background: rgba(220,53,69,0.12); color: #721c24; }
+    .save-state[data-state="error"] .save-state-dot { background: var(--danger); }
+    @keyframes save-pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
     /* Inline validation visual */
     #productModal input:invalid:not(:placeholder-shown):not([type="color"]),
     #productModal textarea:invalid:not(:placeholder-shown) {
@@ -392,7 +407,13 @@
 <!-- Product Modal -->
 <div class="modal-overlay" id="productModal">
   <div class="modal">
-    <div class="modal-title"><span id="modalTitle">Add Product</span><button class="close-btn" onclick="closeProductModal()">×</button></div>
+    <div class="modal-title">
+      <span id="modalTitle">Add Product</span>
+      <div class="save-state" id="saveState" data-state="clean">
+        <span class="save-state-dot"></span><span class="save-state-text">Hazır</span>
+      </div>
+      <button class="close-btn" onclick="closeProductModal()">×</button>
+    </div>
     <input type="hidden" id="p_id">
 
     <details class="form-section" open>
@@ -525,6 +546,36 @@ let editCategories = [];
 let editTags = [];
 
 // ===== CHIP INPUT (shared by categories + tags) =====
+// ===== SAVE STATE INDICATOR =====
+function setSaveState(state, text) {
+  const el = document.getElementById('saveState');
+  if (!el) return;
+  el.dataset.state = state;
+  const labels = { clean: 'Hazır', dirty: 'Kaydedilmedi', saving: 'Kaydediliyor…', success: 'Kaydedildi ✓', error: 'Hata' };
+  el.querySelector('.save-state-text').textContent = text || labels[state] || state;
+}
+// Listen to all input/change events on the product modal — any change → dirty.
+document.addEventListener('DOMContentLoaded', () => {
+  const modal = document.getElementById('productModal');
+  if (!modal) return;
+  const onChange = () => {
+    if (!modal.classList.contains('open')) return;
+    const state = document.getElementById('saveState')?.dataset.state;
+    if (state !== 'saving') setSaveState('dirty');
+  };
+  modal.addEventListener('input', onChange);
+  modal.addEventListener('change', onChange);
+});
+// Guard against losing unsaved changes on tab close / navigation.
+window.addEventListener('beforeunload', e => {
+  const el = document.getElementById('saveState');
+  if (el && el.dataset.state === 'dirty') {
+    e.preventDefault();
+    e.returnValue = '';
+    return '';
+  }
+});
+
 function escapeHtml(s) {
   return String(s).replace(/[<>&"']/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' }[c]));
 }
@@ -807,6 +858,7 @@ function openProductModal(product) {
   renderColorList();
   renderChips('category');
   renderChips('tag');
+  setSaveState('clean');
 }
 
 // ===== COLOR VARIANTS =====
@@ -980,6 +1032,7 @@ async function saveProduct() {
   if (!name || !priceVal) { toast('Name and price required', true); return; }
 
   btn.disabled = true; btn.textContent = 'Saving...';
+  setSaveState('saving');
   const slug = slugify(name);
   const id = document.getElementById('p_id').value;
 
@@ -1113,9 +1166,12 @@ async function saveProduct() {
       await api('/api/products', { method: 'POST', body: JSON.stringify(productBody) });
     }
     products = await api('/api/products');
+    setSaveState('success');
+    setTimeout(() => setSaveState('clean'), 2500);
     closeProductModal(); renderProducts(); renderDashboard();
     toast(id ? 'Product updated' : 'Product added');
   } catch (e) {
+    setSaveState('error', 'Hata: ' + (e.message || 'kaydedilemedi'));
     toast('Error: ' + e.message, true);
   } finally {
     btn.disabled = false; btn.textContent = 'Save Product';
