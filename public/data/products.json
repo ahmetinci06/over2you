@@ -10,7 +10,7 @@
       "L",
       "XL"
     ],
-    "badge": "SALE",
+    "badge": "NEW",
     "color": "#c4a47a",
     "colorName": "Tan",
     "colorFamily": "brown",
@@ -58,6 +58,12 @@
         "name": "TAN",
         "hex": "#c4a47a",
         "default": true
+      },
+      {
+        "id": "black",
+        "name": "BLACK",
+        "hex": "#000000",
+        "default": false
       }
     ]
   }
