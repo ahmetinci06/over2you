@@ -518,6 +518,17 @@
       </div>
     </details>
 
+    <details class="form-section">
+      <summary>Bundle (Bu Ürünle Birlikte Al)</summary>
+      <div class="form-section-body">
+        <div class="form-row single"><div class="form-group">
+          <label>Birlikte önerilecek ürün ID'leri (virgülle)</label>
+          <input type="text" id="p_bundleWith" pattern="[\d, ]*" placeholder="örn: 2, 3, 5">
+          <p style="font-size:11px;color:var(--muted);margin-top:0.3rem;">Boş bırakırsan PDP'de bundle bölümü gizlenir.</p>
+        </div></div>
+      </div>
+    </details>
+
     <details class="form-section" open>
       <summary>Renk Varyantları</summary>
       <div class="form-section-body">
@@ -992,6 +1003,7 @@ function openProductModal(product) {
     document.getElementById('p_metaTitle').value = product.seo?.metaTitle || '';
     document.getElementById('p_metaDescription').value = product.seo?.metaDescription || '';
     document.getElementById('p_slug').value = product.seo?.slug || '';
+    document.getElementById('p_bundleWith').value = Array.isArray(product.bundleWith) ? product.bundleWith.join(', ') : '';
     document.getElementById('p_description').value = product.description || '';
     editImages = (product.images || []).map(src => ({ src, file: null }));
     if (Array.isArray(product.images360) && product.images360.length === 4) {
@@ -1340,7 +1352,8 @@ async function saveProduct() {
         slug: (document.getElementById('p_slug').value.trim() || slugify(name)) || null,
       },
       sku: document.getElementById('p_sku').value.trim() || null,
-      tags: editTags.length > 0 ? editTags : []
+      tags: editTags.length > 0 ? editTags : [],
+      bundleWith: (document.getElementById('p_bundleWith').value || '').split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n) && n > 0)
     };
     btn.textContent = 'Saving…';
     if (id) {

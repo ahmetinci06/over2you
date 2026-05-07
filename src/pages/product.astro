@@ -266,11 +266,22 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
             }
           </div>
         </section>
+
+        <section class="pdp-bundle" id="pdpBundle" aria-labelledby="pdpBundleHeading" hidden>
+          <h2 id="pdpBundleHeading" data-i18n="pdp.bundle.title">Bu Ürünle Tamamla</h2>
+          <p class="pdp-bundle-pitch" data-i18n="pdp.bundle.pitch">Aynı estetiği paylaşan parçalar.</p>
+          <div class="pdp-bundle-grid"></div>
+          <div class="pdp-bundle-cta">
+            <button type="button" class="pdp-bundle-add" id="bundleAddAll"><span data-i18n="pdp.bundle.addAll">Tümünü Sepete Ekle</span></button>
+            <span class="pdp-bundle-total"><span data-i18n="pdp.bundle.total">Toplam</span>: €<span id="bundleTotal">0.00</span></span>
+          </div>
+        </section>
       `;
 
       wireInteractions(product);
       wireColorSwatches(product, variantColors, frames360, imgBase);
       wireLightbox(thumbsSource, imgBase);
+      wireBundle(product, list, imgBase);
       // Re-apply translations to the dynamically rendered PDP DOM.
       if (typeof window.o2yApplyLang === 'function') {
         window.o2yApplyLang(window.o2yLang || 'tr');
@@ -459,6 +470,77 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
           update();
         }
       };
+    }
+
+    function effectivePrice(p) {
+      return (typeof p.salePrice === 'number' && p.salePrice < p.price) ? p.salePrice : p.price;
+    }
+
+    function wireBundle(product, allProducts, imgBase) {
+      const section = document.getElementById('pdpBundle');
+      if (!section) return;
+      const ids = Array.isArray(product.bundleWith) ? product.bundleWith : [];
+      if (ids.length === 0) return;
+      const items = allProducts.filter(p => ids.includes(p.id) && p.id !== product.id && !p.deletedAt);
+      if (items.length === 0) return;
+
+      const grid = section.querySelector('.pdp-bundle-grid');
+      const totalEl = section.querySelector('#bundleTotal');
+      const addAll = section.querySelector('#bundleAddAll');
+
+      const B = window.O2Y_BASE;
+      const baseTotal = effectivePrice(product);
+
+      grid.innerHTML = items.map(p => {
+        const eff = effectivePrice(p);
+        const onSale = typeof p.salePrice === 'number' && p.salePrice < p.price;
+        const thumb = (p.images && p.images[0])
+          ? `<img src="${imgBase}${p.images[0]}" alt="${p.name}" loading="lazy">`
+          : '<div class="pdp-bundle-img-empty"></div>';
+        return `
+          <label class="pdp-bundle-card" data-id="${p.id}" data-price="${eff}">
+            <input type="checkbox" class="pdp-bundle-check" checked>
+            <a href="${B}product?id=${p.id}" class="pdp-bundle-thumb" aria-label="${p.name}">${thumb}</a>
+            <div class="pdp-bundle-meta">
+              <div class="pdp-bundle-name">${p.name}</div>
+              <div class="pdp-bundle-price">${onSale
+                ? '<strong style="color:#c94c4c;">€' + eff.toFixed(2) + '</strong> <del style="opacity:0.5;">€' + p.price.toFixed(2) + '</del>'
+                : '€' + eff.toFixed(2)}</div>
+            </div>
+          </label>
+        `;
+      }).join('');
+
+      function recalcTotal() {
+        let sum = baseTotal;
+        section.querySelectorAll('.pdp-bundle-card').forEach(card => {
+          const cb = card.querySelector('.pdp-bundle-check');
+          if (cb && cb.checked) sum += parseFloat(card.dataset.price) || 0;
+        });
+        totalEl.textContent = sum.toFixed(2);
+      }
+      recalcTotal();
+
+      section.querySelectorAll('.pdp-bundle-check').forEach(cb => {
+        cb.addEventListener('change', recalcTotal);
+      });
+
+      addAll.addEventListener('click', () => {
+        if (!window.Cart || typeof window.Cart.add !== 'function') return;
+        // Add the current product first if a size is selected (best effort).
+        const sizeBtn = document.querySelector('.size-btn[style*="background"]');
+        if (sizeBtn) window.Cart.add(product, sizeBtn.dataset.size);
+        // Then each checked bundle item with default mid-size.
+        section.querySelectorAll('.pdp-bundle-card').forEach(card => {
+          const cb = card.querySelector('.pdp-bundle-check');
+          if (!cb || !cb.checked) return;
+          const id = parseInt(card.dataset.id, 10);
+          const item = items.find(p => p.id === id);
+          if (item) window.Cart.add(item);
+        });
+      });
+
+      section.removeAttribute('hidden');
     }
 
     function wireInteractions(product) {
@@ -920,6 +1002,102 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
   }
   @media (max-width: 400px) {
     .pdp-related-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ===== Bundle / "Complete the Fit" ===== */
+  .pdp-bundle {
+    margin-top: 4rem;
+    padding-top: 2.5rem;
+    border-top: 1px solid rgb(var(--border-color) / 0.15);
+  }
+  .pdp-bundle[hidden] { display: none; }
+  .pdp-bundle h2 {
+    font: var(--heading-font-style) 800 1.25rem/1.2 var(--heading-font-family);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 0 0 0.4rem;
+  }
+  .pdp-bundle-pitch {
+    font-size: var(--text-sm);
+    color: rgb(var(--text-color) / 0.55);
+    margin: 0 0 1.5rem;
+  }
+  .pdp-bundle-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .pdp-bundle-card {
+    display: grid;
+    grid-template-columns: 24px 80px 1fr;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border: 1px solid rgb(var(--border-color) / 0.15);
+    background: rgb(var(--background));
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .pdp-bundle-card:hover { border-color: rgb(var(--text-color) / 0.5); }
+  .pdp-bundle-card:has(.pdp-bundle-check:checked) {
+    background: rgb(var(--text-color) / 0.03);
+    border-color: rgb(var(--text-color) / 0.4);
+  }
+  .pdp-bundle-check { accent-color: rgb(var(--text-color)); cursor: pointer; }
+  .pdp-bundle-thumb {
+    width: 80px;
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+    background: rgb(var(--text-color) / 0.04);
+    display: block;
+  }
+  .pdp-bundle-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .pdp-bundle-img-empty { width: 100%; height: 100%; background: rgb(var(--text-color) / 0.06); }
+  .pdp-bundle-meta { min-width: 0; }
+  .pdp-bundle-name {
+    font: var(--heading-font-style) 600 var(--text-sm)/1.3 var(--heading-font-family);
+    margin-bottom: 0.25rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .pdp-bundle-price {
+    font-size: 12px;
+    color: rgb(var(--text-color) / 0.7);
+  }
+  .pdp-bundle-cta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding: 1rem 0 0;
+    border-top: 1px solid rgb(var(--border-color) / 0.15);
+  }
+  .pdp-bundle-add {
+    padding: 0.85rem 1.5rem;
+    background: rgb(var(--button-background));
+    color: rgb(var(--button-text-color));
+    border: 0;
+    font: var(--heading-font-style) 800 var(--text-sm)/1 var(--heading-font-family);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .pdp-bundle-add:hover { opacity: 0.85; }
+  .pdp-bundle-total {
+    font-size: var(--text-sm);
+    color: rgb(var(--text-color) / 0.7);
+  }
+  .pdp-bundle-total span:last-child {
+    font-weight: 700;
+    color: rgb(var(--text-color));
+  }
+  @media (max-width: 768px) {
+    .pdp-bundle-grid { grid-template-columns: 1fr; }
+    .pdp-bundle h2 { font-size: 1.05rem; }
   }
 
   /* ===== Thumbnail rail ===== */
