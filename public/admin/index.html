@@ -96,6 +96,16 @@
     .color-thumb.drag-over { transform: translateY(-2px); }
     .color-thumb.drag-over::before { content: ''; position: absolute; inset: -3px; border: 2px solid var(--accent); border-radius: 5px; pointer-events: none; z-index: 2; }
 
+    /* Form sections (native <details>) */
+    .form-section { border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 0.75rem; overflow: hidden; }
+    .form-section > summary { padding: 0.7rem 0.9rem; background: var(--accent-light); font: var(--heading-font-style) 700 12px/1.2 var(--heading-font-family); text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; user-select: none; list-style: none; display: flex; align-items: center; justify-content: space-between; }
+    .form-section > summary::-webkit-details-marker { display: none; }
+    .form-section > summary::after { content: '+'; font-size: 16px; font-weight: 400; color: var(--muted); transition: transform 0.2s; }
+    .form-section[open] > summary::after { content: '−'; }
+    .form-section[open] > summary { border-bottom: 1px solid var(--border); }
+    .form-section-body { padding: 0.85rem 0.9rem 0.6rem; }
+    .form-section-body .form-row:last-child { margin-bottom: 0; }
+
     /* Color variants list */
     .color-list { display: flex; flex-direction: column; gap: 0.5rem; }
     .color-card { border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem; background: #fafafa; display: grid; grid-template-columns: 1fr 70px auto auto; gap: 0.6rem 0.6rem; align-items: center; }
@@ -359,28 +369,59 @@
   <div class="modal">
     <div class="modal-title"><span id="modalTitle">Add Product</span><button class="close-btn" onclick="closeProductModal()">×</button></div>
     <input type="hidden" id="p_id">
-    <div class="form-row"><div class="form-group"><label>Product Name</label><input id="p_name" placeholder="Hoodie Lapis Blue"></div><div class="form-group"><label>Category</label><select id="p_category"><option value="jackets">Jackets</option><option value="hoodies">Hoodies</option><option value="sweatpants">Sweatpants</option><option value="crewnecks">Crewnecks</option><option value="tshirts">T-Shirts</option><option value="accessories">Accessories</option></select></div></div>
-    <div class="form-row c3"><div class="form-group"><label>Price (€)</label><input type="number" step="0.01" id="p_price" value="84.00"></div><div class="form-group"><label>Compare Price (€)</label><input type="number" step="0.01" id="p_comparePrice" placeholder="Optional"></div><div class="form-group"><label>Badge</label><select id="p_badge"><option value="">None</option><option value="NEW">NEW</option><option value="LAST STOCK">LAST STOCK</option><option value="SALE">SALE</option></select></div></div>
-    <div class="form-row"><div class="form-group"><label>Color Name</label><input id="p_colorName" placeholder="Lapis Blue"></div><div class="form-group"><label>Color</label><div class="color-input-wrap"><input type="color" id="p_color" value="#2a5a8a"><span class="color-hex" id="p_colorHex">#2a5a8a</span></div></div></div>
-    <div class="form-row"><div class="form-group"><label>Color Family</label><select id="p_colorFamily"><option value="black">Black</option><option value="white">White</option><option value="grey">Grey</option><option value="blue">Blue</option><option value="red">Red</option><option value="pink">Pink</option><option value="brown">Brown</option><option value="green">Green</option><option value="dark">Dark</option></select></div><div class="form-group"><label>Sizes</label><input id="p_sizes" value="XXS,XS,S,M,L,XL,XXL"></div></div>
-    <div class="form-row"><div class="form-group"><label>Stock Status</label><select id="p_stock"><option value="in-stock">In Stock</option><option value="low-stock">Low Stock</option><option value="out-of-stock">Out of Stock</option></select></div><div class="form-group"><label>Stock Quantity</label><input type="number" id="p_stockQty" placeholder="∞"></div></div>
-    <div class="form-row single"><div class="form-group"><label>Description</label><textarea id="p_description" rows="3"></textarea></div></div>
-    <div class="form-row single"><div class="form-group"><label>Images (gallery — first is the listing thumbnail)</label>
-      <div class="img-upload-zone" id="imgDropZone" onclick="document.getElementById('imgFileInput').click()">
-        📁 Click or drag images here
-        <input type="file" id="imgFileInput" accept="image/*" multiple style="display:none;" onchange="handleImageUpload(this.files)">
+
+    <details class="form-section" open>
+      <summary>Temel Bilgiler</summary>
+      <div class="form-section-body">
+        <div class="form-row"><div class="form-group"><label>Product Name</label><input id="p_name" placeholder="Hoodie Lapis Blue"></div><div class="form-group"><label>Category</label><select id="p_category"><option value="jackets">Jackets</option><option value="hoodies">Hoodies</option><option value="sweatpants">Sweatpants</option><option value="crewnecks">Crewnecks</option><option value="tshirts">T-Shirts</option><option value="accessories">Accessories</option></select></div></div>
+        <div class="form-row c3"><div class="form-group"><label>Price (€)</label><input type="number" step="0.01" id="p_price" value="84.00"></div><div class="form-group"><label>Compare Price (€)</label><input type="number" step="0.01" id="p_comparePrice" placeholder="Optional"></div><div class="form-group"><label>Badge</label><select id="p_badge"><option value="">None</option><option value="NEW">NEW</option><option value="LAST STOCK">LAST STOCK</option><option value="SALE">SALE</option></select></div></div>
+        <div class="form-row"><div class="form-group"><label>Color Name (top-level)</label><input id="p_colorName" placeholder="Lapis Blue"></div><div class="form-group"><label>Color (top-level hex)</label><div class="color-input-wrap"><input type="color" id="p_color" value="#2a5a8a"><span class="color-hex" id="p_colorHex">#2a5a8a</span></div></div></div>
+        <div class="form-row"><div class="form-group"><label>Color Family</label><select id="p_colorFamily"><option value="black">Black</option><option value="white">White</option><option value="grey">Grey</option><option value="blue">Blue</option><option value="red">Red</option><option value="pink">Pink</option><option value="brown">Brown</option><option value="green">Green</option><option value="dark">Dark</option></select></div><div class="form-group"></div></div>
+        <div class="form-row single"><div class="form-group"><label>Description</label><textarea id="p_description" rows="3"></textarea></div></div>
       </div>
-      <div class="img-thumbs" id="imgThumbs"></div>
-    </div></div>
-    <div class="form-row single"><div class="form-group"><label>360° View — 4 angle shots (optional)</label>
-      <div class="img360-grid" id="img360Grid"></div>
-      <p class="img360-hint">All 4 slots required for the 360° viewer to enable. Use transparent PNGs.</p>
-    </div></div>
-    <div class="form-row single"><div class="form-group"><label>Renk Varyantları (opsiyonel)</label>
-      <div class="color-list" id="colorList"></div>
-      <button type="button" class="btn btn-outline btn-sm" onclick="addColor()" style="margin-top:0.5rem;">+ Renk Ekle</button>
-      <p style="font-size:11px;color:var(--muted);margin-top:0.4rem;line-height:1.4;">Boş bırakırsan ürün tek renk kalır (üstteki Color Name + Color alanları kullanılır). Birden fazla renk eklersen storefront PDP'sinde swatch satırı bu listeden gelir.</p>
-    </div></div>
+    </details>
+
+    <details class="form-section">
+      <summary>Görseller</summary>
+      <div class="form-section-body">
+        <div class="form-row single"><div class="form-group"><label>Images (gallery — first is the listing thumbnail)</label>
+          <div class="img-upload-zone" id="imgDropZone" onclick="document.getElementById('imgFileInput').click()">
+            📁 Sürükle bırak veya tıkla
+            <input type="file" id="imgFileInput" accept="image/*" multiple style="display:none;" onchange="handleImageUpload(this.files)">
+          </div>
+          <div class="img-thumbs" id="imgThumbs"></div>
+        </div></div>
+      </div>
+    </details>
+
+    <details class="form-section">
+      <summary>360° Fotolar</summary>
+      <div class="form-section-body">
+        <div class="form-row single"><div class="form-group"><label>360° View — 4 angle shots (optional)</label>
+          <div class="img360-grid" id="img360Grid"></div>
+          <p class="img360-hint">All 4 slots required for the 360° viewer to enable. Use transparent PNGs.</p>
+        </div></div>
+      </div>
+    </details>
+
+    <details class="form-section">
+      <summary>Beden ve Stok</summary>
+      <div class="form-section-body">
+        <div class="form-row"><div class="form-group"><label>Sizes (comma-separated)</label><input id="p_sizes" value="XXS,XS,S,M,L,XL,XXL"></div><div class="form-group"></div></div>
+        <div class="form-row"><div class="form-group"><label>Stock Status</label><select id="p_stock"><option value="in-stock">In Stock</option><option value="low-stock">Low Stock</option><option value="out-of-stock">Out of Stock</option></select></div><div class="form-group"><label>Stock Quantity</label><input type="number" id="p_stockQty" placeholder="∞"></div></div>
+      </div>
+    </details>
+
+    <details class="form-section" open>
+      <summary>Renk Varyantları</summary>
+      <div class="form-section-body">
+        <div class="form-row single"><div class="form-group">
+          <div class="color-list" id="colorList"></div>
+          <button type="button" class="btn btn-outline btn-sm" onclick="addColor()" style="margin-top:0.5rem;">+ Renk Ekle</button>
+          <p style="font-size:11px;color:var(--muted);margin-top:0.4rem;line-height:1.4;">Boş bırakırsan ürün tek renk kalır (Temel Bilgiler'deki Color Name + Color alanları kullanılır). Birden fazla renk eklersen storefront PDP'sinde swatch satırı bu listeden gelir.</p>
+        </div></div>
+      </div>
+    </details>
     <div class="btn-group" style="margin-top:1.25rem;justify-content:flex-end;">
       <button class="btn btn-outline" onclick="closeProductModal()">Cancel</button>
       <button class="btn btn-primary" onclick="saveProduct()" id="saveProductBtn">Save Product</button>
