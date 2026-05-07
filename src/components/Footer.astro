@@ -2,7 +2,31 @@
 const base = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : import.meta.env.BASE_URL + '/';
 ---
 <footer class="footer">
+  <!-- Newsletter row -->
+  <div class="footer-newsletter">
+    <div class="footer-newsletter-inner">
+      <div class="footer-newsletter-pitch">
+        <h3>İLK SEN BİL</h3>
+        <p>Yeni koleksiyonlar, sınırlı drop'lar ve özel teklifler — direkt e-posta kutuna.</p>
+      </div>
+      <form class="footer-newsletter-form" onsubmit="event.preventDefault(); this.querySelector('input').value=''; this.querySelector('button').textContent='✓ TEŞEKKÜRLER'; setTimeout(()=>this.querySelector('button').textContent='ABONE OL', 2000);">
+        <input type="email" placeholder="E-posta adresin" required aria-label="E-posta adresi" />
+        <button type="submit">ABONE OL</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Main row: 4 cols (1.5fr brand + 1fr × 3 from existing CSS) -->
   <div class="footer-grid">
+    <div class="footer-col footer-col-brand">
+      <a href={base} class="footer-logo">OVER2YOU</a>
+      <p class="footer-tagline">Premium temel parçalar, zamansız tasarım.</p>
+      <div class="footer-social">
+        <a href="#" aria-label="Instagram" class="footer-social-link"><img src={`${base}img/social/instagram.svg`} alt="" width="20" height="20" /></a>
+        <a href="#" aria-label="TikTok" class="footer-social-link"><img src={`${base}img/social/tiktok.svg`} alt="" width="20" height="20" /></a>
+        <a href="#" aria-label="X" class="footer-social-link"><img src={`${base}img/social/x.svg`} alt="" width="20" height="20" /></a>
+      </div>
+    </div>
     <div class="footer-col">
       <h4>İLETİŞİM</h4>
       <p data-i18n="footer.supportText">SİPARİŞ SORULARI İÇİN BİZE ULAŞIN</p>
@@ -24,8 +48,175 @@ const base = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL :
       <a href={`${base}mesafeli-satis`}>Mesafeli Satış Sözleşmesi</a>
     </div>
   </div>
+
+  <!-- Bottom bar: 3 zones — copyright | payments | secure -->
   <div class="footer-bottom">
-    <p>© 2026 - Over2You. Tüm hakları saklıdır.</p>
-    <p data-i18n="footer.securePayments" style="margin-top:0.4rem;font-size:11px;letter-spacing:0.06em;">GÜVENLİ ÖDEME</p>
+    <p class="footer-bottom-copy">© 2026 - Over2You. Tüm hakları saklıdır.</p>
+    <div class="footer-payments">
+      <span class="payment-badge">VISA</span>
+      <span class="payment-badge">MASTERCARD</span>
+      <span class="payment-badge">TROY</span>
+      <span class="payment-badge">IYZICO</span>
+    </div>
+    <p class="footer-bottom-secure" data-i18n="footer.securePayments">GÜVENLİ ÖDEME</p>
   </div>
 </footer>
+
+<style is:global>
+  /* Newsletter row */
+  .footer-newsletter {
+    background: rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 2.5rem var(--container-gutter);
+  }
+  .footer-newsletter-inner {
+    max-width: 85rem;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+    align-items: center;
+  }
+  .footer-newsletter-pitch h3 {
+    font: var(--heading-font-style) 800 1.35rem/1.2 var(--heading-font-family);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #fff;
+    margin: 0 0 0.5rem;
+  }
+  .footer-newsletter-pitch p {
+    font-size: var(--text-sm);
+    color: rgba(255, 255, 255, 0.6);
+    line-height: 1.5;
+    margin: 0;
+  }
+  .footer-newsletter-form {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .footer-newsletter-form input {
+    flex: 1;
+    padding: 0.85rem 1rem;
+    background: #fff;
+    border: 0;
+    color: #111;
+    font-family: inherit;
+    font-size: var(--text-sm);
+    outline: none;
+  }
+  .footer-newsletter-form input::placeholder { color: rgba(0, 0, 0, 0.4); }
+  .footer-newsletter-form button {
+    padding: 0.85rem 1.5rem;
+    background: #000;
+    color: #fff;
+    border: 1px solid #fff;
+    font: var(--heading-font-style) 800 var(--text-xs)/1 var(--heading-font-family);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    white-space: nowrap;
+  }
+  .footer-newsletter-form button:hover {
+    background: #fff;
+    color: #000;
+  }
+  @media (max-width: 768px) {
+    .footer-newsletter-inner { grid-template-columns: 1fr; gap: 1.25rem; }
+    .footer-newsletter-form { flex-direction: column; }
+    .footer-newsletter-form button { width: 100%; }
+  }
+
+  /* Tablet 2x2 (768–1023) — overrides existing .footer-grid 4-col rule
+     via higher specificity. <480 falls back to existing 1fr default. */
+  @media (min-width: 480px) and (max-width: 1023px) {
+    .footer .footer-grid {
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+  }
+
+  /* Brand col content (uses existing .footer-grid 1.5fr slot) */
+  .footer-col-brand .footer-logo {
+    display: block;
+    font: var(--heading-font-style) 900 1.5rem/1 var(--heading-font-family);
+    color: #fff;
+    text-decoration: none;
+    letter-spacing: 0.02em;
+    margin-bottom: 0.75rem;
+  }
+  .footer-col-brand .footer-tagline {
+    font-size: var(--text-sm);
+    color: rgba(255, 255, 255, 0.55);
+    line-height: 1.5;
+    margin-bottom: 1.25rem;
+    max-width: 18em;
+  }
+  .footer-social {
+    display: flex;
+    gap: 0.75rem;
+  }
+  .footer-social-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    transition: opacity 0.2s, border-color 0.2s;
+    opacity: 0.7;
+  }
+  .footer-social-link img {
+    width: 16px;
+    height: 16px;
+    /* SVGs ship with currentColor (defaults to black when used as <img>);
+       invert flips them to white for the dark footer bg. */
+    filter: invert(1);
+  }
+  .footer-social-link:hover {
+    opacity: 1;
+    border-color: rgba(255, 255, 255, 0.5);
+  }
+
+  /* Bottom bar 3-zone layout (overrides existing space-between) */
+  .footer .footer-bottom {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .footer-bottom-copy,
+  .footer-bottom-secure {
+    margin: 0 !important;
+  }
+  .footer-bottom-secure {
+    font-size: var(--text-xs) !important;
+    letter-spacing: 0.06em;
+    color: rgba(255, 255, 255, 0.4) !important;
+  }
+  .footer-payments {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .payment-badge {
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+    text-transform: uppercase;
+    line-height: 1.4;
+  }
+  @media (max-width: 768px) {
+    .footer .footer-bottom {
+      flex-direction: column;
+      text-align: center;
+    }
+    .footer-payments { justify-content: center; }
+  }
+</style>
