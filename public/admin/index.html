@@ -435,6 +435,25 @@
       </div>
     </details>
 
+    <details class="form-section">
+      <summary>SEO ve URL</summary>
+      <div class="form-section-body">
+        <div class="form-row single"><div class="form-group">
+          <label>Meta başlık (max 60 karakter)</label>
+          <input type="text" id="p_metaTitle" maxlength="60" placeholder="Boşsa ürün adı kullanılır">
+        </div></div>
+        <div class="form-row single"><div class="form-group">
+          <label>Meta açıklama (max 160 karakter)</label>
+          <textarea id="p_metaDescription" maxlength="160" rows="2" placeholder="Boşsa ürün açıklamasının ilk 160 karakteri"></textarea>
+        </div></div>
+        <div class="form-row single"><div class="form-group">
+          <label>URL Slug (örn: bdg-corduroy-bomber-jacket)</label>
+          <input type="text" id="p_slug" pattern="[a-z0-9\-]+" placeholder="boşsa ürün adından otomatik üretilir">
+          <p style="font-size:11px;color:var(--muted);margin-top:0.3rem;">Sadece a-z, 0-9 ve tire (-).</p>
+        </div></div>
+      </div>
+    </details>
+
     <details class="form-section" open>
       <summary>Renk Varyantları</summary>
       <div class="form-section-body">
@@ -731,6 +750,10 @@ function openProductModal(product) {
     editCategories = Array.isArray(product.categories) && product.categories.length > 0
       ? [...product.categories]
       : (product.category ? [product.category] : []);
+    editTags = Array.isArray(product.tags) ? [...product.tags] : [];
+    document.getElementById('p_metaTitle').value = product.seo?.metaTitle || '';
+    document.getElementById('p_metaDescription').value = product.seo?.metaDescription || '';
+    document.getElementById('p_slug').value = product.seo?.slug || '';
     document.getElementById('p_description').value = product.description || '';
     editImages = (product.images || []).map(src => ({ src, file: null }));
     if (Array.isArray(product.images360) && product.images360.length === 4) {
@@ -1051,7 +1074,12 @@ async function saveProduct() {
       description: document.getElementById('p_description').value,
       images: imageSrcs,
       images360: images360,
-      colors: colors
+      colors: colors,
+      seo: {
+        metaTitle: document.getElementById('p_metaTitle').value.trim() || null,
+        metaDescription: document.getElementById('p_metaDescription').value.trim() || null,
+        slug: (document.getElementById('p_slug').value.trim() || slugify(name)) || null,
+      }
     };
     btn.textContent = 'Saving…';
     if (id) {

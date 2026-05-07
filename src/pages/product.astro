@@ -2,7 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : import.meta.env.BASE_URL + '/');
 ---
-<Layout title="Product — Over2You">
+<Layout title="Product — Over2You" description="Over2You — premium temel parçalar.">
   <div class="pd-page" style="padding:6rem var(--container-gutter) 4rem;max-width:1400px;margin:0 auto;">
     <div class="product-layout" id="productLayout">
       <p style="text-align:center;padding:4rem;color:rgb(var(--text-color)/0.4);">Loading product...</p>
@@ -74,7 +74,12 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
         return;
       }
 
-      document.title = product.name + ' — Over2You';
+      // SEO: prefer product.seo.metaTitle / metaDescription, fall back to defaults
+      document.title = (product.seo && product.seo.metaTitle) || (product.name + ' — Over2You');
+      const metaDesc = (product.seo && product.seo.metaDescription) || (product.description || '').slice(0, 160);
+      let metaEl = document.querySelector('meta[name="description"]');
+      if (!metaEl) { metaEl = document.createElement('meta'); metaEl.setAttribute('name', 'description'); document.head.appendChild(metaEl); }
+      metaEl.setAttribute('content', metaDesc);
       const B = window.O2Y_BASE;
       const imgBase = B + 'img/';
       const related = list.filter(r => r.category === product.category && r.id !== product.id).slice(0, 8);
