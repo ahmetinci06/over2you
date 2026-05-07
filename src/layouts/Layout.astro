@@ -22,6 +22,87 @@ const base = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL :
   <link rel="icon" type="image/svg+xml" href={`${base}favicon.svg`} />
   <link rel="stylesheet" href={`${base}css/style.css`} />
   <script is:inline define:vars={{base}}>window.O2Y_BASE = base;</script>
+  <style>
+    /* lang switch — pill, dark text + dark border so it reads on the
+       solid-white header used by all pages except the home (which is
+       transparentHeader). On the home hero, dark text on dark photo
+       reads at the same level as the rest of the header nav-links. */
+    .lang-switch {
+      cursor: pointer;
+      background: none;
+      border: 1px solid rgb(var(--text-color) / 0.3);
+      color: rgb(var(--text-color));
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      margin-right: 8px;
+      border-radius: 4px;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .lang-switch:hover {
+      background: rgb(var(--text-color));
+      color: rgb(var(--background));
+      border-color: rgb(var(--text-color));
+    }
+    /* On home (transparentHeader=true), the header text is white so the
+       hamburger lines show. Match the lang switch to that. */
+    .header.header--transparent .lang-switch {
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+    .header.header--transparent .lang-switch:hover {
+      background: #fff;
+      color: #000;
+      border-color: #fff;
+    }
+    /* Hide in header on mobile — moved to the mobile drawer footer */
+    @media (max-width: 999px) {
+      .lang-switch { display: none; }
+    }
+
+    /* Mobile drawer language toggle. Triggers #langSwitch via onclick. */
+    .mobile-nav-footer {
+      margin-top: auto;
+      padding: 1.5rem var(--container-gutter);
+      border-top: 1px solid rgba(0, 0, 0, 0.08);
+    }
+    .mobile-lang-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 0.6rem;
+      width: 100%;
+      background: none;
+      border: 0;
+      padding: 0.5rem 0;
+      font: var(--heading-font-style) 600 13px/1 var(--heading-font-family);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: rgb(var(--text-color) / 0.4);
+      cursor: pointer;
+      text-align: left;
+    }
+    .mobile-lang-toggle .mobile-lang-tr,
+    .mobile-lang-toggle .mobile-lang-en {
+      transition: color 0.15s, font-weight 0.15s;
+    }
+    html[lang="tr"] .mobile-lang-toggle .mobile-lang-tr,
+    html[lang="en"] .mobile-lang-toggle .mobile-lang-en {
+      color: rgb(var(--text-color));
+      font-weight: 800;
+    }
+    .mobile-lang-toggle .mobile-lang-sep {
+      color: rgb(var(--text-color) / 0.25);
+    }
+    /* mobile-nav-content stretches so footer sticks bottom */
+    .mobile-nav-content {
+      display: flex;
+      flex-direction: column;
+      min-height: 100%;
+    }
+    [data-mobile-list] { margin-bottom: auto; }
+  </style>
 </head>
 <body class="color-scheme color-scheme--scheme-1">
   <header class={`header ${transparentHeader ? 'header--transparent' : ''}`} id="header">
@@ -35,7 +116,7 @@ const base = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL :
       <a href={base} class="header-logo"><span class="logo-text">OVER2YOU</span></a>
       <div class="header-secondary-nav">
         <a href="#" class="nav-link" style="opacity:0;pointer-events:none;">.</a>
-        <button id="langSwitch" style="cursor:pointer;background:none;border:1px solid rgba(255,255,255,0.3);color:#fff;padding:4px 10px;font-size:11px;font-weight:700;letter-spacing:1px;margin-right:8px;">EN</button>
+        <button id="langSwitch" class="lang-switch">EN</button>
         <button class="icon-btn search-btn" id="searchBtn" aria-label="Search">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
         </button>
@@ -55,7 +136,7 @@ const base = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL :
       </button>
     </div>
     <div class="mobile-nav-content">
-      <ul class="nav-list main-nav-list" id="mainNavList">
+      <ul class="nav-list main-nav-list" id="mainNavList" data-mobile-list>
         <li><a href={`${base}shop?sort=newest`} class="mobile-nav-link" data-i18n="nav.newIn">YENİ GELENLER</a></li>
         <li><a href="#" class="mobile-nav-link has-submenu" data-target="shopMenu" data-i18n="nav.shopAll">TÜM ÜRÜNLER <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 18l6-6-6-6"></path></svg></a></li>
         <li><a href={`${base}about`} class="mobile-nav-link" data-i18n="nav.brand">HAKKIMIZDA</a></li>
@@ -92,6 +173,13 @@ const base = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL :
           <li><a href={`${base}shop?cat=crewnecks`} class="mobile-nav-link" data-i18n="cat.crewnecks">CREWNECK</a></li>
           <li><a href={`${base}shop?cat=tshirts`} class="mobile-nav-link" data-i18n="cat.tshirts">TİŞÖRT</a></li>
         </ul>
+      </div>
+      <div class="mobile-nav-footer">
+        <button type="button" class="mobile-lang-toggle" aria-label="Dil değiştir / Change language" onclick="document.getElementById('langSwitch').click(); document.getElementById('mobileNav').classList.remove('active'); document.getElementById('mobileNavOverlay').classList.remove('active'); document.body.style.overflow='';">
+          <span class="mobile-lang-tr">TÜRKÇE</span>
+          <span class="mobile-lang-sep">·</span>
+          <span class="mobile-lang-en">ENGLISH</span>
+        </button>
       </div>
     </div>
   </nav>
