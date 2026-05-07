@@ -93,7 +93,12 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>
     <div class="order-summary">
       <div class="order-summary-title"><span data-i18n="checkout.summary">SİPARİŞ ÖZETİ</span> (${items.reduce((s,i)=>s+i.qty,0)})</div>
-      ${items.map(i => '<div class="summary-item"><div class="summary-item-swatch" style="background:'+(i.color||'#eee')+';"></div><div><div class="summary-item-name">'+i.name+'</div><div class="summary-item-variant">Beden: '+i.selectedSize+' · Adet: '+i.qty+'</div></div><div class="summary-item-price">€'+(i.price*i.qty).toFixed(2)+'</div></div>').join('')}
+      ${items.map(i => {
+        const swatchHex = i.selectedColorHex || i.color || '#eee';
+        const colorLabel = i.selectedColorName ? (window.o2yT ? o2yT('common.color') : 'Renk') + ': ' + i.selectedColorName + ' · ' : '';
+        const sizeLabel = (window.o2yT ? o2yT('common.size') : 'Beden') + ': ' + i.selectedSize;
+        return '<div class="summary-item"><div class="summary-item-swatch" style="background:'+swatchHex+';"></div><div><div class="summary-item-name">'+i.name+'</div><div class="summary-item-variant">'+colorLabel+sizeLabel+' · '+i.qty+'×</div></div><div class="summary-item-price">€'+(i.price*i.qty).toFixed(2)+'</div></div>';
+      }).join('')}
       <div class="summary-totals">
         <div class="summary-row"><span data-i18n="checkout.subtotal">Ara Toplam</span><span>€${subtotal.toFixed(2)}</span></div>
         <div class="summary-row"><span data-i18n="checkout.shippingFee">Kargo</span><span>${shipping===0?'<span data-i18n="checkout.free">ÜCRETSİZ</span>':'€'+shipping.toFixed(2)}</span></div>
@@ -132,7 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!valid) return;
     const method = f.querySelector('input[name="payment"]:checked').value;
     const orderNumber = 'O2Y-' + Date.now().toString(36).toUpperCase();
-    const order = { orderNumber, date:new Date().toISOString(), customer:{email:f.email.value,phone:f.phone.value,firstName:f.firstName.value,lastName:f.lastName.value,address:f.address.value,city:f.city.value,postalCode:f.postalCode.value,country:f.country.value}, items:items.map(i=>({name:i.name,size:i.selectedSize,qty:i.qty,price:i.price})), subtotal,shipping,total, paymentMethod:method };
+    const order = { orderNumber, date:new Date().toISOString(), customer:{email:f.email.value,phone:f.phone.value,firstName:f.firstName.value,lastName:f.lastName.value,address:f.address.value,city:f.city.value,postalCode:f.postalCode.value,country:f.country.value}, items:items.map(i=>({name:i.name,size:i.selectedSize,color:i.selectedColorName||null,qty:i.qty,price:i.price})), subtotal,shipping,total, paymentMethod:method };
     const orders = JSON.parse(localStorage.getItem('over2you_orders')||'[]');
     orders.push(order); localStorage.setItem('over2you_orders',JSON.stringify(orders));
     localStorage.removeItem('over2you_cart');

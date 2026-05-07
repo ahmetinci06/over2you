@@ -619,10 +619,17 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
 
       addAll.addEventListener('click', () => {
         if (!window.Cart || typeof window.Cart.add !== 'function') return;
+        // Resolve main product's active color from the swatch state.
+        const mainColors = (Array.isArray(product.colors) && product.colors.length > 0)
+          ? product.colors
+          : [{ id: 'default', name: product.colorName || '', hex: product.color || '', default: true }];
+        const activeSwatch = document.querySelector('.pdp-color-swatch.active');
+        const aci = activeSwatch ? parseInt(activeSwatch.dataset.colorIdx, 10) : -1;
+        const mainActiveColor = (aci >= 0 && mainColors[aci]) ? mainColors[aci] : (mainColors.find(c => c.default) || mainColors[0]);
         // Add the current product first if a size is selected (best effort).
         const sizeBtn = document.querySelector('.size-btn[style*="background"]');
-        if (sizeBtn) window.Cart.add(product, sizeBtn.dataset.size);
-        // Then each checked bundle item with default mid-size.
+        if (sizeBtn) window.Cart.add(product, sizeBtn.dataset.size, mainActiveColor);
+        // Then each checked bundle item — fall through to its own default color.
         section.querySelectorAll('.pdp-bundle-card').forEach(card => {
           const cb = card.querySelector('.pdp-bundle-check');
           if (!cb || !cb.checked) return;
@@ -685,7 +692,17 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
           setTimeout(() => { section.style.outline = 'none'; }, 1500);
           return;
         }
-        if (window.Cart && typeof window.Cart.add === 'function') window.Cart.add(product, selectedSize);
+        if (window.Cart && typeof window.Cart.add === 'function') {
+          // Read the active swatch from the DOM — single source of truth
+          // (color switch handler keeps .pdp-color-swatch.active in sync).
+          const colorList = (Array.isArray(product.colors) && product.colors.length > 0)
+            ? product.colors
+            : [{ id: 'default', name: product.colorName || '', hex: product.color || '', default: true }];
+          const activeSwatch = document.querySelector('.pdp-color-swatch.active');
+          const ci = activeSwatch ? parseInt(activeSwatch.dataset.colorIdx, 10) : -1;
+          const activeColor = (ci >= 0 && colorList[ci]) ? colorList[ci] : (colorList.find(c => c.default) || colorList[0]);
+          window.Cart.add(product, selectedSize, activeColor);
+        }
         const btn = document.getElementById('addToCartBtn');
         btn.textContent = '✓ ADDED'; btn.style.background = '#28a745';
         setTimeout(() => { btn.textContent = 'ADD TO CART'; btn.style.background = 'rgb(var(--button-background))'; }, 2000);

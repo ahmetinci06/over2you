@@ -202,9 +202,19 @@ const Cart = (function() {
 
   function save() { localStorage.setItem('over2you_cart', JSON.stringify(items)); }
 
-  function add(product, size) {
+  function add(product, size, selectedColor) {
     const selectedSize = size || product.selectedSize || product.sizes[Math.floor(product.sizes.length / 2)];
-    const key = `${product.id}-${selectedSize}`;
+    // Resolve active color: explicit arg → product default → top-level fallback.
+    const colorObj = selectedColor
+      || (Array.isArray(product.colors) && product.colors.find(c => c.default))
+      || (Array.isArray(product.colors) && product.colors[0])
+      || null;
+    const colorId = colorObj ? colorObj.id : (product.colorName || 'default').toLowerCase();
+    const colorName = colorObj ? colorObj.name : (product.colorName || '');
+    const colorHex = colorObj ? colorObj.hex : (product.color || '#eee');
+    // Variant-aware dedupe key — same product+size in different colors are
+    // separate cart lines.
+    const key = `${product.id}-${selectedSize}-${colorId}`;
     const existing = items.find(i => i.key === key);
     if (existing) {
       existing.qty += 1;
@@ -212,7 +222,21 @@ const Cart = (function() {
       // Store the effective (charged) price so cart/checkout math is sale-aware.
       const onSale = typeof product.salePrice === 'number' && product.salePrice < product.price;
       const effective = onSale ? product.salePrice : product.price;
-      items.push({ ...product, price: effective, key, selectedSize, qty: 1 });
+      // Pick a color-aware thumbnail when the variant has its own images.
+      const colorImage = (colorObj && Array.isArray(colorObj.images) && colorObj.images[0])
+        || (Array.isArray(product.images) && product.images[0])
+        || null;
+      items.push({
+        ...product,
+        price: effective,
+        key,
+        selectedSize,
+        selectedColorId: colorId,
+        selectedColorName: colorName,
+        selectedColorHex: colorHex,
+        selectedImage: colorImage,
+        qty: 1,
+      });
     }
     save(); render(); open();
   }
@@ -244,10 +268,10 @@ const Cart = (function() {
     if (footer) footer.style.display = 'block';
     body.innerHTML = items.map(item => `
       <div class="cart-item">
-        <div class="cart-item-swatch" style="background:${item.color || '#eee'};"></div>
+        <div class="cart-item-swatch" style="background:${item.selectedColorHex || item.color || '#eee'};"></div>
         <div class="cart-item-details">
           <div class="cart-item-name">${item.name}</div>
-          <div class="cart-item-variant">Size: ${item.selectedSize}</div>
+          <div class="cart-item-variant">${item.selectedColorName ? (window.o2yT ? o2yT('common.color') : 'Renk') + ': ' + item.selectedColorName + ' · ' : ''}${window.o2yT ? o2yT('common.size') : 'Beden'}: ${item.selectedSize}</div>
           <div class="cart-item-qty-row">
             <button class="qty-btn" onclick="Cart.updateQty('${item.key}', -1)">−</button>
             <span class="qty-value">${item.qty}</span>

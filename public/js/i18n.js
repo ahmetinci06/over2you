@@ -105,6 +105,8 @@ const O2Y_TRANSLATIONS = {
     'lightbox.prev': 'Önceki',
     'lightbox.next': 'Sonraki',
     // Bundle
+    'common.color': 'Renk',
+    'common.size': 'Beden',
     'pdp.bundle.title': 'Bu Ürünle Tamamla',
     'pdp.bundle.pitch': 'Aynı estetiği paylaşan parçalar.',
     'pdp.bundle.addAll': 'Tümünü Sepete Ekle',
@@ -230,6 +232,8 @@ const O2Y_TRANSLATIONS = {
     'lightbox.close': 'Close',
     'lightbox.prev': 'Previous',
     'lightbox.next': 'Next',
+    'common.color': 'Color',
+    'common.size': 'Size',
     'pdp.bundle.title': 'Complete the Fit',
     'pdp.bundle.pitch': 'Pieces that share the same aesthetic.',
     'pdp.bundle.addAll': 'Add All to Cart',
