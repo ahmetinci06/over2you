@@ -22,9 +22,9 @@ const base = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL :
       <a href={base} class="footer-logo">OVER2YOU</a>
       <p class="footer-tagline">Premium temel parçalar, zamansız tasarım.</p>
       <div class="footer-social">
-        <a href="#" aria-label="Instagram" class="footer-social-link"><img src={`${base}img/social/instagram.svg?v=2`} alt="" width="20" height="20" /></a>
-        <a href="#" aria-label="TikTok" class="footer-social-link"><img src={`${base}img/social/tiktok.svg?v=2`} alt="" width="20" height="20" /></a>
-        <a href="#" aria-label="X" class="footer-social-link"><img src={`${base}img/social/x.svg?v=2`} alt="" width="20" height="20" /></a>
+        <a href="#" aria-label="Instagram" class="footer-social-link"><img src={`${base}img/social/instagram.svg?v=2`} alt="" width="22" height="22" /></a>
+        <a href="#" aria-label="TikTok" class="footer-social-link"><img src={`${base}img/social/tiktok.svg?v=2`} alt="" width="22" height="22" /></a>
+        <a href="#" aria-label="X" class="footer-social-link"><img src={`${base}img/social/x.svg?v=2`} alt="" width="22" height="22" /></a>
       </div>
     </div>
     <div class="footer-col">
@@ -152,31 +152,31 @@ const base = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL :
     margin-bottom: 1.25rem;
     max-width: 18em;
   }
+  /* Minimalist: no circle wrap, icons render directly. Larger glyph
+     for brand recognition, opacity-only hover for restraint. */
   .footer-social {
     display: flex;
-    gap: 0.75rem;
+    gap: 20px;
   }
   .footer-social-link {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 50%;
-    transition: opacity 0.2s, border-color 0.2s;
+    width: 28px;
+    height: 28px;
     opacity: 0.7;
+    transition: opacity 0.2s ease;
   }
   .footer-social-link img {
-    width: 16px;
-    height: 16px;
+    width: 22px;
+    height: 22px;
+    display: block;
     /* SVGs ship with currentColor (defaults to black when used as <img>);
        invert flips them to white for the dark footer bg. */
     filter: invert(1);
   }
   .footer-social-link:hover {
     opacity: 1;
-    border-color: rgba(255, 255, 255, 0.5);
   }
 
   /* Bottom bar 3-zone layout (overrides existing space-between) */
