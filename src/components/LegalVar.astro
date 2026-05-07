@@ -1,0 +1,29 @@
+---
+import vars from '../data/legal-vars.json';
+
+interface Props {
+  name: keyof typeof vars;
+}
+
+const { name } = Astro.props;
+const value = (vars as Record<string, string>)[name];
+const filled = value && String(value).trim() !== '';
+---
+{filled ? (
+  <span>{value}</span>
+) : (
+  <span class="legal-pending" data-field={name}>[müşteri bilgisi bekleniyor]</span>
+)}
+
+<style>
+  .legal-pending {
+    display: inline-block;
+    background: #fff3cd;
+    color: #5c4400;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 0.9em;
+    border: 1px dashed #ffc107;
+    font-style: italic;
+  }
+</style>

@@ -1,0 +1,33 @@
+---
+import vars from '../data/legal-vars.json';
+
+const emptyFields = Object.entries(vars)
+  .filter(([, v]) => !v || String(v).trim() === '')
+  .map(([k]) => k);
+const isReady = emptyFields.length === 0;
+---
+{!isReady && (
+  <div class="legal-warning">
+    <strong>⚠ DİKKAT:</strong> Bu sayfa şablon halindedir. Yayına almadan önce
+    aşağıdaki <code>{emptyFields.length}</code> alan müşteri bilgileriyle doldurulmalıdır:
+    {' '}<code>{emptyFields.join(', ')}</code>.
+    Yasal incelemeden geçmemiştir, avukat onayı önerilir.
+  </div>
+)}
+
+<style>
+  .legal-warning {
+    background: #fff3cd;
+    color: #5c4400;
+    padding: 1rem;
+    border-left: 4px solid #ffc107;
+    margin-bottom: 2rem;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .legal-warning code {
+    background: rgba(0, 0, 0, 0.08);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+</style>
