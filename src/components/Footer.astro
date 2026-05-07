@@ -9,10 +9,11 @@ const base = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL :
         <h3>İLK SEN BİL</h3>
         <p>Yeni koleksiyonlar, sınırlı drop'lar ve özel teklifler — direkt e-posta kutuna.</p>
       </div>
-      <form class="footer-newsletter-form" onsubmit="event.preventDefault(); this.querySelector('input').value=''; this.querySelector('button').textContent='✓ TEŞEKKÜRLER'; setTimeout(()=>this.querySelector('button').textContent='ABONE OL', 2000);">
-        <input type="email" placeholder="E-posta adresin" required aria-label="E-posta adresi" />
+      <form class="footer-newsletter-form" id="footerNewsletterForm">
+        <input type="email" placeholder="E-posta adresin" required aria-label="E-posta adresi" name="email" />
         <button type="submit">ABONE OL</button>
       </form>
+      <p class="footer-newsletter-flash" id="footerNewsletterFlash" hidden></p>
     </div>
   </div>
 
@@ -130,6 +131,16 @@ const base = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL :
     background: #fff;
     color: #000;
   }
+  .footer-newsletter-flash {
+    max-width: 85rem;
+    margin: 0.6rem auto 0;
+    font-size: var(--text-sm);
+    letter-spacing: 0.02em;
+  }
+  .footer-newsletter-flash[hidden] { display: none; }
+  .footer-newsletter-flash.success { color: #4ade80; }
+  .footer-newsletter-flash.error { color: #f87171; }
+  .footer-newsletter-flash.sending { color: rgba(255, 255, 255, 0.55); }
   @media (max-width: 768px) {
     .footer-newsletter-inner { grid-template-columns: 1fr; gap: 1.25rem; }
     .footer-newsletter-form { flex-direction: column; }
@@ -229,3 +240,41 @@ const base = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL :
     .footer-payments { justify-content: center; }
   }
 </style>
+
+<script is:inline>
+  (function() {
+    const form = document.getElementById('footerNewsletterForm');
+    if (!form) return;
+    const flash = document.getElementById('footerNewsletterFlash');
+    const t = (k, fallback) => (window.o2yT ? window.o2yT(k) : fallback);
+    function show(state, key, fallback) {
+      flash.className = 'footer-newsletter-flash ' + state;
+      flash.textContent = t(key, fallback);
+      flash.hidden = false;
+    }
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = form.querySelector('input[name="email"]').value.trim();
+      show('sending', 'footer.newsletter.sending', 'gönderiliyor…');
+      try {
+        const r = await fetch('/api/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        const data = await r.json().catch(() => ({}));
+        if (r.ok && data.status === 'subscribed') {
+          show('success', 'footer.newsletter.success', 'abone oldun ✓');
+          form.reset();
+        } else if (r.ok && data.status === 'duplicate') {
+          show('success', 'footer.newsletter.duplicate', 'zaten abonesin ✓');
+          form.reset();
+        } else {
+          show('error', 'footer.newsletter.invalid', 'geçersiz e-posta');
+        }
+      } catch {
+        show('error', 'footer.newsletter.error', 'bir hata oluştu, tekrar dene');
+      }
+    });
+  })();
+</script>
