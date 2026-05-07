@@ -86,6 +86,21 @@
     .img-thumb-wrap { position: relative; }
     .img-thumb-rm { position: absolute; top: -4px; right: -4px; width: 18px; height: 18px; background: var(--danger); color: #fff; border: none; border-radius: 50%; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
+    /* Color variants list */
+    .color-list { display: flex; flex-direction: column; gap: 0.5rem; }
+    .color-card { border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem; background: #fafafa; display: grid; grid-template-columns: 1fr 70px auto auto; gap: 0.6rem; align-items: center; }
+    .color-card input[type="text"] { padding: 6px 10px; font-size: 12px; border: 1px solid var(--border); border-radius: 4px; }
+    .color-card input[type="color"] { width: 60px; height: 32px; padding: 0; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; background: none; }
+    .color-card .color-default-label { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; cursor: pointer; user-select: none; }
+    .color-card .color-default-label input { margin: 0; }
+    .color-card .color-remove { background: transparent; border: 0; color: var(--danger); cursor: pointer; padding: 4px 10px; font-size: 18px; line-height: 1; border-radius: 4px; transition: background 0.15s; }
+    .color-card .color-remove:hover { background: rgba(220, 53, 69, 0.08); }
+    @media (max-width: 600px) {
+      .color-card { grid-template-columns: 1fr 60px; gap: 0.4rem; }
+      .color-card .color-default-label { grid-column: 1 / -1; }
+      .color-card .color-remove { grid-column: 1 / -1; justify-self: end; }
+    }
+
     /* 360° angle slot grid (4 fixed slots: front, side-r, back, side-l) */
     .img360-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-top: 0.5rem; }
     .img360-slot { aspect-ratio: 3 / 4; border: 2px dashed var(--border); border-radius: 6px; position: relative; cursor: pointer; overflow: hidden; background: #fafafa; transition: border-color 0.15s; }
@@ -337,6 +352,11 @@
       <div class="img360-grid" id="img360Grid"></div>
       <p class="img360-hint">All 4 slots required for the 360° viewer to enable. Use transparent PNGs.</p>
     </div></div>
+    <div class="form-row single"><div class="form-group"><label>Renk Varyantları (opsiyonel)</label>
+      <div class="color-list" id="colorList"></div>
+      <button type="button" class="btn btn-outline btn-sm" onclick="addColor()" style="margin-top:0.5rem;">+ Renk Ekle</button>
+      <p style="font-size:11px;color:var(--muted);margin-top:0.4rem;line-height:1.4;">Boş bırakırsan ürün tek renk kalır (üstteki Color Name + Color alanları kullanılır). Birden fazla renk eklersen storefront PDP'sinde swatch satırı bu listeden gelir.</p>
+    </div></div>
     <div class="btn-group" style="margin-top:1.25rem;justify-content:flex-end;">
       <button class="btn btn-outline" onclick="closeProductModal()">Cancel</button>
       <button class="btn btn-primary" onclick="saveProduct()" id="saveProductBtn">Save Product</button>
@@ -368,8 +388,10 @@ const SLOT_DEFS = [
 // Pending state for the product modal:
 //   editImages: array of { src: 'products/foo.png', file?: File } — File present when not yet uploaded
 //   edit360Slots: 4 entries (one per SLOT_DEFS), each null OR { src, file?, flip }
+//   editColors: array of { id, name, hex, default, ... advanced fields filled in turn 10 commit 5 }
 let editImages = [];
 let edit360Slots = [null, null, null, null];
+let editColors = [];
 
 // Turkish-aware slug for predictable filenames
 const TR_MAP = { 'ç':'c','Ç':'c','ğ':'g','Ğ':'g','ı':'i','İ':'i','ö':'o','Ö':'o','ş':'s','Ş':'s','ü':'u','Ü':'u' };
@@ -597,6 +619,7 @@ function openProductModal(product) {
         return f && f.src ? { src: f.src, file: null, flip: !!f.flip } : null;
       });
     }
+    editColors = Array.isArray(product.colors) ? product.colors.map(c => ({ ...c })) : [];
   } else {
     document.getElementById('p_id').value = '';
     document.querySelectorAll('#productModal input:not([type=hidden]):not([type=color]):not([type=file]), #productModal textarea').forEach(i => i.value = '');
@@ -606,6 +629,39 @@ function openProductModal(product) {
   }
   renderImageThumbs();
   render360Slots();
+  renderColorList();
+}
+
+// ===== COLOR VARIANTS (basic — name/hex/default/remove) =====
+function renderColorList() {
+  const list = document.getElementById('colorList');
+  if (!list) return;
+  if (!editColors.length) { list.innerHTML = ''; return; }
+  list.innerHTML = editColors.map((c, i) => `
+    <div class="color-card" data-color-idx="${i}">
+      <input type="text" placeholder="Örn: TAN" value="${(c.name || '').replace(/"/g, '&quot;')}" oninput="updateColor(${i}, 'name', this.value)">
+      <input type="color" value="${c.hex || '#000000'}" oninput="updateColor(${i}, 'hex', this.value)" aria-label="Renk seç">
+      <label class="color-default-label"><input type="radio" name="color-default" ${c.default ? 'checked' : ''} onchange="setDefaultColor(${i})">Varsayılan</label>
+      <button type="button" class="color-remove" onclick="removeColor(${i})" aria-label="Rengi kaldır">×</button>
+    </div>
+  `).join('');
+}
+function addColor() {
+  editColors.push({ id: '', name: '', hex: '#000000', default: editColors.length === 0 });
+  renderColorList();
+}
+function removeColor(i) {
+  const wasDefault = editColors[i] && editColors[i].default;
+  editColors.splice(i, 1);
+  if (wasDefault && editColors.length > 0 && !editColors.some(c => c.default)) editColors[0].default = true;
+  renderColorList();
+}
+function updateColor(i, key, value) {
+  if (editColors[i]) editColors[i][key] = value;
+}
+function setDefaultColor(i) {
+  editColors.forEach((c, idx) => c.default = idx === i);
+  renderColorList();
 }
 function closeProductModal() { document.getElementById('productModal').classList.remove('open'); }
 function editProduct(index) { openProductModal(products[index]); }
@@ -673,7 +729,19 @@ async function saveProduct() {
       }
     }
 
-    // Phase 3: send product to backend (POST creates new id, PUT replaces by id)
+    // Phase 3: build colors[] from editColors (basic fields only this commit;
+    // advanced fields wired in turn 10 commit 5). Drop entries with empty name.
+    const colors = editColors
+      .filter(c => c.name && c.name.trim())
+      .map(c => ({
+        id: (c.id || slugify(c.name)) || ('color-' + Math.random().toString(36).slice(2, 7)),
+        name: c.name.trim(),
+        hex: c.hex || '#000000',
+        default: !!c.default,
+      }));
+    if (colors.length > 0 && !colors.some(c => c.default)) colors[0].default = true;
+
+    // Phase 4: send product to backend (POST creates new id, PUT replaces by id)
     const productBody = {
       name,
       price: priceVal,
@@ -688,7 +756,8 @@ async function saveProduct() {
       stockQty: document.getElementById('p_stockQty').value ? parseInt(document.getElementById('p_stockQty').value) : null,
       description: document.getElementById('p_description').value,
       images: imageSrcs,
-      images360: images360
+      images360: images360,
+      colors: colors
     };
     btn.textContent = 'Saving…';
     if (id) {
