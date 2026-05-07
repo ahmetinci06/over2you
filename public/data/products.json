@@ -2,7 +2,7 @@
   {
     "id": 1,
     "name": "BDG Corduroy Bomber Jacket",
-    "price": 120,
+    "price": 119,
     "category": "jackets",
     "sizes": [
       "S",
@@ -10,7 +10,7 @@
       "L",
       "XL"
     ],
-    "badge": "NEW",
+    "badge": "SALE",
     "color": "#c4a47a",
     "colorName": "Tan",
     "colorFamily": "brown",
@@ -49,8 +49,16 @@
         "flip": true
       }
     ],
-    "comparePrice": null,
+    "comparePrice": 149,
     "stock": "in-stock",
-    "stockQty": null
+    "stockQty": null,
+    "colors": [
+      {
+        "id": "tan",
+        "name": "TAN",
+        "hex": "#c4a47a",
+        "default": true
+      }
+    ]
   }
 ]
