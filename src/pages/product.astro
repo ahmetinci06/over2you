@@ -9,6 +9,38 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
     </div>
   </div>
 
+  <!-- Size guide modal — outside #productLayout so render() doesn't wipe it.
+       Triggered by the accordion's "Beden Tablosu" item (which calls
+       this.classList.add('open')). -->
+  <div id="sizeGuideModal" class="size-guide-modal" onclick="if(event.target===this) this.classList.remove('open');" role="dialog" aria-labelledby="sizeGuideTitle" aria-modal="true">
+    <div class="size-guide-modal-inner">
+      <button class="size-guide-modal-close" type="button" onclick="document.getElementById('sizeGuideModal').classList.remove('open');" aria-label="Kapat">×</button>
+      <h2 id="sizeGuideTitle">BEDEN TABLOSU</h2>
+      <p class="size-guide-intro">Vücut ölçülerinize göre seçim önerisi. Ürün ölçüleri parça başına değişebilir; sıkı/oversize tercih ediyorsanız bir alt/üst beden seçebilirsiniz.</p>
+      <div class="size-guide-table-wrap">
+        <table class="size-guide-table">
+          <thead>
+            <tr>
+              <th>Beden</th>
+              <th>Göğüs (cm)</th>
+              <th>Bel (cm)</th>
+              <th>Kalça (cm)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>XS</td><td>82–86</td><td>62–66</td><td>88–92</td></tr>
+            <tr><td>S</td><td>86–90</td><td>66–70</td><td>92–96</td></tr>
+            <tr><td>M</td><td>90–96</td><td>70–76</td><td>96–102</td></tr>
+            <tr><td>L</td><td>96–102</td><td>76–82</td><td>102–108</td></tr>
+            <tr><td>XL</td><td>102–108</td><td>82–88</td><td>108–114</td></tr>
+            <tr><td>XXL</td><td>108–114</td><td>88–94</td><td>114–120</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="size-guide-note">Müşteri-onaylı ürün-bazlı ölçüler eklenince bu tablo güncellenecek (genel referans).</p>
+    </div>
+  </div>
+
   <script is:inline>
   document.addEventListener('DOMContentLoaded', () => {
     const MAX_WAIT_MS = 4000;
@@ -254,6 +286,13 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
     }
 
     tryRender();
+
+    // ESC closes the size-guide modal.
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      const modal = document.getElementById('sizeGuideModal');
+      if (modal && modal.classList.contains('open')) modal.classList.remove('open');
+    });
   });
   </script>
 </Layout>
@@ -373,6 +412,92 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
     height: 18px;
     flex-shrink: 0;
     color: rgb(var(--text-color) / 0.7);
+  }
+
+  /* ===== Size guide modal ===== */
+  .size-guide-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 4rem 1rem 2rem;
+    overflow-y: auto;
+  }
+  .size-guide-modal.open { display: flex; }
+  .size-guide-modal-inner {
+    background: #fff;
+    border-radius: 6px;
+    max-width: 640px;
+    width: 100%;
+    padding: 2rem;
+    position: relative;
+    box-shadow: 0 18px 60px rgba(0, 0, 0, 0.18);
+  }
+  .size-guide-modal-close {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.6rem;
+    width: 36px;
+    height: 36px;
+    background: none;
+    border: 0;
+    font-size: 24px;
+    cursor: pointer;
+    color: rgb(var(--text-color) / 0.55);
+    line-height: 1;
+  }
+  .size-guide-modal-close:hover { color: rgb(var(--text-color)); }
+  .size-guide-modal h2 {
+    font: var(--heading-font-style) 800 1.25rem/1.2 var(--heading-font-family);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 0 0 0.75rem;
+    color: rgb(var(--text-color));
+  }
+  .size-guide-intro {
+    font-size: var(--text-sm);
+    color: rgb(var(--text-color) / 0.7);
+    line-height: 1.6;
+    margin: 0 0 1.25rem;
+  }
+  .size-guide-table-wrap {
+    overflow-x: auto;
+    margin-bottom: 1rem;
+  }
+  .size-guide-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--text-sm);
+  }
+  .size-guide-table th {
+    text-align: left;
+    padding: 0.6rem 0.5rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 11px;
+    color: rgb(var(--text-color) / 0.5);
+    border-bottom: 2px solid rgb(var(--border-color) / 0.2);
+  }
+  .size-guide-table td {
+    padding: 0.6rem 0.5rem;
+    border-bottom: 1px solid rgb(var(--border-color) / 0.1);
+  }
+  .size-guide-table td:first-child {
+    font-weight: 700;
+    color: rgb(var(--text-color));
+  }
+  .size-guide-note {
+    font-size: 11px;
+    color: rgb(var(--text-color) / 0.45);
+    font-style: italic;
+    margin: 0;
+  }
+  @media (max-width: 600px) {
+    .size-guide-modal-inner { padding: 1.5rem 1.25rem; }
   }
 
   /* ===== Payment strip on PDP (light-bg variant of footer's badge) ===== */
