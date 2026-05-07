@@ -117,11 +117,41 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
               <span>14 gün ücretsiz değişim hakkı</span>
             </div>
 
-            <div class="product-accordion" style="border-top:1px solid rgb(var(--border-color)/0.15);margin-top:1.25rem;">
-              <div class="accordion-item" onclick="this.classList.toggle('open');this.nextElementSibling.style.display=this.nextElementSibling.style.display==='block'?'none':'block';" style="border-bottom:1px solid rgb(var(--border-color)/0.15);padding:1rem 0;cursor:pointer;display:flex;justify-content:space-between;align-items:center;"><span style="font:var(--heading-font-style) 600 13px/1 var(--heading-font-family);text-transform:uppercase;">Product Details</span><span>+</span></div>
-              <div style="display:none;padding:0 0 1rem;font-size:var(--text-sm);color:rgb(var(--text-color)/0.6);line-height:1.7;">${product.description}</div>
-              <div class="accordion-item" onclick="this.classList.toggle('open');this.nextElementSibling.style.display=this.nextElementSibling.style.display==='block'?'none':'block';" style="border-bottom:1px solid rgb(var(--border-color)/0.15);padding:1rem 0;cursor:pointer;display:flex;justify-content:space-between;align-items:center;"><span style="font:var(--heading-font-style) 600 13px/1 var(--heading-font-family);text-transform:uppercase;">Shipping & Returns</span><span>+</span></div>
-              <div style="display:none;padding:0 0 1rem;font-size:var(--text-sm);color:rgb(var(--text-color)/0.6);line-height:1.7;">Free shipping on orders over €100. Standard delivery 3-5 business days. Free returns within 30 days.</div>
+            <div class="product-accordion">
+              <div class="accordion-item" onclick="this.classList.toggle('open');this.nextElementSibling.style.display=this.nextElementSibling.style.display==='block'?'none':'block';">
+                <span class="accordion-label">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                  Ürün Bilgisi
+                </span>
+                <span class="accordion-toggle">+</span>
+              </div>
+              <div class="accordion-content">${product.description}</div>
+
+              <div class="accordion-item" onclick="this.classList.toggle('open');this.nextElementSibling.style.display=this.nextElementSibling.style.display==='block'?'none':'block';">
+                <span class="accordion-label">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg>
+                  Bakım Talimatları
+                </span>
+                <span class="accordion-toggle">+</span>
+              </div>
+              <div class="accordion-content">30°C'de yıkayın. Tamburlu kurutucu kullanmayın, asarak kurutun. Düşük ısıda ütüleyin. Ağartıcı kullanmayın. Profesyonel kuru temizleme önerilir.</div>
+
+              <div class="accordion-item accordion-item--link" onclick="document.getElementById('sizeGuideModal') && document.getElementById('sizeGuideModal').classList.add('open');">
+                <span class="accordion-label">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.3 15.3 8.7 2.7a1 1 0 00-1.4 0L2.7 7.3a1 1 0 000 1.4l12.6 12.6a1 1 0 001.4 0l4.6-4.6a1 1 0 000-1.4z"/><path d="m7.5 10.5 2 2"/><path d="m10.5 7.5 2 2"/><path d="m13.5 4.5 2 2"/><path d="m4.5 13.5 2 2"/></svg>
+                  Beden Tablosu
+                </span>
+                <span class="accordion-toggle">→</span>
+              </div>
+
+              <div class="accordion-item" onclick="this.classList.toggle('open');this.nextElementSibling.style.display=this.nextElementSibling.style.display==='block'?'none':'block';">
+                <span class="accordion-label">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                  Kargo & İade
+                </span>
+                <span class="accordion-toggle">+</span>
+              </div>
+              <div class="accordion-content">100€ üzeri siparişlerde kargo ücretsizdir. Standart teslimat 3-5 iş günü. 14 gün içinde ücretsiz değişim ve iade hakkı.</div>
             </div>
           </div>
         </div>
@@ -242,6 +272,55 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
   .pdp-stock strong {
     color: rgb(var(--text-color));
     font-weight: 700;
+  }
+
+  /* ===== Accordion (4 tabs) ===== */
+  .product-accordion {
+    border-top: 1px solid rgb(var(--border-color) / 0.15);
+    margin-top: 1.25rem;
+  }
+  .product-accordion .accordion-item {
+    border-bottom: 1px solid rgb(var(--border-color) / 0.15);
+    padding: 1rem 0;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+    transition: color 0.15s;
+  }
+  .product-accordion .accordion-item:hover {
+    color: rgb(var(--text-color));
+  }
+  .product-accordion .accordion-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    font: var(--heading-font-style) 600 13px/1 var(--heading-font-family);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .product-accordion .accordion-label svg {
+    width: 16px;
+    height: 16px;
+    color: rgb(var(--text-color) / 0.55);
+    flex-shrink: 0;
+  }
+  .product-accordion .accordion-toggle {
+    font: var(--heading-font-style) 400 16px/1 var(--heading-font-family);
+    color: rgb(var(--text-color) / 0.55);
+    transition: transform 0.2s;
+  }
+  .product-accordion .accordion-item.open .accordion-toggle {
+    transform: rotate(45deg);
+  }
+  .product-accordion .accordion-content {
+    display: none;
+    padding: 0 0 1rem;
+    padding-left: 28px; /* aligns content under the label text, past the icon */
+    font-size: var(--text-sm);
+    color: rgb(var(--text-color) / 0.6);
+    line-height: 1.7;
   }
 
   /* ===== Exchange banner ===== */
