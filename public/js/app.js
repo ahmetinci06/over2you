@@ -282,18 +282,6 @@ const Cart = (function() {
   return { add, remove, updateQty, open, close, render, getItems: () => items };
 })();
 
-// ===== NEWSLETTER =====
-(function() {
-  const form = document.getElementById('newsletterForm');
-  if (!form) return;
-  form.addEventListener('submit', e => {
-    e.preventDefault();
-    const email = form.querySelector('input[type="email"]').value;
-    if (email) {
-      form.innerHTML = '<p style="color:#4ade80;font-size:var(--text-sm);letter-spacing:0.04em;">✓ SUBSCRIBED SUCCESSFULLY</p>';
-    }
-  });
-})();
 
 // ===== RENDER PRODUCTS (Shop Page Grid) =====
 function renderProducts(filter, targetEl) {
