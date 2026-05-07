@@ -398,6 +398,16 @@
         <div class="form-row"><div class="form-group"><label>Color Name (top-level)</label><input id="p_colorName" placeholder="Lapis Blue"></div><div class="form-group"><label>Color (top-level hex)</label><div class="color-input-wrap"><input type="color" id="p_color" value="#2a5a8a"><span class="color-hex" id="p_colorHex">#2a5a8a</span></div></div></div>
         <div class="form-row"><div class="form-group"><label>Color Family</label><select id="p_colorFamily"><option value="black">Black</option><option value="white">White</option><option value="grey">Grey</option><option value="blue">Blue</option><option value="red">Red</option><option value="pink">Pink</option><option value="brown">Brown</option><option value="green">Green</option><option value="dark">Dark</option></select></div><div class="form-group"></div></div>
         <div class="form-row single"><div class="form-group"><label>Description</label><textarea id="p_description" rows="3"></textarea></div></div>
+        <div class="form-row"><div class="form-group">
+          <label>SKU</label>
+          <input type="text" id="p_sku" placeholder="örn: BDG-CDR-TAN-001">
+        </div><div class="form-group">
+          <label>Etiketler (Enter/virgül ile ekle)</label>
+          <div class="chip-input">
+            <div class="chip-list" id="tagChips"></div>
+            <input type="text" id="tagInput" placeholder="Etiket ekle..." onkeydown="handleChipKey('tag', event)">
+          </div>
+        </div></div>
       </div>
     </details>
 
@@ -751,6 +761,7 @@ function openProductModal(product) {
       ? [...product.categories]
       : (product.category ? [product.category] : []);
     editTags = Array.isArray(product.tags) ? [...product.tags] : [];
+    document.getElementById('p_sku').value = product.sku || '';
     document.getElementById('p_metaTitle').value = product.seo?.metaTitle || '';
     document.getElementById('p_metaDescription').value = product.seo?.metaDescription || '';
     document.getElementById('p_slug').value = product.seo?.slug || '';
@@ -1079,7 +1090,9 @@ async function saveProduct() {
         metaTitle: document.getElementById('p_metaTitle').value.trim() || null,
         metaDescription: document.getElementById('p_metaDescription').value.trim() || null,
         slug: (document.getElementById('p_slug').value.trim() || slugify(name)) || null,
-      }
+      },
+      sku: document.getElementById('p_sku').value.trim() || null,
+      tags: editTags.length > 0 ? editTags : []
     };
     btn.textContent = 'Saving…';
     if (id) {

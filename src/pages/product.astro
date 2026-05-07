@@ -137,6 +137,7 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
           </div>
           <div class="pd-info">
             <h1 style="font:var(--heading-font-style) 800 1.5rem/1.2 var(--heading-font-family);text-transform:uppercase;letter-spacing:0.03em;margin-bottom:0.75rem;">${product.name}</h1>
+            ${product.sku ? `<p style="font-size:11px;color:rgb(var(--text-color)/0.45);letter-spacing:0.04em;margin-bottom:0.6rem;">SKU: ${product.sku}</p>` : ''}
             <p style="font-size:var(--text-base);margin-bottom:1rem;">€${product.price.toFixed(2)}</p>
             ${product.badge ? `<span style="display:inline-block;padding:3px 8px;font-size:10px;font-weight:700;background:rgb(var(--text-color));color:rgb(var(--background));margin-bottom:1.25rem;">${product.badge}</span>` : ''}
 
