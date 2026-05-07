@@ -46,10 +46,13 @@
      ±2 is the wrap state (back of the cylinder); collapsed to center with
      scale 0 + opacity 0 so a slot fades into / out of the center as it
      rotates past the visible band. No diagonal travel. */
+  // Center scale 0.92 (was 1.00) so tall product photos (figure with head)
+  // get ~4% top clearance instead of pressing against the stage edge.
+  // Side scales also nudged down to keep the visual ratio with center.
   const POS = {
-    '-1': { l: 18, t: 90, s: 0.70, o: 0.95, z: 3 },
-    '0':  { l: 50, t: 90, s: 1.00, o: 1.00, z: 6 },
-    '1':  { l: 82, t: 90, s: 0.70, o: 0.95, z: 3 },
+    '-1': { l: 18, t: 90, s: 0.65, o: 0.95, z: 3 },
+    '0':  { l: 50, t: 90, s: 0.92, o: 1.00, z: 6 },
+    '1':  { l: 82, t: 90, s: 0.65, o: 0.95, z: 3 },
     '2':  { l: 50, t: 90, s: 0.10, o: 0.00, z: 0 },
     '-2': { l: 50, t: 90, s: 0.10, o: 0.00, z: 0 },
   };

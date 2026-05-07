@@ -143,7 +143,7 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
         <div class="product-grid-layout">
           <div class="pd-gallery${showThumbs ? '' : ' pd-gallery-no-thumbs'}">
             ${showThumbs ? `<div class="pd-thumbs" id="pdThumbs">${thumbsHTML}</div>` : ''}
-            <div class="pd-stage-wrap">${stageHTML}</div>
+            <div class="pd-stage-wrap">${stageHTML}<div class="magnify-lens" hidden aria-hidden="true"></div></div>
           </div>
           <div class="pd-info">
             <h1 style="font:var(--heading-font-style) 800 1.5rem/1.2 var(--heading-font-family);text-transform:uppercase;letter-spacing:0.03em;margin-bottom:0.75rem;">${product.name}</h1>
@@ -282,6 +282,7 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
       wireColorSwatches(product, variantColors, frames360, imgBase);
       wireLightbox(thumbsSource, imgBase);
       wireBundle(product, list, imgBase);
+      wireMagnify();
       // Re-apply translations to the dynamically rendered PDP DOM.
       if (typeof window.o2yApplyLang === 'function') {
         window.o2yApplyLang(window.o2yLang || 'tr');
@@ -409,13 +410,21 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
       let base = imgBase;
       let idx = 0;
       let isOpen = false;
+      let pinchScale = 1;
+
+      function resetZoom() {
+        pinchScale = 1;
+        img.style.transform = '';
+      }
 
       function update() {
         const t = thumbs[idx];
         if (!t) return;
         img.src = base + t.src;
         img.alt = t.label || '';
-        img.style.transform = t.flip ? 'scaleX(-1)' : '';
+        // base flip preserves; pinch reset on image change.
+        resetZoom();
+        if (t.flip) img.style.transform = 'scaleX(-1)';
         const single = thumbs.length <= 1;
         if (counter) counter.textContent = thumbs.length > 0 ? (idx + 1) + ' / ' + thumbs.length : '';
         prevBtn.style.visibility = (single || idx === 0) ? 'hidden' : 'visible';
@@ -434,7 +443,40 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
         lb.setAttribute('hidden', '');
         document.body.style.overflow = '';
         isOpen = false;
+        resetZoom();
       }
+
+      // Pinch-to-zoom (mobile) + double-tap reset.
+      let startDist = 0;
+      let startScale = 1;
+      let lastTap = 0;
+      function dist(touches) {
+        return Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
+      }
+      img.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 2) {
+          startDist = dist(e.touches);
+          startScale = pinchScale;
+        }
+      }, { passive: true });
+      img.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 2 && startDist > 0) {
+          e.preventDefault();
+          const ratio = dist(e.touches) / startDist;
+          pinchScale = Math.max(1, Math.min(4, startScale * ratio));
+          const flip = thumbs[idx] && thumbs[idx].flip ? 'scaleX(-1)' : '';
+          img.style.transform = (flip ? flip + ' ' : '') + 'scale(' + pinchScale + ')';
+        }
+      }, { passive: false });
+      img.addEventListener('touchend', (e) => {
+        if (e.touches.length < 2) startDist = 0;
+        // Double-tap reset.
+        if (e.changedTouches.length === 1 && e.touches.length === 0) {
+          const now = Date.now();
+          if (now - lastTap < 300 && pinchScale > 1) resetZoom();
+          lastTap = now;
+        }
+      });
 
       prevBtn.addEventListener('click', () => { if (idx > 0) { idx--; update(); } });
       nextBtn.addEventListener('click', () => { if (idx < thumbs.length - 1) { idx++; update(); } });
@@ -470,6 +512,56 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
           update();
         }
       };
+    }
+
+    function wireMagnify() {
+      // Desktop hover magnify lens — disabled on touch / small viewports.
+      if (window.matchMedia('(max-width: 768px), (hover: none)').matches) return;
+      const wrap = document.querySelector('.pd-stage-wrap');
+      const lens = wrap && wrap.querySelector('.magnify-lens');
+      if (!wrap || !lens) return;
+
+      const LENS = 220;
+      const ZOOM = 2;
+
+      function getCurrentImg() {
+        return wrap.querySelector('.c3d-flat img');
+      }
+
+      wrap.addEventListener('mouseenter', () => {
+        const img = getCurrentImg();
+        if (!img || !img.src) return;
+        lens.style.backgroundImage = `url("${img.src}")`;
+        lens.style.backgroundSize = (img.clientWidth * ZOOM) + 'px ' + (img.clientHeight * ZOOM) + 'px';
+        lens.removeAttribute('hidden');
+      });
+
+      wrap.addEventListener('mouseleave', () => {
+        lens.setAttribute('hidden', '');
+      });
+
+      wrap.addEventListener('mousemove', (e) => {
+        if (lens.hasAttribute('hidden')) return;
+        const img = getCurrentImg();
+        if (!img) return;
+        const imgRect = img.getBoundingClientRect();
+        // If cursor leaves the image area (carousel padding), hide lens.
+        if (e.clientX < imgRect.left || e.clientX > imgRect.right ||
+            e.clientY < imgRect.top  || e.clientY > imgRect.bottom) {
+          lens.setAttribute('hidden', '');
+          return;
+        }
+        const wrapRect = wrap.getBoundingClientRect();
+        const lx = e.clientX - wrapRect.left - LENS / 2;
+        const ly = e.clientY - wrapRect.top - LENS / 2;
+        lens.style.left = lx + 'px';
+        lens.style.top  = ly + 'px';
+        // bg position — center the zoomed point under the cursor.
+        const px = e.clientX - imgRect.left;
+        const py = e.clientY - imgRect.top;
+        lens.style.backgroundPosition =
+          (-(px * ZOOM - LENS / 2)) + 'px ' + (-(py * ZOOM - LENS / 2)) + 'px';
+      });
     }
 
     function effectivePrice(p) {
@@ -1136,6 +1228,23 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
   /* C3D flat-mode container becomes clickable for lightbox. */
   .pd-stage-wrap .c3d-flat { cursor: zoom-in; }
 
+  /* Hover magnify lens — desktop only, hidden by media query on touch. */
+  .magnify-lens {
+    position: absolute;
+    width: 220px;
+    height: 220px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    pointer-events: none;
+    background-repeat: no-repeat;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
+    z-index: 10;
+  }
+  .magnify-lens[hidden] { display: none; }
+  @media (max-width: 768px), (hover: none) {
+    .magnify-lens { display: none !important; }
+  }
+
   /* ===== Mobile dot indicators (flat mode, multi-image) ===== */
   .c3d-dots {
     display: flex;
@@ -1176,6 +1285,10 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
     max-height: 88vh;
     object-fit: contain;
     user-select: none;
+    -webkit-user-drag: none;
+    transform-origin: center center;
+    touch-action: pan-y pinch-zoom;
+    transition: transform 0.18s ease;
   }
   .pdp-lightbox button {
     background: transparent;
@@ -1371,15 +1484,16 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
   }
   .c3d-slot-active { cursor: default; }
 
-  /* Floor anchor */
+  /* Floor anchor — softened (0.10 → 0.06) so it reads as ground contact
+     rather than a duplicate shadow under the stage's own gradient bg. */
   .c3d-floor {
     position: absolute;
     left: 50%;
-    bottom: 10%;
-    width: 70%;
-    height: 24px;
+    bottom: 6%;
+    width: 60%;
+    height: 18px;
     transform: translateX(-50%);
-    background: radial-gradient(ellipse at center, rgba(0,0,0,0.10), transparent 70%);
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0.06), transparent 70%);
     pointer-events: none;
     z-index: 0;
   }

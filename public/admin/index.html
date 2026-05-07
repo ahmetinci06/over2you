@@ -108,8 +108,18 @@
     .bulk-action-bar .btn-danger:hover { background: #c82333; }
 
     /* Form preview */
-    .form-preview { margin-top: 1rem; border: 1px solid var(--border); border-radius: var(--radius); background: #fff; overflow: hidden; }
-    .form-preview__banner { background: #fff3cd; color: #5c4400; padding: 0.5rem 0.75rem; font-size: 11px; font-weight: 600; border-bottom: 1px solid #ffc107; }
+    /* Side panel preview — slides in from the right while the product
+       form modal is open. Replaces the legacy inline form-preview
+       (turn 11) which competed for vertical space inside the modal. */
+    #adminPreviewPanel { position: fixed; top: 0; right: 0; width: 480px; max-width: 100vw; height: 100vh; background: #fff; box-shadow: -4px 0 24px rgba(0,0,0,0.15); transform: translateX(0); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 600; overflow-y: auto; display: flex; flex-direction: column; }
+    #adminPreviewPanel[hidden] { display: flex; transform: translateX(100%); }
+    #adminPreviewPanel header { display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: #fff; z-index: 1; }
+    #adminPreviewPanel header h3 { font-size: 14px; font-weight: 700; margin: 0; }
+    #adminPreviewPanel .preview-banner { background: #fff3cd; color: #5c4400; padding: 10px 20px; font-size: 12px; border-bottom: 1px solid #ffc107; }
+    #adminPreviewPanel .preview-content { padding: 20px; }
+    #adminPreviewPanel .preview-close { background: none; border: 0; font-size: 24px; cursor: pointer; line-height: 1; padding: 0 8px; color: var(--muted); }
+    #adminPreviewPanel .preview-close:hover { color: var(--text); }
+    @media (max-width: 768px) { #adminPreviewPanel { width: 100vw; } }
     #formPreviewContent { padding: 1rem; }
 
     /* Save state indicator */
@@ -336,6 +346,7 @@
         <span class="bulk-count"><strong id="bulkSelectedCount">0</strong> ürün seçildi</span>
         <div class="bulk-action-bar__buttons">
           <button class="btn btn-sm btn-danger" onclick="bulkDelete()">🗑 Sil</button>
+          <button class="btn btn-sm btn-outline" onclick="openBulkStock()">📦 Stok Güncelle</button>
           <button class="btn btn-sm btn-outline" onclick="openBulkCategory()">📁 Kategori Değiştir</button>
           <button class="btn btn-sm btn-outline" onclick="bulkBadge('NEW')">Set NEW</button>
           <button class="btn btn-sm btn-outline" onclick="bulkBadge('SALE')">Set SALE</button>
@@ -544,16 +555,44 @@
         </div></div>
       </div>
     </details>
-    <div class="form-preview" id="formPreview" hidden>
-      <div class="form-preview__banner">⚠ Henüz kaydedilmedi — sadece önizleme</div>
-      <div id="formPreviewContent"></div>
-    </div>
     <div class="btn-group" style="margin-top:1.25rem;justify-content:space-between;align-items:center;">
       <button type="button" class="btn btn-outline" onclick="togglePreview()" id="previewBtn">👁 Önizleme</button>
       <div class="btn-group" style="gap:0.5rem;">
         <button class="btn btn-outline" onclick="closeProductModal()">Cancel</button>
         <button class="btn btn-primary" onclick="saveProduct()" id="saveProductBtn">Save Product</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Side panel preview (replaces inline formPreview) -->
+<aside id="adminPreviewPanel" hidden role="complementary" aria-label="Ürün önizlemesi">
+  <header>
+    <h3>Önizleme</h3>
+    <button type="button" class="preview-close" onclick="togglePreview()" aria-label="Kapat">×</button>
+  </header>
+  <div class="preview-banner">⚠ Henüz kaydedilmedi — sadece önizleme</div>
+  <div class="preview-content" id="formPreviewContent"></div>
+</aside>
+
+<!-- Bulk stock modal -->
+<div class="modal-overlay" id="bulkStockModal" onclick="if(event.target===this) closeBulkStock();" role="dialog" aria-modal="true">
+  <div class="modal" style="max-width:440px;">
+    <h3 style="font-size:15px;font-weight:800;margin-bottom:0.75rem;">Toplu Stok Güncelle</h3>
+    <p style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:1rem;"><strong id="bulkStockCount" style="color:var(--text);">0</strong> ürünün stoğu güncellenecek.</p>
+    <div class="form-group">
+      <label>Yeni stok adedi</label>
+      <input type="number" id="bulkStockValue" min="0" step="1" placeholder="örn: 25">
+    </div>
+    <div class="form-group">
+      <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-weight:400;">
+        <input type="checkbox" id="bulkStockClearOOS" checked>
+        <span>"Stokta yok" işaretini kaldır (varsa)</span>
+      </label>
+    </div>
+    <div class="btn-group" style="justify-content:flex-end;gap:0.5rem;margin-top:1rem;">
+      <button type="button" class="btn btn-outline" onclick="closeBulkStock()">Vazgeç</button>
+      <button type="button" class="btn btn-primary" onclick="applyBulkStock()">Uygula</button>
     </div>
   </div>
 </div>
@@ -625,12 +664,19 @@ let editCategories = [];
 let editTags = [];
 
 // ===== CHIP INPUT (shared by categories + tags) =====
-// ===== FORM PREVIEW =====
+// ===== FORM PREVIEW (side panel) =====
+let previewDebounceTimer = null;
 function togglePreview() {
-  const el = document.getElementById('formPreview');
-  if (!el) return;
-  if (el.hidden) { renderFormPreview(); el.hidden = false; }
-  else { el.hidden = true; }
+  const panel = document.getElementById('adminPreviewPanel');
+  if (!panel) return;
+  if (panel.hidden) { renderFormPreview(); panel.hidden = false; }
+  else { panel.hidden = true; }
+}
+function schedulePreviewUpdate() {
+  const panel = document.getElementById('adminPreviewPanel');
+  if (!panel || panel.hidden) return;
+  clearTimeout(previewDebounceTimer);
+  previewDebounceTimer = setTimeout(renderFormPreview, 300);
 }
 function renderFormPreview() {
   const out = document.getElementById('formPreviewContent');
@@ -688,6 +734,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!modal.classList.contains('open')) return;
     const state = document.getElementById('saveState')?.dataset.state;
     if (state !== 'saving') setSaveState('dirty');
+    if (typeof schedulePreviewUpdate === 'function') schedulePreviewUpdate();
   };
   modal.addEventListener('input', onChange);
   modal.addEventListener('change', onChange);
@@ -719,7 +766,13 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 // Guard against losing unsaved changes on tab close / navigation.
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { const m = document.getElementById('deleteConfirmModal'); if (m && m.classList.contains('open')) closeDeleteConfirm(); } });
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  const m = document.getElementById('deleteConfirmModal');
+  if (m && m.classList.contains('open')) { closeDeleteConfirm(); return; }
+  const p = document.getElementById('adminPreviewPanel');
+  if (p && !p.hidden) { p.hidden = true; }
+});
 window.addEventListener('beforeunload', e => {
   const el = document.getElementById('saveState');
   if (el && el.dataset.state === 'dirty') {
@@ -959,6 +1012,44 @@ async function bulkDelete() {
     updateBulkBar();
     toast(`${ids.length} ürün silindi`);
   } catch(e) { toast('Hata: ' + e.message, true); }
+}
+
+// Bulk stock — sequential PUT pattern, same backend-untouched discipline.
+function openBulkStock() {
+  if (!selectedProducts.size) return;
+  document.getElementById('bulkStockCount').textContent = String(selectedProducts.size);
+  document.getElementById('bulkStockValue').value = '';
+  document.getElementById('bulkStockClearOOS').checked = true;
+  document.getElementById('bulkStockModal').classList.add('open');
+}
+function closeBulkStock() {
+  document.getElementById('bulkStockModal').classList.remove('open');
+}
+async function applyBulkStock() {
+  const v = document.getElementById('bulkStockValue').value;
+  const stockQty = parseInt(v, 10);
+  if (isNaN(stockQty) || stockQty < 0) {
+    toast('Geçerli bir stok değeri gir (≥ 0)', true);
+    return;
+  }
+  const clearOOS = document.getElementById('bulkStockClearOOS').checked;
+  const targets = [...selectedProducts].map(i => products[i]).filter(Boolean);
+  closeBulkStock();
+  try {
+    for (const p of targets) {
+      const updated = Object.assign({}, p, {
+        stockQty,
+        stock: stockQty === 0 ? 'out-of-stock' : (stockQty <= 5 ? 'low-stock' : 'in-stock'),
+      });
+      if (clearOOS && p.outOfStock) updated.outOfStock = false;
+      await api('/api/products/' + p.id, { method: 'PUT', body: JSON.stringify(updated) });
+    }
+    products = await api('/api/products');
+    renderProducts(); renderDashboard();
+    toast(targets.length + ' ürünün stoğu güncellendi');
+  } catch (e) {
+    toast('Hata: ' + e.message, true);
+  }
 }
 
 // Bulk category — opens a modal with the category dropdown, applies via
