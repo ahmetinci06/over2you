@@ -1,25 +1,23 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import LegalVar from '../components/LegalVar.astro';
+import LegalWarning from '../components/LegalWarning.astro';
 ---
 <Layout title="Mesafeli Satış Sözleşmesi — Over2You" description="Over2You mesafeli satış sözleşmesi.">
   <div class="legal-page">
-    <div class="legal-warning">
-      <strong>⚠ DİKKAT:</strong> Bu sayfa şablon halindedir. Yayına almadan önce
-      <code>[[...]]</code> içindeki tüm placeholder'lar müşteri bilgileriyle doldurulmalıdır.
-      Yasal incelemeden geçmemiştir, avukat onayı önerilir.
-    </div>
+    <LegalWarning />
 
     <h1>Mesafeli Satış Sözleşmesi</h1>
 
     <h2>1. Taraflar</h2>
     <p><strong>SATICI:</strong></p>
     <ul>
-      <li>Ünvan: [[COMPANY_NAME]]</li>
-      <li>Adres: [[COMPANY_ADDRESS]]</li>
-      <li>Vergi No: [[COMPANY_TAX_NUMBER]] / [[COMPANY_TAX_OFFICE]]</li>
-      <li>MERSİS: [[COMPANY_MERSIS]]</li>
-      <li>E-posta: [[COMPANY_EMAIL]]</li>
-      <li>Telefon: [[COMPANY_PHONE]]</li>
+      <li>Ünvan: <LegalVar name="COMPANY_NAME" /></li>
+      <li>Adres: <LegalVar name="COMPANY_ADDRESS" /></li>
+      <li>Vergi No: <LegalVar name="COMPANY_TAX_NUMBER" /> / <LegalVar name="COMPANY_TAX_OFFICE" /></li>
+      <li>MERSİS: <LegalVar name="COMPANY_MERSIS" /></li>
+      <li>E-posta: <LegalVar name="COMPANY_EMAIL" /></li>
+      <li>Telefon: <LegalVar name="COMPANY_PHONE" /></li>
     </ul>
     <p><strong>ALICI:</strong> Sipariş sırasında bilgileri girilen kişi.</p>
 
@@ -54,7 +52,7 @@ import Layout from '../layouts/Layout.astro';
     </ul>
 
     <h2>7. Yetkili Mahkeme</h2>
-    <p>İşbu sözleşmeden doğan uyuşmazlıklarda Tüketici Hakem Heyetleri ve [[COMPANY_TAX_OFFICE]]
+    <p>İşbu sözleşmeden doğan uyuşmazlıklarda Tüketici Hakem Heyetleri ve <LegalVar name="COMPANY_TAX_OFFICE" />
     Tüketici Mahkemeleri yetkilidir.</p>
 
     <h2>8. Yürürlük</h2>
@@ -73,8 +71,6 @@ import Layout from '../layouts/Layout.astro';
   .legal-page li { margin-bottom: 0.35rem; font-size: var(--text-sm); }
   .legal-page code { background: rgb(var(--text-color)/0.08); padding: 1px 5px; border-radius: 3px; font-size: 0.9em; }
   .legal-effective { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid rgb(var(--border-color)/0.2); font-size: 11px; color: rgb(var(--text-color)/0.5); letter-spacing: 0.04em; }
-  .legal-warning { background: #fff3cd; color: #5c4400; padding: 1rem; border-left: 4px solid #ffc107; margin-bottom: 2rem; font-size: 13px; line-height: 1.6; }
-  .legal-warning code { background: rgba(0,0,0,0.08); }
   @media (max-width: 600px) {
     .legal-page { padding: 5rem 1rem 3rem; }
     .legal-page h1 { font-size: 1.4rem; }
