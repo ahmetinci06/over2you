@@ -96,6 +96,15 @@
     .color-thumb.drag-over { transform: translateY(-2px); }
     .color-thumb.drag-over::before { content: ''; position: absolute; inset: -3px; border: 2px solid var(--accent); border-radius: 5px; pointer-events: none; z-index: 2; }
 
+    /* chip-input shared by categories + tags */
+    .chip-input { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; padding: 0.4rem 0.5rem; border: 1px solid var(--border); border-radius: 4px; background: #fff; min-height: 36px; }
+    .chip-list { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+    .chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 4px 3px 10px; background: var(--accent-light); border: 1px solid var(--border); border-radius: 14px; font-size: 11px; line-height: 1.4; color: var(--text); }
+    .chip button { background: none; border: 0; color: var(--muted); cursor: pointer; font-size: 14px; line-height: 1; padding: 0 4px; border-radius: 50%; }
+    .chip button:hover { color: var(--danger); }
+    .chip-input input { border: 0; outline: none; flex: 1; min-width: 110px; padding: 4px 6px; font-size: 12px; background: transparent; }
+    .required-mark { color: var(--danger); }
+
     .oos-toggle { display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.6rem 0.75rem; background: rgba(220,53,69,0.05); border: 1px solid rgba(220,53,69,0.18); border-radius: 4px; cursor: pointer; font-size: 12px; color: var(--text); user-select: none; }
     .oos-toggle input { margin-top: 1px; }
     .oos-toggle strong { color: var(--danger); margin-right: 0.25rem; }
@@ -377,7 +386,14 @@
     <details class="form-section" open>
       <summary>Temel Bilgiler</summary>
       <div class="form-section-body">
-        <div class="form-row"><div class="form-group"><label>Product Name</label><input id="p_name" placeholder="Hoodie Lapis Blue"></div><div class="form-group"><label>Category</label><select id="p_category"><option value="jackets">Jackets</option><option value="hoodies">Hoodies</option><option value="sweatpants">Sweatpants</option><option value="crewnecks">Crewnecks</option><option value="tshirts">T-Shirts</option><option value="accessories">Accessories</option></select></div></div>
+        <div class="form-row"><div class="form-group"><label>Product Name <span class="required-mark">*</span></label><input id="p_name" placeholder="Hoodie Lapis Blue" required minlength="3"></div><div class="form-group"><label>Primary Category</label><select id="p_category"><option value="jackets">Jackets</option><option value="hoodies">Hoodies</option><option value="sweatpants">Sweatpants</option><option value="crewnecks">Crewnecks</option><option value="tshirts">T-Shirts</option><option value="accessories">Accessories</option></select></div></div>
+        <div class="form-row single"><div class="form-group">
+          <label>Ek kategoriler (chip — primary kategori dahil tüm kategoriler chip listesindekiler. Enter veya virgül ile ekle)</label>
+          <div class="chip-input">
+            <div class="chip-list" id="categoryChips"></div>
+            <input type="text" id="categoryInput" placeholder="Kategori ekle..." onkeydown="handleChipKey('category', event)">
+          </div>
+        </div></div>
         <div class="form-row c3"><div class="form-group"><label>Price (€)</label><input type="number" step="0.01" id="p_price" value="84.00"></div><div class="form-group"><label>Compare Price (€)</label><input type="number" step="0.01" id="p_comparePrice" placeholder="Optional"></div><div class="form-group"><label>Badge</label><select id="p_badge"><option value="">None</option><option value="NEW">NEW</option><option value="LAST STOCK">LAST STOCK</option><option value="SALE">SALE</option></select></div></div>
         <div class="form-row"><div class="form-group"><label>Color Name (top-level)</label><input id="p_colorName" placeholder="Lapis Blue"></div><div class="form-group"><label>Color (top-level hex)</label><div class="color-input-wrap"><input type="color" id="p_color" value="#2a5a8a"><span class="color-hex" id="p_colorHex">#2a5a8a</span></div></div></div>
         <div class="form-row"><div class="form-group"><label>Color Family</label><select id="p_colorFamily"><option value="black">Black</option><option value="white">White</option><option value="grey">Grey</option><option value="blue">Blue</option><option value="red">Red</option><option value="pink">Pink</option><option value="brown">Brown</option><option value="green">Green</option><option value="dark">Dark</option></select></div><div class="form-group"></div></div>
@@ -464,6 +480,34 @@ const SLOT_DEFS = [
 let editImages = [];
 let edit360Slots = [null, null, null, null];
 let editColors = [];
+let editCategories = [];
+let editTags = [];
+
+// ===== CHIP INPUT (shared by categories + tags) =====
+function escapeHtml(s) {
+  return String(s).replace(/[<>&"']/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function renderChips(target) {
+  const list = document.getElementById(target + 'Chips');
+  if (!list) return;
+  const arr = target === 'category' ? editCategories : editTags;
+  list.innerHTML = arr.map((v, i) => `<span class="chip">${escapeHtml(v)}<button type="button" onclick="removeChip('${target}', ${i})" aria-label="Kaldır">×</button></span>`).join('');
+}
+function handleChipKey(target, e) {
+  if (e.key !== 'Enter' && e.key !== ',') return;
+  e.preventDefault();
+  const v = e.target.value.trim();
+  if (!v) return;
+  const arr = target === 'category' ? editCategories : editTags;
+  if (!arr.includes(v)) arr.push(v);
+  e.target.value = '';
+  renderChips(target);
+}
+function removeChip(target, i) {
+  const arr = target === 'category' ? editCategories : editTags;
+  arr.splice(i, 1);
+  renderChips(target);
+}
 
 // Turkish-aware slug for predictable filenames
 const TR_MAP = { 'ç':'c','Ç':'c','ğ':'g','Ğ':'g','ı':'i','İ':'i','ö':'o','Ö':'o','ş':'s','Ş':'s','ü':'u','Ü':'u' };
@@ -684,6 +728,9 @@ function openProductModal(product) {
     document.getElementById('p_stock').value = product.stock || 'in-stock';
     document.getElementById('p_stockQty').value = product.stockQty ?? '';
     document.getElementById('p_outOfStock').checked = !!product.outOfStock;
+    editCategories = Array.isArray(product.categories) && product.categories.length > 0
+      ? [...product.categories]
+      : (product.category ? [product.category] : []);
     document.getElementById('p_description').value = product.description || '';
     editImages = (product.images || []).map(src => ({ src, file: null }));
     if (Array.isArray(product.images360) && product.images360.length === 4) {
@@ -706,10 +753,14 @@ function openProductModal(product) {
     document.getElementById('p_sizes').value = 'XXS,XS,S,M,L,XL,XXL';
     document.getElementById('p_price').value = '84.00';
     document.getElementById('p_stock').value = 'in-stock';
+    editCategories = [];
+    editTags = [];
   }
   renderImageThumbs();
   render360Slots();
   renderColorList();
+  renderChips('category');
+  renderChips('tag');
 }
 
 // ===== COLOR VARIANTS =====
@@ -988,6 +1039,7 @@ async function saveProduct() {
       price: priceVal,
       comparePrice: parseFloat(document.getElementById('p_comparePrice').value) || null,
       category: document.getElementById('p_category').value,
+      categories: editCategories.length > 0 ? editCategories : (document.getElementById('p_category').value ? [document.getElementById('p_category').value] : []),
       sizes: document.getElementById('p_sizes').value.split(',').map(s => s.trim()).filter(Boolean),
       badge: document.getElementById('p_badge').value || null,
       color: document.getElementById('p_color').value,
