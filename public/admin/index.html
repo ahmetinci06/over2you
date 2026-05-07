@@ -88,13 +88,27 @@
 
     /* Color variants list */
     .color-list { display: flex; flex-direction: column; gap: 0.5rem; }
-    .color-card { border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem; background: #fafafa; display: grid; grid-template-columns: 1fr 70px auto auto; gap: 0.6rem; align-items: center; }
+    .color-card { border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem; background: #fafafa; display: grid; grid-template-columns: 1fr 70px auto auto; gap: 0.6rem 0.6rem; align-items: center; }
     .color-card input[type="text"] { padding: 6px 10px; font-size: 12px; border: 1px solid var(--border); border-radius: 4px; }
     .color-card input[type="color"] { width: 60px; height: 32px; padding: 0; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; background: none; }
     .color-card .color-default-label { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; cursor: pointer; user-select: none; }
     .color-card .color-default-label input { margin: 0; }
     .color-card .color-remove { background: transparent; border: 0; color: var(--danger); cursor: pointer; padding: 4px 10px; font-size: 18px; line-height: 1; border-radius: 4px; transition: background 0.15s; }
     .color-card .color-remove:hover { background: rgba(220, 53, 69, 0.08); }
+    .color-advanced-toggle { grid-column: 1 / -1; display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); cursor: pointer; user-select: none; }
+    .color-advanced[hidden] { display: none; }
+    .color-advanced { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 0.5rem; padding-top: 0.4rem; border-top: 1px dashed var(--border); }
+    .color-advanced fieldset { border: 1px solid var(--border); border-radius: 4px; padding: 0.5rem 0.6rem 0.6rem; }
+    .color-advanced legend { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); padding: 0 4px; }
+    .color-advanced input[type="file"] { font-size: 11px; }
+    .color-thumb-row { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.4rem; }
+    .color-thumb { position: relative; width: 56px; aspect-ratio: 3/4; border: 1px solid var(--border); border-radius: 3px; overflow: hidden; background: #fff; }
+    .color-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .color-thumb button { position: absolute; top: 2px; right: 2px; width: 16px; height: 16px; background: var(--danger); color: #fff; border: 0; border-radius: 50%; font-size: 9px; cursor: pointer; line-height: 1; }
+    .color-thumb-360.empty { background: repeating-linear-gradient(45deg, #fafafa, #fafafa 4px, #f0f0f0 4px, #f0f0f0 8px); border-style: dashed; }
+    .color-thumb-tag { position: absolute; bottom: 2px; left: 2px; font-size: 8px; font-weight: 700; background: rgba(255,255,255,0.9); padding: 1px 4px; border-radius: 2px; letter-spacing: 0.02em; }
+    .color-num-row { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+    .color-num-row input { flex: 1; min-width: 120px; padding: 6px 10px; font-size: 12px; border: 1px solid var(--border); border-radius: 4px; }
     @media (max-width: 600px) {
       .color-card { grid-template-columns: 1fr 60px; gap: 0.4rem; }
       .color-card .color-default-label { grid-column: 1 / -1; }
@@ -619,7 +633,14 @@ function openProductModal(product) {
         return f && f.src ? { src: f.src, file: null, flip: !!f.flip } : null;
       });
     }
-    editColors = Array.isArray(product.colors) ? product.colors.map(c => ({ ...c })) : [];
+    editColors = Array.isArray(product.colors) ? product.colors.map(c => ({
+      ...c,
+      advanced: !!(c.images || c.images360 || typeof c.stock === 'number' || typeof c.priceOverride === 'number'),
+      colorImages: Array.isArray(c.images) ? c.images.map(src => ({ src, file: null })) : [],
+      color360: Array.isArray(c.images360) && c.images360.length === 4
+        ? c.images360.map(f => f && f.src ? { src: f.src, file: null } : null)
+        : [null, null, null, null],
+    })) : [];
   } else {
     document.getElementById('p_id').value = '';
     document.querySelectorAll('#productModal input:not([type=hidden]):not([type=color]):not([type=file]), #productModal textarea').forEach(i => i.value = '');
@@ -632,7 +653,10 @@ function openProductModal(product) {
   renderColorList();
 }
 
-// ===== COLOR VARIANTS (basic — name/hex/default/remove) =====
+// ===== COLOR VARIANTS =====
+// editColors[i] = { id, name, hex, default, advanced, colorImages[], color360[], stock, priceOverride }
+// colorImages: [{ src: 'products/foo.png', file?: File }]
+// color360:    [{ src: 'products/foo.png', file?: File }] in 4 slots front/side-r/back/side-l
 function renderColorList() {
   const list = document.getElementById('colorList');
   if (!list) return;
@@ -643,11 +667,45 @@ function renderColorList() {
       <input type="color" value="${c.hex || '#000000'}" oninput="updateColor(${i}, 'hex', this.value)" aria-label="Renk seç">
       <label class="color-default-label"><input type="radio" name="color-default" ${c.default ? 'checked' : ''} onchange="setDefaultColor(${i})">Varsayılan</label>
       <button type="button" class="color-remove" onclick="removeColor(${i})" aria-label="Rengi kaldır">×</button>
+      <label class="color-advanced-toggle">
+        <input type="checkbox" ${c.advanced ? 'checked' : ''} onchange="toggleColorAdvanced(${i}, this.checked)">
+        Bu rengin kendi fotoları / stoku / fiyatı var
+      </label>
+      <div class="color-advanced" ${c.advanced ? '' : 'hidden'}>
+        <fieldset>
+          <legend>Bu renge özel galeri fotoları (boşsa ana fotolar kullanılır)</legend>
+          <input type="file" multiple accept="image/*" onchange="handleColorImages(${i}, this.files); this.value='';">
+          <div class="color-thumb-row">${(c.colorImages || []).map((entry, ei) => `
+            <div class="color-thumb"><img src="${colorEntryPreview(entry)}" alt=""><button type="button" onclick="removeColorImage(${i}, ${ei})" aria-label="Kaldır">×</button></div>
+          `).join('')}</div>
+        </fieldset>
+        <fieldset>
+          <legend>Bu renge özel 360° fotoları (4 görsel: front, side-r, back, side-l sırasıyla)</legend>
+          <input type="file" multiple accept="image/*" onchange="handleColor360(${i}, this.files); this.value='';">
+          <div class="color-thumb-row color-360-row">${SLOT_DEFS.map((def, si) => {
+            const slot = (c.color360 && c.color360[si]) || null;
+            return `<div class="color-thumb color-thumb-360 ${slot ? '' : 'empty'}" title="${def.label}"><span class="color-thumb-tag">${def.id}</span>${slot ? `<img src="${colorEntryPreview(slot)}" alt="${def.label}"><button type="button" onclick="clearColor360Slot(${i}, ${si})" aria-label="Sil">×</button>` : ''}</div>`;
+          }).join('')}</div>
+        </fieldset>
+        <fieldset>
+          <legend>Stok ve fiyat (opsiyonel)</legend>
+          <div class="color-num-row">
+            <input type="number" placeholder="Stok adedi" min="0" value="${typeof c.stock === 'number' ? c.stock : ''}" oninput="updateColorNum(${i}, 'stock', this.value)">
+            <input type="number" step="0.01" placeholder="Bu rengin fiyatı (boşsa ana fiyat)" value="${typeof c.priceOverride === 'number' ? c.priceOverride : ''}" oninput="updateColorNum(${i}, 'priceOverride', this.value)">
+          </div>
+        </fieldset>
+      </div>
     </div>
   `).join('');
 }
+function colorEntryPreview(entry) {
+  if (!entry) return '';
+  if (entry.file) return URL.createObjectURL(entry.file);
+  if (entry.src) return '../img/' + entry.src;
+  return '';
+}
 function addColor() {
-  editColors.push({ id: '', name: '', hex: '#000000', default: editColors.length === 0 });
+  editColors.push({ id: '', name: '', hex: '#000000', default: editColors.length === 0, advanced: false, colorImages: [], color360: [null, null, null, null], stock: null, priceOverride: null });
   renderColorList();
 }
 function removeColor(i) {
@@ -659,8 +717,53 @@ function removeColor(i) {
 function updateColor(i, key, value) {
   if (editColors[i]) editColors[i][key] = value;
 }
+function updateColorNum(i, key, raw) {
+  if (!editColors[i]) return;
+  if (raw === '' || raw === null) editColors[i][key] = null;
+  else editColors[i][key] = (key === 'stock') ? parseInt(raw, 10) : parseFloat(raw);
+}
 function setDefaultColor(i) {
   editColors.forEach((c, idx) => c.default = idx === i);
+  renderColorList();
+}
+function toggleColorAdvanced(i, on) {
+  if (!editColors[i]) return;
+  editColors[i].advanced = !!on;
+  if (on) {
+    if (!editColors[i].colorImages) editColors[i].colorImages = [];
+    if (!editColors[i].color360) editColors[i].color360 = [null, null, null, null];
+  }
+  renderColorList();
+}
+function handleColorImages(i, files) {
+  if (!editColors[i]) return;
+  if (!editColors[i].colorImages) editColors[i].colorImages = [];
+  for (const f of files) {
+    if (f.type && f.type.startsWith('image/')) editColors[i].colorImages.push({ src: null, file: f });
+  }
+  renderColorList();
+}
+function removeColorImage(i, ei) {
+  if (!editColors[i] || !editColors[i].colorImages) return;
+  editColors[i].colorImages.splice(ei, 1);
+  renderColorList();
+}
+function handleColor360(i, files) {
+  if (!editColors[i]) return;
+  if (!editColors[i].color360) editColors[i].color360 = [null, null, null, null];
+  let slot = 0;
+  for (const f of files) {
+    if (slot >= 4) break;
+    if (f.type && f.type.startsWith('image/')) {
+      editColors[i].color360[slot] = { src: null, file: f };
+      slot++;
+    }
+  }
+  renderColorList();
+}
+function clearColor360Slot(i, si) {
+  if (!editColors[i] || !editColors[i].color360) return;
+  editColors[i].color360[si] = null;
   renderColorList();
 }
 function closeProductModal() { document.getElementById('productModal').classList.remove('open'); }
@@ -729,16 +832,59 @@ async function saveProduct() {
       }
     }
 
-    // Phase 3: build colors[] from editColors (basic fields only this commit;
-    // advanced fields wired in turn 10 commit 5). Drop entries with empty name.
-    const colors = editColors
-      .filter(c => c.name && c.name.trim())
-      .map(c => ({
-        id: (c.id || slugify(c.name)) || ('color-' + Math.random().toString(36).slice(2, 7)),
+    // Phase 3: build colors[] from editColors. Filter empty-name entries,
+    // upload pending advanced files with predictable filenames, then build
+    // the final colors[] objects with optional advanced fields populated.
+    const validColors = editColors.filter(c => c.name && c.name.trim());
+    const colors = [];
+    for (const c of validColors) {
+      const cid = (c.id || slugify(c.name)) || ('color-' + Math.random().toString(36).slice(2, 7));
+      const out = {
+        id: cid,
         name: c.name.trim(),
         hex: c.hex || '#000000',
         default: !!c.default,
-      }));
+      };
+      if (c.advanced) {
+        // images[]
+        if (c.colorImages && c.colorImages.length > 0) {
+          btn.textContent = 'Renk fotoları yükleniyor…';
+          const colorImageSrcs = [];
+          for (let i = 0; i < c.colorImages.length; i++) {
+            const entry = c.colorImages[i];
+            if (entry.file) {
+              const ext = getExt(entry.file.name);
+              const filename = `${slug}-${cid}-${i + 1}${ext}`;
+              entry.src = await uploadImageWithFilename(entry.file, filename);
+              entry.file = null;
+            }
+            if (entry.src) colorImageSrcs.push(entry.src);
+          }
+          if (colorImageSrcs.length > 0) out.images = colorImageSrcs;
+        }
+        // images360 (4 slots, only saved if all 4 filled)
+        if (c.color360 && c.color360.every(s => s)) {
+          btn.textContent = 'Renk 360 yükleniyor…';
+          const color360Out = [];
+          for (let si = 0; si < SLOT_DEFS.length; si++) {
+            const def = SLOT_DEFS[si];
+            const slot = c.color360[si];
+            if (slot.file) {
+              const ext = getExt(slot.file.name);
+              const filename = `${slug}-${cid}-${def.id}${ext}`;
+              slot.src = await uploadImageWithFilename(slot.file, filename);
+              slot.file = null;
+            }
+            color360Out.push({ id: def.id, src: slot.src, label: def.label, deg: def.deg, flip: def.flip });
+          }
+          out.images360 = color360Out;
+        }
+        // stock + priceOverride
+        if (typeof c.stock === 'number' && !isNaN(c.stock)) out.stock = c.stock;
+        if (typeof c.priceOverride === 'number' && !isNaN(c.priceOverride)) out.priceOverride = c.priceOverride;
+      }
+      colors.push(out);
+    }
     if (colors.length > 0 && !colors.some(c => c.default)) colors[0].default = true;
 
     // Phase 4: send product to backend (POST creates new id, PUT replaces by id)
