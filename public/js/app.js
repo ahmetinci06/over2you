@@ -169,7 +169,7 @@ function getPageBase() {
             <div class="search-result-swatch" style="background:${p.color};"></div>
             <div class="search-result-info">
               <span class="search-result-name">${p.name}</span>
-              <span class="search-result-price">€${p.price.toFixed(2)}</span>
+              <span class="search-result-price">€${(typeof p.salePrice === 'number' && p.salePrice < p.price ? p.salePrice : p.price).toFixed(2)}</span>
             </div>
           </a>
         `).join('');
@@ -209,7 +209,10 @@ const Cart = (function() {
     if (existing) {
       existing.qty += 1;
     } else {
-      items.push({ ...product, key, selectedSize, qty: 1 });
+      // Store the effective (charged) price so cart/checkout math is sale-aware.
+      const onSale = typeof product.salePrice === 'number' && product.salePrice < product.price;
+      const effective = onSale ? product.salePrice : product.price;
+      items.push({ ...product, price: effective, key, selectedSize, qty: 1 });
     }
     save(); render(); open();
   }
@@ -321,7 +324,12 @@ function renderProducts(filter, targetEl) {
       </div>
       <a href="${base}product?id=${product.id}" style="text-decoration:none;color:inherit;">
         <div class="product-name">${product.name}</div>
-        <div class="product-price">€${product.price.toFixed(2)}</div>
+        ${(() => {
+          const onSale = typeof product.salePrice === 'number' && product.salePrice < product.price;
+          return onSale
+            ? `<div class="product-price"><strong style="color:#c94c4c;">€${product.salePrice.toFixed(2)}</strong> <del style="opacity:0.5;font-weight:400;margin-left:0.3em;">€${product.price.toFixed(2)}</del></div>`
+            : `<div class="product-price">€${product.price.toFixed(2)}</div>`;
+        })()}
       </a>
     </div>
   `).join('');

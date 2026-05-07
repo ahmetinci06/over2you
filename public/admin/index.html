@@ -448,7 +448,7 @@
             <input type="text" id="categoryInput" placeholder="Kategori ekle..." onkeydown="handleChipKey('category', event)">
           </div>
         </div></div>
-        <div class="form-row c3"><div class="form-group"><label>Price (€) <span class="required-mark">*</span></label><input type="number" step="0.01" id="p_price" value="84.00" required min="0" placeholder="0.00"><span class="field-error">Fiyat zorunlu, sıfır veya pozitif.</span></div><div class="form-group"><label>Compare Price (€)</label><input type="number" step="0.01" id="p_comparePrice" placeholder="Optional" min="0"></div><div class="form-group"><label>Badge</label><select id="p_badge"><option value="">None</option><option value="NEW">NEW</option><option value="LAST STOCK">LAST STOCK</option><option value="SALE">SALE</option></select></div></div>
+        <div class="form-row c3"><div class="form-group"><label>Price (€) <span class="required-mark">*</span></label><input type="number" step="0.01" id="p_price" value="84.00" required min="0" placeholder="0.00"><span class="field-error">Fiyat zorunlu, sıfır veya pozitif.</span></div><div class="form-group"><label>Sale Price (€)</label><input type="number" step="0.01" id="p_salePrice" placeholder="İndirimli fiyat (boş = indirim yok)" min="0"></div><div class="form-group"><label>Badge</label><select id="p_badge"><option value="">None</option><option value="NEW">NEW</option><option value="LAST STOCK">LAST STOCK</option><option value="SALE">SALE</option></select></div></div>
         <div class="form-row"><div class="form-group"><label>Color Name (top-level)</label><input id="p_colorName" placeholder="Lapis Blue"></div><div class="form-group"><label>Color (top-level hex)</label><div class="color-input-wrap"><input type="color" id="p_color" value="#2a5a8a"><span class="color-hex" id="p_colorHex">#2a5a8a</span></div></div></div>
         <div class="form-row"><div class="form-group"><label>Color Family</label><select id="p_colorFamily"><option value="black">Black</option><option value="white">White</option><option value="grey">Grey</option><option value="blue">Blue</option><option value="red">Red</option><option value="pink">Pink</option><option value="brown">Brown</option><option value="green">Green</option><option value="dark">Dark</option></select></div><div class="form-group"></div></div>
         <div class="form-row single"><div class="form-group"><label>Description</label><textarea id="p_description" rows="3"></textarea></div></div>
@@ -621,7 +621,7 @@ function renderFormPreview() {
   if (!out) return;
   const name = document.getElementById('p_name').value.trim() || '(adsız)';
   const price = parseFloat(document.getElementById('p_price').value) || 0;
-  const cmpPrice = parseFloat(document.getElementById('p_comparePrice').value);
+  const salePrice = parseFloat(document.getElementById('p_salePrice').value);
   const desc = document.getElementById('p_description').value;
   const sku = document.getElementById('p_sku').value;
   const badge = document.getElementById('p_badge').value;
@@ -630,8 +630,8 @@ function renderFormPreview() {
   const previewImg = (editImages[0] && editImages[0].file)
     ? URL.createObjectURL(editImages[0].file)
     : (editImages[0] && editImages[0].src ? '../img/' + editImages[0].src : '');
-  const priceHtml = (cmpPrice && cmpPrice > price)
-    ? `<span style="text-decoration:line-through;color:var(--muted);font-size:12px;">€${cmpPrice.toFixed(2)}</span> <strong style="color:var(--danger);">€${price.toFixed(2)}</strong>`
+  const priceHtml = (salePrice && salePrice < price)
+    ? `<strong style="color:var(--danger);">€${salePrice.toFixed(2)}</strong> <span style="text-decoration:line-through;color:var(--muted);font-size:12px;">€${price.toFixed(2)}</span>`
     : `<strong>€${price.toFixed(2)}</strong>`;
   out.innerHTML = `
     <div style="display:flex;gap:1rem;align-items:flex-start;">
@@ -863,7 +863,7 @@ function filterProducts() {
       <td><input type="checkbox" data-idx="${idx}" class="product-cb" ${selectedProducts.has(idx)?'checked':''} onchange="toggleSelect(${idx})"></td>
       <td><div class="product-cell"><div class="swatch" style="background:${p.color};"></div><div><div class="product-name">${p.name}</div><div class="product-id">#${p.id}</div></div></div></td>
       <td style="text-transform:capitalize;">${p.category}</td>
-      <td>${p.comparePrice ? `<span style="text-decoration:line-through;color:var(--muted);font-size:11px;">€${p.comparePrice.toFixed(2)}</span> ` : ''}€${p.price.toFixed(2)}</td>
+      <td>${(typeof p.salePrice === 'number' && p.salePrice < p.price) ? `<strong>€${p.salePrice.toFixed(2)}</strong> <span style="text-decoration:line-through;color:var(--muted);font-size:11px;">€${p.price.toFixed(2)}</span>` : `€${p.price.toFixed(2)}`}</td>
       <td style="font-size:11px;">${p.sizes.join(', ')}</td>
       <td>${stockDot} ${p.stockQty != null ? p.stockQty : '∞'}</td>
       <td>${p.badge ? `<span class="badge badge-${p.badge==='NEW'?'new':p.badge==='SALE'?'sale':'stock'}">${p.badge}</span>` : '—'}</td>
@@ -974,7 +974,7 @@ function openProductModal(product) {
     document.getElementById('p_name').value = product.name;
     document.getElementById('p_category').value = product.category;
     document.getElementById('p_price').value = product.price;
-    document.getElementById('p_comparePrice').value = product.comparePrice || '';
+    document.getElementById('p_salePrice').value = product.salePrice || '';
     document.getElementById('p_badge').value = product.badge || '';
     document.getElementById('p_color').value = product.color;
     document.getElementById('p_colorHex').textContent = product.color;
@@ -1319,7 +1319,7 @@ async function saveProduct() {
     const productBody = {
       name,
       price: priceVal,
-      comparePrice: parseFloat(document.getElementById('p_comparePrice').value) || null,
+      salePrice: parseFloat(document.getElementById('p_salePrice').value) || null,
       category: document.getElementById('p_category').value,
       categories: editCategories.length > 0 ? editCategories : (document.getElementById('p_category').value ? [document.getElementById('p_category').value] : []),
       sizes: document.getElementById('p_sizes').value.split(',').map(s => s.trim()).filter(Boolean),

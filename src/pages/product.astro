@@ -138,8 +138,18 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
           <div class="pd-info">
             <h1 style="font:var(--heading-font-style) 800 1.5rem/1.2 var(--heading-font-family);text-transform:uppercase;letter-spacing:0.03em;margin-bottom:0.75rem;">${product.name}</h1>
             ${product.sku ? `<p style="font-size:11px;color:rgb(var(--text-color)/0.45);letter-spacing:0.04em;margin-bottom:0.6rem;">SKU: ${product.sku}</p>` : ''}
-            <p style="font-size:var(--text-base);margin-bottom:1rem;">€${product.price.toFixed(2)}</p>
-            ${product.badge ? `<span style="display:inline-block;padding:3px 8px;font-size:10px;font-weight:700;background:rgb(var(--text-color));color:rgb(var(--background));margin-bottom:1.25rem;">${product.badge}</span>` : ''}
+            ${(() => {
+              const onSale = typeof product.salePrice === 'number' && product.salePrice < product.price;
+              const eff = onSale ? product.salePrice : product.price;
+              return onSale
+                ? `<p style="font-size:var(--text-base);margin-bottom:1rem;"><strong style="color:#c94c4c;">€${eff.toFixed(2)}</strong> <del style="color:rgb(var(--text-color)/0.5);font-weight:400;margin-left:0.4em;">€${product.price.toFixed(2)}</del></p>`
+                : `<p style="font-size:var(--text-base);margin-bottom:1rem;">€${eff.toFixed(2)}</p>`;
+            })()}
+            ${(() => {
+              const onSale = typeof product.salePrice === 'number' && product.salePrice < product.price;
+              const badge = onSale ? 'SALE' : (product.badge || '');
+              return badge ? `<span style="display:inline-block;padding:3px 8px;font-size:10px;font-weight:700;background:rgb(var(--text-color));color:rgb(var(--background));margin-bottom:1.25rem;">${badge}</span>` : '';
+            })()}
 
             <div class="pdp-color-swatches">
               <span class="pdp-color-label">RENK: <strong id="activeColorName">${defaultColor.name}</strong></span>
@@ -239,7 +249,7 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
                     ${p.badge ? `<span class="pdp-related-badge">${p.badge}</span>` : ''}
                   </div>
                   <div class="pdp-related-name">${p.name}</div>
-                  <div class="pdp-related-price">€${p.price.toFixed(2)}</div>
+                  <div class="pdp-related-price">€${(typeof p.salePrice === 'number' && p.salePrice < p.price ? p.salePrice : p.price).toFixed(2)}</div>
                 </a>
               `).join('')
               : `<div class="pdp-related-empty">Yakında daha fazla ürün.</div>`
@@ -320,11 +330,17 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
             }
           }
 
-          // 4. price override
+          // 4. price override / sale aware
           const priceEl = document.querySelector('.pd-info > p');
           if (priceEl) {
-            const eff = (typeof color.priceOverride === 'number') ? color.priceOverride : product.price;
-            priceEl.textContent = '€' + eff.toFixed(2);
+            const onSale = typeof product.salePrice === 'number' && product.salePrice < product.price;
+            const baseEff = onSale ? product.salePrice : product.price;
+            const eff = (typeof color.priceOverride === 'number') ? color.priceOverride : baseEff;
+            if (onSale && typeof color.priceOverride !== 'number') {
+              priceEl.innerHTML = '<strong style="color:#c94c4c;">€' + eff.toFixed(2) + '</strong> <del style="color:rgb(var(--text-color)/0.5);font-weight:400;margin-left:0.4em;">€' + product.price.toFixed(2) + '</del>';
+            } else {
+              priceEl.textContent = '€' + eff.toFixed(2);
+            }
           }
 
           // 5. header logo color — match selected variant
