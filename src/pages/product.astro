@@ -50,6 +50,13 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
       const frames360 = Array.isArray(product.images360) ? product.images360 : [];
       const has360 = frames360.length >= 4 && frames360.every(f => f && typeof f === 'object' && f.src);
 
+      // Related products for below-fold section: max 4 from other products,
+      // shuffled so repeat visits feel fresh. Single-product fallback handled
+      // in the section template.
+      const otherProducts = list.filter(p => p.id !== product.id);
+      const shuffled = otherProducts.slice().sort(() => Math.random() - 0.5);
+      const relatedSlice = shuffled.slice(0, 4);
+
       const framesData = has360
         ? frames360
         : (Array.isArray(product.images) ? product.images : []);
@@ -153,8 +160,34 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
               </div>
               <div class="accordion-content">100€ üzeri siparişlerde kargo ücretsizdir. Standart teslimat 3-5 iş günü. 14 gün içinde ücretsiz değişim ve iade hakkı.</div>
             </div>
+
+            <div class="pdp-payment-strip" aria-label="Kabul edilen ödeme yöntemleri">
+              <span class="pdp-payment-badge">VISA</span>
+              <span class="pdp-payment-badge">MASTERCARD</span>
+              <span class="pdp-payment-badge">TROY</span>
+              <span class="pdp-payment-badge">IYZICO</span>
+            </div>
           </div>
         </div>
+
+        <section class="pdp-related" aria-labelledby="pdpRelatedHeading">
+          <h2 id="pdpRelatedHeading">BENZER ÜRÜNLER</h2>
+          <div class="pdp-related-grid">
+            ${relatedSlice.length > 0
+              ? relatedSlice.map(p => `
+                <a href="${B}product?id=${p.id}" class="pdp-related-card">
+                  <div class="pdp-related-img">
+                    ${(p.images && p.images[0]) ? `<img src="${imgBase}${p.images[0]}" alt="${p.name}" loading="lazy">` : '<div class="pdp-related-img-empty"></div>'}
+                    ${p.badge ? `<span class="pdp-related-badge">${p.badge}</span>` : ''}
+                  </div>
+                  <div class="pdp-related-name">${p.name}</div>
+                  <div class="pdp-related-price">€${p.price.toFixed(2)}</div>
+                </a>
+              `).join('')
+              : `<div class="pdp-related-empty">Yakında daha fazla ürün.</div>`
+            }
+          </div>
+        </section>
       `;
 
       wireInteractions(product);
@@ -340,6 +373,111 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
     height: 18px;
     flex-shrink: 0;
     color: rgb(var(--text-color) / 0.7);
+  }
+
+  /* ===== Payment strip on PDP (light-bg variant of footer's badge) ===== */
+  .pdp-payment-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgb(var(--border-color) / 0.15);
+  }
+  .pdp-payment-badge {
+    border: 1px solid rgb(var(--text-color) / 0.25);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    color: rgb(var(--text-color) / 0.65);
+    text-transform: uppercase;
+    line-height: 1.4;
+  }
+
+  /* ===== Related products (below-fold) ===== */
+  .pdp-related {
+    margin-top: 4rem;
+    padding-top: 2.5rem;
+    border-top: 1px solid rgb(var(--border-color) / 0.15);
+  }
+  .pdp-related h2 {
+    font: var(--heading-font-style) 800 1.25rem/1.2 var(--heading-font-family);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 0 0 1.5rem;
+  }
+  .pdp-related-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+  }
+  .pdp-related-card {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: transform 0.15s;
+  }
+  .pdp-related-card:hover { transform: translateY(-2px); }
+  .pdp-related-img {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    background: rgb(var(--text-color) / 0.04);
+    overflow: hidden;
+    margin-bottom: 0.75rem;
+  }
+  .pdp-related-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.4s;
+  }
+  .pdp-related-card:hover .pdp-related-img img { transform: scale(1.03); }
+  .pdp-related-img-empty {
+    width: 100%;
+    height: 100%;
+    background: rgb(var(--text-color) / 0.06);
+  }
+  .pdp-related-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    padding: 3px 8px;
+    background: rgb(var(--text-color));
+    color: rgb(var(--background));
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .pdp-related-name {
+    font: var(--heading-font-style) 600 13px/1.3 var(--heading-font-family);
+    text-transform: uppercase;
+    margin-bottom: 0.3rem;
+  }
+  .pdp-related-price {
+    font-size: var(--text-sm);
+    color: rgb(var(--text-color) / 0.7);
+  }
+  .pdp-related-empty {
+    grid-column: 1 / -1;
+    padding: 3rem 1rem;
+    text-align: center;
+    font-size: var(--text-sm);
+    color: rgb(var(--text-color) / 0.45);
+    background: rgb(var(--text-color) / 0.02);
+    border: 1px dashed rgb(var(--border-color) / 0.3);
+    border-radius: 4px;
+  }
+  @media (max-width: 768px) {
+    .pdp-related-grid { grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+    .pdp-related h2 { font-size: 1.05rem; }
+  }
+  @media (max-width: 400px) {
+    .pdp-related-grid { grid-template-columns: 1fr; }
   }
 
   /* ===== Thumbnail rail ===== */
