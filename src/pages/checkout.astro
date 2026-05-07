@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   const subtotal = items.reduce((s,i) => s + (i.price*i.qty), 0);
-  const shipping = subtotal >= 100 ? 0 : 6.90;
+  const shipping = subtotal >= 500 ? 0 : 50;
   const total = subtotal + shipping;
 
   wrapper.innerHTML = `
@@ -86,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
           <div class="bank-details" id="bankDetails"><strong>Over2You</strong><br>IBAN: TR00 0000 0000 0000 0000 0000 00<br>Banka: [Banka Adı]<br><br><em>Havale açıklamasına sipariş numaranızı yazın.</em></div>
         </div>
-        <button type="submit" class="btn-place-order" id="placeOrderBtn"><span data-i18n="checkout.placeOrder">SİPARİŞİ TAMAMLA</span> — €${total.toFixed(2)}</button>
+        <button type="submit" class="btn-place-order" id="placeOrderBtn"><span data-i18n="checkout.placeOrder">SİPARİŞİ TAMAMLA</span> — ₺${total.toFixed(2)}</button>
         <button type="button" class="btn-whatsapp" id="whatsappBtn" style="display:none;">WHATSAPP İLE SİPARİŞ</button>
         <div class="secure-badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>GÜVENLİ ÖDEME — 256-BIT SSL ŞİFRELEME</div>
       </form>
@@ -97,12 +97,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const swatchHex = i.selectedColorHex || i.color || '#eee';
         const colorLabel = i.selectedColorName ? (window.o2yT ? o2yT('common.color') : 'Renk') + ': ' + i.selectedColorName + ' · ' : '';
         const sizeLabel = (window.o2yT ? o2yT('common.size') : 'Beden') + ': ' + i.selectedSize;
-        return '<div class="summary-item"><div class="summary-item-swatch" style="background:'+swatchHex+';"></div><div><div class="summary-item-name">'+i.name+'</div><div class="summary-item-variant">'+colorLabel+sizeLabel+' · '+i.qty+'×</div></div><div class="summary-item-price">€'+(i.price*i.qty).toFixed(2)+'</div></div>';
+        return '<div class="summary-item"><div class="summary-item-swatch" style="background:'+swatchHex+';"></div><div><div class="summary-item-name">'+i.name+'</div><div class="summary-item-variant">'+colorLabel+sizeLabel+' · '+i.qty+'×</div></div><div class="summary-item-price">₺'+(i.price*i.qty).toFixed(2)+'</div></div>';
       }).join('')}
       <div class="summary-totals">
-        <div class="summary-row"><span data-i18n="checkout.subtotal">Ara Toplam</span><span>€${subtotal.toFixed(2)}</span></div>
-        <div class="summary-row"><span data-i18n="checkout.shippingFee">Kargo</span><span>${shipping===0?'<span data-i18n="checkout.free">ÜCRETSİZ</span>':'€'+shipping.toFixed(2)}</span></div>
-        <div class="summary-row total"><span data-i18n="checkout.totalLabel">Toplam</span><span>€${total.toFixed(2)}</span></div>
+        <div class="summary-row"><span data-i18n="checkout.subtotal">Ara Toplam</span><span>₺${subtotal.toFixed(2)}</span></div>
+        <div class="summary-row"><span data-i18n="checkout.shippingFee">Kargo</span><span>${shipping===0?'<span data-i18n="checkout.free">ÜCRETSİZ</span>':'₺'+shipping.toFixed(2)}</span></div>
+        <div class="summary-row total"><span data-i18n="checkout.totalLabel">Toplam</span><span>₺${total.toFixed(2)}</span></div>
       </div>
     </div>
   `;
@@ -124,7 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // WhatsApp
   document.getElementById('whatsappBtn').addEventListener('click', () => {
     const f = document.getElementById('orderForm');
-    const msg = encodeURIComponent('🛒 *New Order — Over2You*\n\n*Customer:* '+f.firstName.value+' '+f.lastName.value+'\n*Phone:* '+f.phone.value+'\n*Items:*\n'+items.map(i=>'• '+i.name+' ('+i.selectedSize+') x'+i.qty).join('\n')+'\n\n*Total:* €'+total.toFixed(2));
+    const msg = encodeURIComponent('🛒 *New Order — Over2You*\n\n*Customer:* '+f.firstName.value+' '+f.lastName.value+'\n*Phone:* '+f.phone.value+'\n*Items:*\n'+items.map(i=>'• '+i.name+' ('+i.selectedSize+') x'+i.qty).join('\n')+'\n\n*Total:* ₺'+total.toFixed(2));
     window.open('https://wa.me/905XXXXXXXXX?text='+msg, '_blank');
   });
 

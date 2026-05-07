@@ -152,8 +152,8 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
               const onSale = typeof product.salePrice === 'number' && product.salePrice < product.price;
               const eff = onSale ? product.salePrice : product.price;
               return onSale
-                ? `<p style="font-size:var(--text-base);margin-bottom:1rem;"><strong style="color:#c94c4c;">€${eff.toFixed(2)}</strong> <del style="color:rgb(var(--text-color)/0.5);font-weight:400;margin-left:0.4em;">€${product.price.toFixed(2)}</del></p>`
-                : `<p style="font-size:var(--text-base);margin-bottom:1rem;">€${eff.toFixed(2)}</p>`;
+                ? `<p style="font-size:var(--text-base);margin-bottom:1rem;"><strong style="color:#c94c4c;">₺${eff.toFixed(2)}</strong> <del style="color:rgb(var(--text-color)/0.5);font-weight:400;margin-left:0.4em;">₺${product.price.toFixed(2)}</del></p>`
+                : `<p style="font-size:var(--text-base);margin-bottom:1rem;">₺${eff.toFixed(2)}</p>`;
             })()}
             ${(() => {
               const onSale = typeof product.salePrice === 'number' && product.salePrice < product.price;
@@ -236,7 +236,7 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
                 </span>
                 <span class="accordion-toggle">+</span>
               </div>
-              <div class="accordion-content">100€ üzeri siparişlerde kargo ücretsizdir. Standart teslimat 3-5 iş günü. 14 gün içinde ücretsiz değişim ve iade hakkı.</div>
+              <div class="accordion-content">100₺ üzeri siparişlerde kargo ücretsizdir. Standart teslimat 3-5 iş günü. 14 gün içinde ücretsiz değişim ve iade hakkı.</div>
             </div>
 
             <div class="pdp-payment-strip" aria-label="Kabul edilen ödeme yöntemleri">
@@ -259,7 +259,7 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
                     ${p.badge ? `<span class="pdp-related-badge">${p.badge}</span>` : ''}
                   </div>
                   <div class="pdp-related-name">${p.name}</div>
-                  <div class="pdp-related-price">€${(typeof p.salePrice === 'number' && p.salePrice < p.price ? p.salePrice : p.price).toFixed(2)}</div>
+                  <div class="pdp-related-price">₺${(typeof p.salePrice === 'number' && p.salePrice < p.price ? p.salePrice : p.price).toFixed(2)}</div>
                 </a>
               `).join('')
               : `<div class="pdp-related-empty" data-i18n="pdp.related.empty">Yakında daha fazla ürün.</div>`
@@ -273,7 +273,7 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
           <div class="pdp-bundle-grid"></div>
           <div class="pdp-bundle-cta">
             <button type="button" class="pdp-bundle-add" id="bundleAddAll"><span data-i18n="pdp.bundle.addAll">Tümünü Sepete Ekle</span></button>
-            <span class="pdp-bundle-total"><span data-i18n="pdp.bundle.total">Toplam</span>: €<span id="bundleTotal">0.00</span></span>
+            <span class="pdp-bundle-total"><span data-i18n="pdp.bundle.total">Toplam</span>: ₺<span id="bundleTotal">0.00</span></span>
           </div>
         </section>
       `;
@@ -366,9 +366,9 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
             const baseEff = onSale ? product.salePrice : product.price;
             const eff = (typeof color.priceOverride === 'number') ? color.priceOverride : baseEff;
             if (onSale && typeof color.priceOverride !== 'number') {
-              priceEl.innerHTML = '<strong style="color:#c94c4c;">€' + eff.toFixed(2) + '</strong> <del style="color:rgb(var(--text-color)/0.5);font-weight:400;margin-left:0.4em;">€' + product.price.toFixed(2) + '</del>';
+              priceEl.innerHTML = '<strong style="color:#c94c4c;">₺' + eff.toFixed(2) + '</strong> <del style="color:rgb(var(--text-color)/0.5);font-weight:400;margin-left:0.4em;">₺' + product.price.toFixed(2) + '</del>';
             } else {
-              priceEl.textContent = '€' + eff.toFixed(2);
+              priceEl.textContent = '₺' + eff.toFixed(2);
             }
           }
 
@@ -596,8 +596,8 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
             <div class="pdp-bundle-meta">
               <div class="pdp-bundle-name">${p.name}</div>
               <div class="pdp-bundle-price">${onSale
-                ? '<strong style="color:#c94c4c;">€' + eff.toFixed(2) + '</strong> <del style="opacity:0.5;">€' + p.price.toFixed(2) + '</del>'
-                : '€' + eff.toFixed(2)}</div>
+                ? '<strong style="color:#c94c4c;">₺' + eff.toFixed(2) + '</strong> <del style="opacity:0.5;">₺' + p.price.toFixed(2) + '</del>'
+                : '₺' + eff.toFixed(2)}</div>
             </div>
           </label>
         `;

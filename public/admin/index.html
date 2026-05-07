@@ -421,7 +421,7 @@
         <div class="form-row"><div class="form-group"><label>Instagram URL</label><input id="s_instagram"></div><div class="form-group"><label>TikTok URL</label><input id="s_tiktok"></div></div>
       </div>
       <div class="card"><div class="card-title">Shipping</div>
-        <div class="form-row"><div class="form-group"><label>Free Shipping Threshold (€)</label><input type="number" id="s_freeShippingThreshold"></div><div class="form-group"><label>Shipping Cost (€)</label><input type="number" step="0.01" id="s_shippingCost"></div></div>
+        <div class="form-row"><div class="form-group"><label>Free Shipping Threshold (₺)</label><input type="number" id="s_freeShippingThreshold"></div><div class="form-group"><label>Shipping Cost (₺)</label><input type="number" step="0.01" id="s_shippingCost"></div></div>
       </div>
       <div class="card"><div class="card-title">Payment — Bank Transfer</div>
         <div class="form-row"><div class="form-group"><label>Bank Name</label><input id="s_bankName"></div><div class="form-group"><label>Account Holder</label><input id="s_bankHolder"></div></div>
@@ -464,7 +464,7 @@
             <input type="text" id="categoryInput" placeholder="Kategori ekle..." onkeydown="handleChipKey('category', event)">
           </div>
         </div></div>
-        <div class="form-row c3"><div class="form-group"><label>Price (€) <span class="required-mark">*</span></label><input type="number" step="0.01" id="p_price" value="84.00" required min="0" placeholder="0.00"><span class="field-error">Fiyat zorunlu, sıfır veya pozitif.</span></div><div class="form-group"><label>Sale Price (€)</label><input type="number" step="0.01" id="p_salePrice" placeholder="İndirimli fiyat (boş = indirim yok)" min="0"></div><div class="form-group"><label>Badge</label><select id="p_badge"><option value="">None</option><option value="NEW">NEW</option><option value="LAST STOCK">LAST STOCK</option><option value="SALE">SALE</option></select></div></div>
+        <div class="form-row c3"><div class="form-group"><label>Price (₺) <span class="required-mark">*</span></label><input type="number" step="0.01" id="p_price" value="84.00" required min="0" placeholder="0.00"><span class="field-error">Fiyat zorunlu, sıfır veya pozitif.</span></div><div class="form-group"><label>Sale Price (₺)</label><input type="number" step="0.01" id="p_salePrice" placeholder="İndirimli fiyat (boş = indirim yok)" min="0"></div><div class="form-group"><label>Badge</label><select id="p_badge"><option value="">None</option><option value="NEW">NEW</option><option value="LAST STOCK">LAST STOCK</option><option value="SALE">SALE</option></select></div></div>
         <div class="form-row"><div class="form-group"><label>Color Name (top-level)</label><input id="p_colorName" placeholder="Lapis Blue"></div><div class="form-group"><label>Color (top-level hex)</label><div class="color-input-wrap"><input type="color" id="p_color" value="#2a5a8a"><span class="color-hex" id="p_colorHex">#2a5a8a</span></div></div></div>
         <div class="form-row"><div class="form-group"><label>Color Family</label><select id="p_colorFamily"><option value="black">Black</option><option value="white">White</option><option value="grey">Grey</option><option value="blue">Blue</option><option value="red">Red</option><option value="pink">Pink</option><option value="brown">Brown</option><option value="green">Green</option><option value="dark">Dark</option></select></div><div class="form-group"></div></div>
         <div class="form-row single"><div class="form-group"><label>Description</label><textarea id="p_description" rows="3"></textarea></div></div>
@@ -693,8 +693,8 @@ function renderFormPreview() {
     ? URL.createObjectURL(editImages[0].file)
     : (editImages[0] && editImages[0].src ? '../img/' + editImages[0].src : '');
   const priceHtml = (salePrice && salePrice < price)
-    ? `<strong style="color:var(--danger);">€${salePrice.toFixed(2)}</strong> <span style="text-decoration:line-through;color:var(--muted);font-size:12px;">€${price.toFixed(2)}</span>`
-    : `<strong>€${price.toFixed(2)}</strong>`;
+    ? `<strong style="color:var(--danger);">₺${salePrice.toFixed(2)}</strong> <span style="text-decoration:line-through;color:var(--muted);font-size:12px;">₺${price.toFixed(2)}</span>`
+    : `<strong>₺${price.toFixed(2)}</strong>`;
   out.innerHTML = `
     <div style="display:flex;gap:1rem;align-items:flex-start;">
       ${previewImg
@@ -922,7 +922,7 @@ function renderDashboard() {
     <div class="stat-card"><div class="stat-value">${products.length}</div><div class="stat-label">Products</div></div>
     <div class="stat-card"><div class="stat-value">${cats.length}</div><div class="stat-label">Categories</div></div>
     <div class="stat-card"><div class="stat-value">${products.filter(p=>p.badge==='NEW').length}</div><div class="stat-label">New Items</div></div>
-    <div class="stat-card"><div class="stat-value">€${(total/products.length||0).toFixed(0)}</div><div class="stat-label">Avg Price</div></div>
+    <div class="stat-card"><div class="stat-value">₺${(total/products.length||0).toFixed(0)}</div><div class="stat-label">Avg Price</div></div>
   `;
 }
 
@@ -963,7 +963,7 @@ function filterProducts() {
       <td>${isDeleted ? '' : `<input type="checkbox" data-idx="${idx}" class="product-cb" ${selectedProducts.has(idx)?'checked':''} onchange="toggleSelect(${idx})">`}</td>
       <td><div class="product-cell"><div class="swatch" style="background:${p.color};"></div><div><div class="product-name">${p.name}${isDeleted ? ' <span style="font-size:10px;color:var(--danger);font-weight:600;">(SİLİNDİ)</span>' : ''}</div><div class="product-id">#${p.id}</div></div></div></td>
       <td style="text-transform:capitalize;">${p.category}</td>
-      <td>${(typeof p.salePrice === 'number' && p.salePrice < p.price) ? `<strong>€${p.salePrice.toFixed(2)}</strong> <span style="text-decoration:line-through;color:var(--muted);font-size:11px;">€${p.price.toFixed(2)}</span>` : `€${p.price.toFixed(2)}`}</td>
+      <td>${(typeof p.salePrice === 'number' && p.salePrice < p.price) ? `<strong>₺${p.salePrice.toFixed(2)}</strong> <span style="text-decoration:line-through;color:var(--muted);font-size:11px;">₺${p.price.toFixed(2)}</span>` : `₺${p.price.toFixed(2)}`}</td>
       <td style="font-size:11px;">${p.sizes.join(', ')}</td>
       <td>${stockDot} ${p.stockQty != null ? p.stockQty : '∞'}</td>
       <td>${p.badge ? `<span class="badge badge-${p.badge==='NEW'?'new':p.badge==='SALE'?'sale':'stock'}">${p.badge}</span>` : '—'}</td>
@@ -1819,7 +1819,7 @@ function renderOrders() {
     <div style="border:1px solid var(--border);border-radius:6px;padding:0.75rem;margin-bottom:0.5rem;">
       <div style="display:flex;justify-content:space-between;margin-bottom:0.3rem;"><strong style="font-size:13px;">${o.orderNumber}</strong><span style="font-size:11px;color:var(--muted);">${new Date(o.date).toLocaleString()}</span></div>
       <div style="font-size:11px;color:var(--muted);">${o.items?.map(i=>`${i.name} (${i.size}) ×${i.qty}`).join(', ')||''}</div>
-      <div style="font-size:13px;font-weight:700;margin-top:0.3rem;">€${o.total?.toFixed(2)||'?'} — ${o.paymentMethod||'?'}</div>
+      <div style="font-size:13px;font-weight:700;margin-top:0.3rem;">₺${o.total?.toFixed(2)||'?'} — ${o.paymentMethod||'?'}</div>
     </div>
   `).join('');
 }

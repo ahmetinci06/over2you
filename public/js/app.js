@@ -169,7 +169,7 @@ function getPageBase() {
             <div class="search-result-swatch" style="background:${p.color};"></div>
             <div class="search-result-info">
               <span class="search-result-name">${p.name}</span>
-              <span class="search-result-price">€${(typeof p.salePrice === 'number' && p.salePrice < p.price ? p.salePrice : p.price).toFixed(2)}</span>
+              <span class="search-result-price">₺${(typeof p.salePrice === 'number' && p.salePrice < p.price ? p.salePrice : p.price).toFixed(2)}</span>
             </div>
           </a>
         `).join('');
@@ -277,14 +277,14 @@ const Cart = (function() {
             <span class="qty-value">${item.qty}</span>
             <button class="qty-btn" onclick="Cart.updateQty('${item.key}', 1)">+</button>
           </div>
-          <div class="cart-item-price">€${(item.price * item.qty).toFixed(2)}</div>
+          <div class="cart-item-price">₺${(item.price * item.qty).toFixed(2)}</div>
           <button class="cart-item-remove" onclick="Cart.remove('${item.key}')">Remove</button>
         </div>
       </div>
     `).join('');
 
     const total = items.reduce((s, i) => s + (i.price * i.qty), 0);
-    if (totalEl) totalEl.textContent = `€${total.toFixed(2)}`;
+    if (totalEl) totalEl.textContent = `₺${total.toFixed(2)}`;
   }
 
   // Events
@@ -351,8 +351,8 @@ function renderProducts(filter, targetEl) {
         ${(() => {
           const onSale = typeof product.salePrice === 'number' && product.salePrice < product.price;
           return onSale
-            ? `<div class="product-price"><strong style="color:#c94c4c;">€${product.salePrice.toFixed(2)}</strong> <del style="opacity:0.5;font-weight:400;margin-left:0.3em;">€${product.price.toFixed(2)}</del></div>`
-            : `<div class="product-price">€${product.price.toFixed(2)}</div>`;
+            ? `<div class="product-price"><strong style="color:#c94c4c;">₺${product.salePrice.toFixed(2)}</strong> <del style="opacity:0.5;font-weight:400;margin-left:0.3em;">₺${product.price.toFixed(2)}</del></div>`
+            : `<div class="product-price">₺${product.price.toFixed(2)}</div>`;
         })()}
       </a>
     </div>

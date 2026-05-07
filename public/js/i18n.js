@@ -208,7 +208,7 @@ const O2Y_TRANSLATIONS = {
     'checkout.info': 'Information',
     'checkout.shipping': 'Shipping',
     'checkout.payment': 'Payment',
-    'announcement.freeShipping': 'FREE SHIPPING ON ORDERS OVER €100',
+    'announcement.freeShipping': 'FREE SHIPPING ON ORDERS OVER ₺500',
     'lang.switch': 'TR',
     'about.title': 'ABOUT',
     'about.story': 'Our Story',
