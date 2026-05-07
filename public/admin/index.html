@@ -224,6 +224,10 @@
     /* Toast */
     .toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--accent); color: #fff; padding: 0.65rem 1.1rem; border-radius: 6px; font-size: 12px; font-weight: 600; z-index: 1000; transform: translateY(120%); transition: transform 0.2s; }
     .toast.show { transform: translateY(0); }
+    .undo-toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translate(-50%, 120%); background: #1a1a1a; color: #fff; padding: 0.85rem 1.25rem; border-radius: 6px; font-size: 13px; z-index: 1000; transition: transform 0.2s ease; display: flex; align-items: center; gap: 1rem; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25); }
+    .undo-toast.visible { transform: translate(-50%, 0); }
+    .undo-toast .undo-btn { background: transparent; border: 0; color: #4ade80; font-weight: 700; cursor: pointer; padding: 0.25rem 0.5rem; font-size: 13px; letter-spacing: 0.04em; }
+    .undo-toast .undo-btn:hover { text-decoration: underline; }
 
     /* Content Editor */
     .content-block { border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 1rem; }
@@ -319,6 +323,7 @@
           <option value="LAST STOCK">LAST STOCK</option>
           <option value="SALE">SALE</option>
         </select>
+        <button class="btn btn-sm btn-outline" id="toggleDeletedBtn" onclick="toggleShowDeleted()">Silinenleri Göster</button>
         <span style="margin-left:auto;font-size:11px;color:var(--muted);" id="productCount"></span>
       </div>
       <div class="card" style="padding:0;overflow-x:auto;max-height:calc(100vh - 240px);overflow-y:auto;">
@@ -686,6 +691,32 @@ document.addEventListener('DOMContentLoaded', () => {
   };
   modal.addEventListener('input', onChange);
   modal.addEventListener('change', onChange);
+
+  // Custom TR validity messages — replace browser default English with
+  // localized text. Cleared on `input` so the message disappears as the
+  // user starts typing.
+  const validityMsgs = {
+    p_name: { valueMissing: 'Ürün adı zorunlu.', tooShort: 'En az 3 karakter girilmeli.' },
+    p_price: { valueMissing: 'Fiyat zorunlu.', rangeUnderflow: 'Fiyat sıfır veya pozitif olmalı.', badInput: 'Sayı girilmeli.' },
+    p_salePrice: { rangeUnderflow: 'İndirim fiyatı sıfır veya pozitif olmalı.', badInput: 'Sayı girilmeli.' },
+    p_slug: { patternMismatch: 'Sadece a-z, 0-9 ve tire (-) kullanılabilir.' },
+    p_metaTitle: { tooLong: 'En fazla 60 karakter.' },
+    p_metaDescription: { tooLong: 'En fazla 160 karakter.' },
+    p_bundleWith: { patternMismatch: 'Sadece sayılar ve virgül kullanılabilir (örn: 2, 3, 5).' },
+  };
+  modal.querySelectorAll('input, textarea, select').forEach(el => {
+    if (!el.id || !validityMsgs[el.id]) return;
+    el.addEventListener('invalid', () => {
+      const msgs = validityMsgs[el.id];
+      const v = el.validity;
+      let msg = '';
+      for (const key of Object.keys(msgs)) {
+        if (v[key]) { msg = msgs[key]; break; }
+      }
+      el.setCustomValidity(msg);
+    });
+    el.addEventListener('input', () => el.setCustomValidity(''));
+  });
 });
 // Guard against losing unsaved changes on tab close / navigation.
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { const m = document.getElementById('deleteConfirmModal'); if (m && m.classList.contains('open')) closeDeleteConfirm(); } });
@@ -858,6 +889,7 @@ function filterProducts() {
   const cat = document.getElementById('productCatFilter').value;
   const badge = document.getElementById('productBadgeFilter').value;
   let filtered = products.filter(p => {
+    if (!showDeletedProducts && p.deletedAt) return false;
     if (q && !p.name.toLowerCase().includes(q) && !p.colorName?.toLowerCase().includes(q)) return false;
     if (cat && p.category !== cat) return false;
     if (badge && p.badge !== badge) return false;
@@ -870,15 +902,19 @@ function filterProducts() {
     const idx = products.indexOf(p);
     const stock = p.stock || 'in-stock';
     const stockDot = stock === 'in-stock' ? '🟢' : stock === 'low-stock' ? '🟡' : '🔴';
-    return `<tr>
-      <td><input type="checkbox" data-idx="${idx}" class="product-cb" ${selectedProducts.has(idx)?'checked':''} onchange="toggleSelect(${idx})"></td>
-      <td><div class="product-cell"><div class="swatch" style="background:${p.color};"></div><div><div class="product-name">${p.name}</div><div class="product-id">#${p.id}</div></div></div></td>
+    const isDeleted = !!p.deletedAt;
+    const actionBtns = isDeleted
+      ? `<div class="btn-group"><button class="btn btn-sm btn-outline" onclick="restoreProduct(${p.id})" title="Geri Yükle">↶ Geri Al</button><button class="btn btn-sm btn-outline" style="color:var(--danger);" onclick="permanentDeleteProduct(${p.id}, ${JSON.stringify(p.name)})" title="Kalıcı Sil">Kalıcı Sil</button></div>`
+      : `<div class="btn-group"><button class="btn btn-sm btn-outline" onclick="editProduct(${idx})" title="Düzenle">Edit</button><button class="btn btn-sm btn-outline" onclick="duplicateProduct(${idx})" title="Bu ürünün bir kopyasını oluştur">Kopyala</button><button class="btn btn-sm btn-outline" style="color:var(--danger);" onclick="deleteProduct(${idx})" title="Sil">×</button></div>`;
+    return `<tr${isDeleted ? ' style="opacity:0.45;"' : ''}>
+      <td>${isDeleted ? '' : `<input type="checkbox" data-idx="${idx}" class="product-cb" ${selectedProducts.has(idx)?'checked':''} onchange="toggleSelect(${idx})">`}</td>
+      <td><div class="product-cell"><div class="swatch" style="background:${p.color};"></div><div><div class="product-name">${p.name}${isDeleted ? ' <span style="font-size:10px;color:var(--danger);font-weight:600;">(SİLİNDİ)</span>' : ''}</div><div class="product-id">#${p.id}</div></div></div></td>
       <td style="text-transform:capitalize;">${p.category}</td>
       <td>${(typeof p.salePrice === 'number' && p.salePrice < p.price) ? `<strong>€${p.salePrice.toFixed(2)}</strong> <span style="text-decoration:line-through;color:var(--muted);font-size:11px;">€${p.price.toFixed(2)}</span>` : `€${p.price.toFixed(2)}`}</td>
       <td style="font-size:11px;">${p.sizes.join(', ')}</td>
       <td>${stockDot} ${p.stockQty != null ? p.stockQty : '∞'}</td>
       <td>${p.badge ? `<span class="badge badge-${p.badge==='NEW'?'new':p.badge==='SALE'?'sale':'stock'}">${p.badge}</span>` : '—'}</td>
-      <td><div class="btn-group"><button class="btn btn-sm btn-outline" onclick="editProduct(${idx})" title="Düzenle">Edit</button><button class="btn btn-sm btn-outline" onclick="duplicateProduct(${idx})" title="Bu ürünün bir kopyasını oluştur">Kopyala</button><button class="btn btn-sm btn-outline" style="color:var(--danger);" onclick="deleteProduct(${idx})" title="Sil">×</button></div></td>
+      <td>${actionBtns}</td>
     </tr>`;
   }).join('');
 }
@@ -1214,10 +1250,61 @@ async function confirmDelete() {
     await api('/api/products/' + p.id, { method: 'DELETE' });
     products = await api('/api/products');
     renderProducts(); renderDashboard();
-    toast('Silindi: ' + p.name);
+    showUndoToast(p);
   } catch (e) {
     toast('Hata: ' + e.message, true);
   }
+}
+
+async function restoreProduct(id) {
+  try {
+    await api('/api/products/' + id + '/restore', { method: 'POST' });
+    products = await api('/api/products');
+    renderProducts(); renderDashboard();
+    toast('Geri yüklendi');
+  } catch (e) {
+    toast('Hata: ' + e.message, true);
+  }
+}
+
+async function permanentDeleteProduct(id, name) {
+  if (!confirm('"' + name + '" KALICI olarak silinsin mi? Bu işlem geri alınamaz.')) return;
+  try {
+    await api('/api/products/' + id + '/permanent', { method: 'DELETE' });
+    products = await api('/api/products');
+    renderProducts(); renderDashboard();
+    toast('Kalıcı olarak silindi: ' + name);
+  } catch (e) {
+    toast('Hata: ' + e.message, true);
+  }
+}
+
+let undoToastTimer = null;
+function showUndoToast(p) {
+  let el = document.getElementById('undoToast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'undoToast';
+    el.className = 'undo-toast';
+    document.body.appendChild(el);
+  }
+  el.innerHTML = '<span>"' + p.name + '" silindi</span><button type="button" class="undo-btn">Geri Al</button>';
+  el.classList.add('visible');
+  el.querySelector('.undo-btn').onclick = () => {
+    clearTimeout(undoToastTimer);
+    el.classList.remove('visible');
+    restoreProduct(p.id);
+  };
+  clearTimeout(undoToastTimer);
+  undoToastTimer = setTimeout(() => el.classList.remove('visible'), 5000);
+}
+
+let showDeletedProducts = false;
+function toggleShowDeleted() {
+  showDeletedProducts = !showDeletedProducts;
+  const btn = document.getElementById('toggleDeletedBtn');
+  if (btn) btn.textContent = showDeletedProducts ? 'Silinenleri Gizle' : 'Silinenleri Göster';
+  renderProducts();
 }
 
 async function saveProduct() {

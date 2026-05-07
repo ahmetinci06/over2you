@@ -529,7 +529,8 @@ window.productsReady = false;
     if (prodRes && prodRes.ok) {
       const data = await prodRes.json();
       if (Array.isArray(data) && data.length > 0) {
-        products = data;
+        // Filter soft-deleted products from public storefront views.
+        products = data.filter(p => !p.deletedAt);
         window.products = products;
         const shopGrid = document.getElementById('shopProductGrid');
         if (shopGrid) {
