@@ -674,14 +674,20 @@ function renderColorList() {
       <div class="color-advanced" ${c.advanced ? '' : 'hidden'}>
         <fieldset>
           <legend>Bu renge özel galeri fotoları (boşsa ana fotolar kullanılır)</legend>
-          <input type="file" multiple accept="image/*" onchange="handleColorImages(${i}, this.files); this.value='';">
+          <div class="img-upload-zone color-upload-zone" data-color-idx="${i}" data-kind="images" onclick="this.querySelector('input').click()">
+            📁 Sürükle bırak veya tıkla
+            <input type="file" multiple accept="image/*" style="display:none;" onchange="handleColorImages(${i}, this.files); this.value='';" onclick="event.stopPropagation();">
+          </div>
           <div class="color-thumb-row">${(c.colorImages || []).map((entry, ei) => `
             <div class="color-thumb"><img src="${colorEntryPreview(entry)}" alt=""><button type="button" onclick="removeColorImage(${i}, ${ei})" aria-label="Kaldır">×</button></div>
           `).join('')}</div>
         </fieldset>
         <fieldset>
           <legend>Bu renge özel 360° fotoları (4 görsel: front, side-r, back, side-l sırasıyla)</legend>
-          <input type="file" multiple accept="image/*" onchange="handleColor360(${i}, this.files); this.value='';">
+          <div class="img-upload-zone color-upload-zone" data-color-idx="${i}" data-kind="360" onclick="this.querySelector('input').click()">
+            📁 Sürükle bırak veya tıkla (ilk 4 görsel slot'lara dağıtılır)
+            <input type="file" multiple accept="image/*" style="display:none;" onchange="handleColor360(${i}, this.files); this.value='';" onclick="event.stopPropagation();">
+          </div>
           <div class="color-thumb-row color-360-row">${SLOT_DEFS.map((def, si) => {
             const slot = (c.color360 && c.color360[si]) || null;
             return `<div class="color-thumb color-thumb-360 ${slot ? '' : 'empty'}" title="${def.label}"><span class="color-thumb-tag">${def.id}</span>${slot ? `<img src="${colorEntryPreview(slot)}" alt="${def.label}"><button type="button" onclick="clearColor360Slot(${i}, ${si})" aria-label="Sil">×</button>` : ''}</div>`;
@@ -726,6 +732,14 @@ function setDefaultColor(i) {
   editColors.forEach((c, idx) => c.default = idx === i);
   renderColorList();
 }
+// Wrap renderColorList to also attach drag-drop on freshly-rendered
+// per-color upload zones. Defined as a wrapper so direct callers don't
+// need to remember to call attachColorDropZones explicitly.
+const __renderColorList_inner = renderColorList;
+renderColorList = function() {
+  __renderColorList_inner();
+  if (typeof attachColorDropZones === 'function') attachColorDropZones();
+};
 function toggleColorAdvanced(i, on) {
   if (!editColors[i]) return;
   editColors[i].advanced = !!on;
@@ -1002,12 +1016,38 @@ async function uploadImageWithFilename(file, filename) {
   return (d.url || '').replace(/^img\//, '');
 }
 
-// Drag & drop
-const dz = document.getElementById('imgDropZone');
-if (dz) {
-  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
-  dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
-  dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('dragover'); handleImageUpload(e.dataTransfer.files); });
+// ===== DRAG-DROP UPLOAD ZONES (reusable helper) =====
+// Attaches dragover/dragleave/drop on the given element and forwards
+// the dropped FileList to onFiles. Idempotent — guards on data-dz-init
+// so re-render of dynamic zones (per-color cards) doesn't double-bind.
+function initDropZone(el, onFiles) {
+  if (!el || el.dataset.dzInit === '1') return;
+  el.dataset.dzInit = '1';
+  el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('dragover'); });
+  el.addEventListener('dragleave', () => el.classList.remove('dragover'));
+  el.addEventListener('drop', e => {
+    e.preventDefault();
+    el.classList.remove('dragover');
+    onFiles(e.dataTransfer.files);
+  });
+}
+
+// Top-level images dropzone — refactored to use the shared helper.
+initDropZone(document.getElementById('imgDropZone'), files => handleImageUpload(files));
+
+// Per-color upload zones are rendered inside renderColorList() output;
+// attach drag-drop handlers after each render. Idempotent guard means
+// existing zones retain their listener; only newly-rendered ones are
+// wired the first time.
+function attachColorDropZones() {
+  document.querySelectorAll('.color-upload-zone').forEach(zone => {
+    const idx = parseInt(zone.dataset.colorIdx, 10);
+    const kind = zone.dataset.kind;
+    initDropZone(zone, files => {
+      if (kind === '360') handleColor360(idx, files);
+      else handleColorImages(idx, files);
+    });
+  });
 }
 
 document.getElementById('p_color').addEventListener('input', e => { document.getElementById('p_colorHex').textContent = e.target.value; });
