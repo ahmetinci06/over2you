@@ -78,6 +78,7 @@
       this._renderShell();
       this._renderModeView();
       this._renderDots();
+      this._preloadAdjacent();
       this._setupSwipe();
       this._bindKeys();
       this._observeResize();
@@ -108,7 +109,20 @@
       this.idx = ((i % N) + N) % N;
       this._renderModeView();
       this._renderDots();
+      this._preloadAdjacent();
       this._emit('idx-change');
+    }
+
+    _preloadAdjacent() {
+      const N = this.frames.length;
+      if (N <= 1) return;
+      [this.idx - 1, this.idx + 1].forEach(j => {
+        const k = ((j % N) + N) % N;
+        const f = this.frames[k];
+        if (!f || !f.src) return;
+        const img = new Image();
+        img.src = this.imgBase + f.src;
+      });
     }
 
     setMode(mode) {
