@@ -1,84 +1,104 @@
-# Over2You — E-Commerce Store
+# Over2You
 
-Premium streetwear e-commerce site built with [Astro](https://astro.build).
+Premium streetwear storefront — [over2you.shop](https://over2you.shop)
 
-## 🚀 Quick Start
+Astro 5 + vanilla TS/JS over a CMS-managed JSON catalog. TR-first UI with EN
+toggle. KVKK and mesafeli satış pages baked in.
+
+## Stack
+
+- **Astro 5** — static output, zero JS by default
+- **Vanilla TS/JS** — `app.js`, `i18n.js`, `carousel-3d.js`
+- **Söhne** — full weight family self-hosted in `public/fonts/`
+- **Playwright** — visual-regression scripts in `scripts/`
+- **JSON catalog** — `public/data/{products,settings}.json`, edited via the
+  separate [over2you-cms](https://github.com/Sylvan-Ai/over2you-cms)
+
+## Quick start
 
 ```bash
 npm install
-npm run dev        # Dev server → localhost:4321
-npm run build      # Build to dist/
-npm run preview    # Preview build
+npm run dev        # http://localhost:4321
+npm run build      # → dist/
+npm run preview    # serve the build locally
 ```
 
-## 📁 Project Structure
+Requires Node `18.20+`, `20.3+`, or `22+`.
+
+## Project layout
 
 ```
-├── src/
-│   ├── layouts/Layout.astro    # Main layout (header, footer, cart, nav)
-│   └── pages/
-│       ├── index.astro         # Homepage
-│       └── 404.astro           # 404 page
-├── public/
-│   ├── pages/                  # Shop, product, checkout, confirmation
-│   ├── admin/                  # CMS admin panel
-│   ├── css/style.css           # Design system
-│   ├── js/app.js               # Cart, search, 360 viewer
-│   ├── data/
-│   │   ├── products.json       # Product catalog (CMS-managed)
-│   │   └── settings.json       # Site config (CMS-managed)
-│   ├── fonts/                  # Söhne font family
-│   └── img/                    # Product & hero images
-├── .github/workflows/deploy.yml # Auto-deploy to GitHub Pages
-└── astro.config.mjs
+src/
+├── layouts/Layout.astro          # header + cart drawer + lang switch
+├── components/
+│   ├── Footer.astro
+│   ├── LegalVar.astro            # injects company info into legal pages
+│   └── LegalWarning.astro
+├── data/legal-vars.json          # company info source
+└── pages/
+    ├── index.astro               # home (hero slideshow, featured grid)
+    ├── shop.astro                # catalog + filters
+    ├── product.astro             # PDP — gallery, 360, magnify, size picker
+    ├── checkout.astro            # 3 payment paths
+    ├── confirmation.astro
+    ├── about.astro
+    ├── iletisim.astro            # contact
+    ├── kunye.astro               # imprint
+    ├── kargo.astro               # shipping policy
+    ├── iade-politikasi.astro     # returns
+    ├── mesafeli-satis.astro      # distance-selling agreement
+    ├── kullanim-kosullari.astro  # terms
+    ├── gizlilik-politikasi.astro # privacy
+    └── 404.astro
+
+public/
+├── admin/    # entry into the CMS
+├── css/      # design system
+├── js/       # app, i18n, carousel-3d
+├── data/     # products.json + settings.json (CMS-owned)
+├── fonts/    # Söhne weights
+└── img/      # hero + product imagery
 ```
 
-## 🛠 CMS Admin Panel
+## i18n
 
-Access: `https://your-site.com/admin/`
+TR is the default (`<html lang="tr">`). `public/js/i18n.js` swaps copy when
+the language pill in the header is clicked. All strings live in a single
+`O2Y_TRANSLATIONS` object keyed `tr` / `en`.
 
-Login with a GitHub Personal Access Token (needs `repo` scope).
+## Catalog & settings
 
-**Features:**
-- Product management (add, edit, delete)
-- Store settings (branding, contact, shipping)
-- Payment config (iyzico, bank transfer, WhatsApp)
-- Order viewer + CSV export
-- Bulk product import/export (JSON)
-- Image upload via GitHub API
+Both data files in `public/data/` are owned by the
+[over2you-cms](https://github.com/Sylvan-Ai/over2you-cms) — a separate Node
+service that authenticates against bcrypt-hashed users and writes back to the
+storefront's JSON. Settings cover branding, IBAN, hero slides, shipping
+thresholds, WhatsApp number, and the announcement bar. `public/admin/` ships
+a static admin UI bundled with the build for in-storefront edits.
 
-## 💳 Payment Methods
+## Payments
 
-1. **Credit Card** — iyzico integration (needs API backend)
-2. **Bank Transfer** — IBAN details shown at checkout
-3. **WhatsApp Order** — Sends cart via WhatsApp message
+| method        | status        | notes                                           |
+| ------------- | ------------- | ----------------------------------------------- |
+| iyzico (card) | frontend only | settings slot for keys; payment backend pending |
+| bank transfer | wired         | IBAN block shown at checkout                    |
+| WhatsApp      | wired         | builds a pre-filled cart message to your number |
 
-## 🔧 Configuration
+## Visual regression
 
-### iyzico (Card Payments)
-1. Get API keys from [iyzico](https://www.iyzico.com)
-2. Set keys in CMS → Settings → Payment → iyzico
-3. Run the API backend: `cd api/ && npm install && npm start`
+`scripts/eyeball-*.cjs` — Playwright snapshots used to verify product-page
+states (cart drawer, 360 mode, gallery, magnify lens) after layout changes.
 
-### GitHub Pages Deploy
-Automatic via GitHub Actions on push to `main`.
+```bash
+node scripts/eyeball-360.cjs
+```
 
-Or manual: Settings → Pages → Source: GitHub Actions.
+## Deploy
 
-## 📦 Key Features
+Static output. Run `npm run build` and serve `dist/` from any static host;
+production is currently behind nginx at over2you.shop.
 
-- Responsive design (mobile-first)
-- Hero slideshow with auto-play
-- Product grid with category/color filters
-- Product detail page with 360° viewer
-- Size picker with validation
-- Cart drawer with localStorage persistence
-- Live search (name, category, color)
-- Checkout with 3 payment methods
-- Order confirmation page
-- CMS admin panel (no backend needed)
-- SEO meta tags + Open Graph
+No GitHub Actions, no Pages workflow — that path was retired.
 
-## 📄 License
+## License
 
-All rights reserved © 2026 Over2You
+All rights reserved © 2026 Over2You.
