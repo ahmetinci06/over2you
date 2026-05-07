@@ -101,9 +101,23 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
               </div>
             </div>
 
-            <button id="addToCartBtn" style="width:100%;padding:1rem;background:rgb(var(--button-background));color:rgb(var(--button-text-color));border:none;font:var(--heading-font-style) 800 var(--text-sm)/1.65 var(--heading-font-family);text-transform:uppercase;letter-spacing:0.03em;cursor:pointer;transition:all 0.3s;margin-bottom:1.5rem;">ADD TO CART</button>
+            <div class="pdp-stock">
+              <span class="pdp-stock-dot" aria-hidden="true"></span>
+              <strong>Stokta</strong> <span>— 3-5 iş günü içinde kargoda</span>
+            </div>
 
-            <div class="product-accordion" style="border-top:1px solid rgb(var(--border-color)/0.15);">
+            <button id="addToCartBtn" style="width:100%;padding:1rem;background:rgb(var(--button-background));color:rgb(var(--button-text-color));border:none;font:var(--heading-font-style) 800 var(--text-sm)/1.65 var(--heading-font-family);text-transform:uppercase;letter-spacing:0.03em;cursor:pointer;transition:all 0.3s;margin-bottom:0.85rem;">ADD TO CART</button>
+
+            <div class="pdp-banner">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="23 4 23 10 17 10"/>
+                <polyline points="1 20 1 14 7 14"/>
+                <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+              </svg>
+              <span>14 gün ücretsiz değişim hakkı</span>
+            </div>
+
+            <div class="product-accordion" style="border-top:1px solid rgb(var(--border-color)/0.15);margin-top:1.25rem;">
               <div class="accordion-item" onclick="this.classList.toggle('open');this.nextElementSibling.style.display=this.nextElementSibling.style.display==='block'?'none':'block';" style="border-bottom:1px solid rgb(var(--border-color)/0.15);padding:1rem 0;cursor:pointer;display:flex;justify-content:space-between;align-items:center;"><span style="font:var(--heading-font-style) 600 13px/1 var(--heading-font-family);text-transform:uppercase;">Product Details</span><span>+</span></div>
               <div style="display:none;padding:0 0 1rem;font-size:var(--text-sm);color:rgb(var(--text-color)/0.6);line-height:1.7;">${product.description}</div>
               <div class="accordion-item" onclick="this.classList.toggle('open');this.nextElementSibling.style.display=this.nextElementSibling.style.display==='block'?'none':'block';" style="border-bottom:1px solid rgb(var(--border-color)/0.15);padding:1rem 0;cursor:pointer;display:flex;justify-content:space-between;align-items:center;"><span style="font:var(--heading-font-style) 600 13px/1 var(--heading-font-family);text-transform:uppercase;">Shipping & Returns</span><span>+</span></div>
@@ -206,6 +220,47 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
   }
   .pd-info {
     position: static;
+  }
+
+  /* ===== Stock indicator ===== */
+  .pdp-stock {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: var(--text-sm);
+    color: rgb(var(--text-color) / 0.7);
+    margin-bottom: 0.85rem;
+  }
+  .pdp-stock-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #2ea043;
+    flex-shrink: 0;
+  }
+  .pdp-stock strong {
+    color: rgb(var(--text-color));
+    font-weight: 700;
+  }
+
+  /* ===== Exchange banner ===== */
+  .pdp-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.7rem 0.85rem;
+    border: 1px solid rgb(var(--border-color) / 0.25);
+    border-radius: 4px;
+    font-size: var(--text-sm);
+    color: rgb(var(--text-color) / 0.8);
+    margin-bottom: 0;
+  }
+  .pdp-banner svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    color: rgb(var(--text-color) / 0.7);
   }
 
   /* ===== Thumbnail rail ===== */
