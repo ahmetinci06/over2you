@@ -162,7 +162,7 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
             })()}
 
             <div class="pdp-color-swatches">
-              <span class="pdp-color-label">RENK: <strong id="activeColorName">${defaultColor.name}</strong></span>
+              <span class="pdp-color-label"><span data-i18n="pdp.color">RENK:</span> <strong id="activeColorName">${defaultColor.name}</strong></span>
               <div class="swatch-row">
                 ${variantColors.map((c, idx) => `
                   <button type="button" class="pdp-color-swatch${idx === defaultColorIdx ? ' active' : ''}" data-color-idx="${idx}" data-color-id="${c.id}" aria-label="${c.name}" title="${c.name}">
@@ -174,7 +174,7 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
             </div>
 
             <div style="margin-bottom:1.25rem;" id="sizeSection">
-              <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:rgb(var(--text-color)/0.5);display:block;margin-bottom:0.5rem;">SIZE:</span>
+              <span data-i18n="pdp.size" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:rgb(var(--text-color)/0.5);display:block;margin-bottom:0.5rem;">BEDEN:</span>
               <div style="display:flex;gap:6px;flex-wrap:wrap;" id="sizeButtons">
                 ${product.sizes.map(s => `<button class="size-btn" data-size="${s}" style="padding:0.5rem 1rem;border:1px solid rgb(var(--border-color));background:transparent;font:var(--heading-font-style) 600 11px/1 var(--heading-font-family);cursor:pointer;transition:all 0.2s;">${s}</button>`).join('')}
               </div>
@@ -199,14 +199,14 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
                 <polyline points="1 20 1 14 7 14"/>
                 <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
               </svg>
-              <span>14 gün ücretsiz değişim hakkı</span>
+              <span data-i18n="pdp.freeReturn">14 gün ücretsiz değişim hakkı</span>
             </div>
 
             <div class="product-accordion">
               <div class="accordion-item" onclick="this.classList.toggle('open');this.nextElementSibling.style.display=this.nextElementSibling.style.display==='block'?'none':'block';">
                 <span class="accordion-label">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                  Ürün Bilgisi
+                  <span data-i18n="pdp.accordion.info">Ürün Bilgisi</span>
                 </span>
                 <span class="accordion-toggle">+</span>
               </div>
@@ -215,7 +215,7 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
               <div class="accordion-item" onclick="this.classList.toggle('open');this.nextElementSibling.style.display=this.nextElementSibling.style.display==='block'?'none':'block';">
                 <span class="accordion-label">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg>
-                  Bakım Talimatları
+                  <span data-i18n="pdp.accordion.care">Bakım Talimatları</span>
                 </span>
                 <span class="accordion-toggle">+</span>
               </div>
@@ -224,7 +224,7 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
               <div class="accordion-item accordion-item--link" onclick="document.getElementById('sizeGuideModal') && document.getElementById('sizeGuideModal').classList.add('open');">
                 <span class="accordion-label">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.3 15.3 8.7 2.7a1 1 0 00-1.4 0L2.7 7.3a1 1 0 000 1.4l12.6 12.6a1 1 0 001.4 0l4.6-4.6a1 1 0 000-1.4z"/><path d="m7.5 10.5 2 2"/><path d="m10.5 7.5 2 2"/><path d="m13.5 4.5 2 2"/><path d="m4.5 13.5 2 2"/></svg>
-                  Beden Tablosu
+                  <span data-i18n="pdp.accordion.size">Beden Tablosu</span>
                 </span>
                 <span class="accordion-toggle">→</span>
               </div>
@@ -232,7 +232,7 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
               <div class="accordion-item" onclick="this.classList.toggle('open');this.nextElementSibling.style.display=this.nextElementSibling.style.display==='block'?'none':'block';">
                 <span class="accordion-label">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-                  Kargo & İade
+                  <span data-i18n="pdp.accordion.shipping">Kargo & İade</span>
                 </span>
                 <span class="accordion-toggle">+</span>
               </div>
@@ -249,7 +249,7 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
         </div>
 
         <section class="pdp-related" aria-labelledby="pdpRelatedHeading">
-          <h2 id="pdpRelatedHeading">BENZER ÜRÜNLER</h2>
+          <h2 id="pdpRelatedHeading" data-i18n="pdp.related.heading">BENZER ÜRÜNLER</h2>
           <div class="pdp-related-grid">
             ${relatedSlice.length > 0
               ? relatedSlice.map(p => `
@@ -262,7 +262,7 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
                   <div class="pdp-related-price">€${(typeof p.salePrice === 'number' && p.salePrice < p.price ? p.salePrice : p.price).toFixed(2)}</div>
                 </a>
               `).join('')
-              : `<div class="pdp-related-empty">Yakında daha fazla ürün.</div>`
+              : `<div class="pdp-related-empty" data-i18n="pdp.related.empty">Yakında daha fazla ürün.</div>`
             }
           </div>
         </section>
@@ -271,6 +271,10 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
       wireInteractions(product);
       wireColorSwatches(product, variantColors, frames360, imgBase);
       wireLightbox(thumbsSource, imgBase);
+      // Re-apply translations to the dynamically rendered PDP DOM.
+      if (typeof window.o2yApplyLang === 'function') {
+        window.o2yApplyLang(window.o2yLang || 'tr');
+      }
     }
 
     function wireColorSwatches(product, variantColors, baseFrames360, imgBase) {
@@ -953,6 +957,30 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
   }
   /* C3D flat-mode container becomes clickable for lightbox. */
   .pd-stage-wrap .c3d-flat { cursor: zoom-in; }
+
+  /* ===== Mobile dot indicators (flat mode, multi-image) ===== */
+  .c3d-dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 0 0;
+  }
+  .c3d-dots[hidden] { display: none; }
+  .c3d-dot {
+    width: 8px;
+    height: 8px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: rgb(var(--text-color) / 0.25);
+    cursor: pointer;
+    transition: background 0.2s ease, width 0.2s ease, border-radius 0.2s ease;
+  }
+  .c3d-dot.active {
+    background: rgb(var(--text-color));
+    width: 20px;
+    border-radius: 4px;
+  }
 
   /* ===== Lightbox modal ===== */
   .pdp-lightbox {

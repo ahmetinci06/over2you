@@ -8,10 +8,12 @@ const isReady = emptyFields.length === 0;
 ---
 {!isReady && (
   <div class="legal-warning">
-    <strong>⚠ DİKKAT:</strong> Bu sayfa şablon halindedir. Yayına almadan önce
-    aşağıdaki <code>{emptyFields.length}</code> alan müşteri bilgileriyle doldurulmalıdır:
+    <strong data-i18n="legal.warning.bold">⚠ DİKKAT:</strong>
+    {' '}<span data-i18n="legal.warning.intro">Bu sayfa şablon halindedir. Yayına almadan önce aşağıdaki</span>
+    {' '}<code>{emptyFields.length}</code>
+    {' '}<span data-i18n="legal.warning.fieldsSuffix">alan müşteri bilgileriyle doldurulmalıdır:</span>
     {' '}<code>{emptyFields.join(', ')}</code>.
-    Yasal incelemeden geçmemiştir, avukat onayı önerilir.
+    {' '}<span data-i18n="legal.warning.advisory">Yasal incelemeden geçmemiştir, avukat onayı önerilir.</span>
   </div>
 )}
 

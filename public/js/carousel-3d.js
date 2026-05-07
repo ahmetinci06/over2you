@@ -71,11 +71,14 @@
       this.has360 = this.dataset.has360 === 'true' && this.frames.length >= 4;
       this.idx = 0;
       this.mode = 'flat';
+      this.isMobile = window.matchMedia('(max-width: 768px)').matches;
 
       if (!this.frames.length) { this._renderEmpty(); return; }
 
       this._renderShell();
       this._renderModeView();
+      this._renderDots();
+      this._setupSwipe();
       this._bindKeys();
       this._observeResize();
     }
@@ -104,6 +107,7 @@
       const N = this.frames.length;
       this.idx = ((i % N) + N) % N;
       this._renderModeView();
+      this._renderDots();
       this._emit('idx-change');
     }
 
@@ -155,6 +159,7 @@
             </button>
           ` : ''}
         </div>
+        <div class="c3d-dots" hidden></div>
       `;
 
       const toggle = this.querySelector('.c3d-toggle');
@@ -247,17 +252,82 @@
 
     _bindKeys() {
       this._keyHandler = (e) => {
-        if (this.mode !== '360') return;
-        if (e.key === 'ArrowRight') { e.preventDefault(); this.setIdx(this.idx + 1); }
-        else if (e.key === 'ArrowLeft') { e.preventDefault(); this.setIdx(this.idx - 1); }
-        else if (e.key === 'Escape') { e.preventDefault(); this.setMode('flat'); }
+        // Skip when user is typing in a form field.
+        const ae = document.activeElement;
+        if (ae && ['INPUT', 'TEXTAREA', 'SELECT'].includes(ae.tagName)) return;
+        // Lightbox owns ←/→ when open — avoid double-fire.
+        const lb = document.getElementById('pdpLightbox');
+        if (lb && !lb.hasAttribute('hidden')) return;
+
+        if (this.mode === '360') {
+          if (e.key === 'ArrowRight') { e.preventDefault(); this.setIdx(this.idx + 1); }
+          else if (e.key === 'ArrowLeft') { e.preventDefault(); this.setIdx(this.idx - 1); }
+          else if (e.key === 'Escape') { e.preventDefault(); this.setMode('flat'); }
+        } else {
+          // Flat mode: navigate the image list (only meaningful for multi-frame).
+          if (this.frames.length <= 1) return;
+          if (e.key === 'ArrowRight') { e.preventDefault(); this.setIdx(this.idx + 1); }
+          else if (e.key === 'ArrowLeft') { e.preventDefault(); this.setIdx(this.idx - 1); }
+        }
       };
       window.addEventListener('keydown', this._keyHandler);
+    }
+
+    _renderDots() {
+      const dotsEl = this.querySelector('.c3d-dots');
+      if (!dotsEl) return;
+      // Mobile-only, flat-mode-only, multi-image-only.
+      const showDots = this.isMobile && this.mode === 'flat' && this.frames.length > 1;
+      dotsEl.hidden = !showDots;
+      if (!showDots) return;
+      dotsEl.innerHTML = this.frames.map((_, i) =>
+        `<button class="c3d-dot${i === this.idx ? ' active' : ''}" type="button" data-dot="${i}" aria-label="Görsel ${i + 1}"></button>`
+      ).join('');
+      dotsEl.querySelectorAll('.c3d-dot').forEach(d => {
+        d.addEventListener('click', () => this.setIdx(parseInt(d.dataset.dot, 10)));
+      });
+    }
+
+    _setupSwipe() {
+      const flat = this.querySelector('.c3d-flat');
+      if (!flat) return;
+      let startX = 0, startY = 0, deltaX = 0, isHoriz = false;
+
+      flat.addEventListener('touchstart', (e) => {
+        if (this.mode !== 'flat' || this.frames.length <= 1) return;
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        deltaX = 0;
+        isHoriz = false;
+      }, { passive: true });
+
+      flat.addEventListener('touchmove', (e) => {
+        if (this.mode !== 'flat' || this.frames.length <= 1) return;
+        deltaX = e.touches[0].clientX - startX;
+        const dy = e.touches[0].clientY - startY;
+        if (!isHoriz && Math.abs(deltaX) > 8 && Math.abs(deltaX) > Math.abs(dy)) {
+          isHoriz = true;
+        }
+        // Block vertical scroll only once the gesture is clearly horizontal.
+        if (isHoriz) e.preventDefault();
+      }, { passive: false });
+
+      flat.addEventListener('touchend', () => {
+        if (this.mode !== 'flat' || !isHoriz) return;
+        if (Math.abs(deltaX) > 50) {
+          this.setIdx(deltaX < 0 ? this.idx + 1 : this.idx - 1);
+        }
+        deltaX = 0;
+        isHoriz = false;
+      });
     }
 
     _observeResize() {
       if (typeof ResizeObserver === 'undefined') return;
       this._ro = new ResizeObserver(() => {
+        const wasMobile = this.isMobile;
+        this.isMobile = window.matchMedia('(max-width: 768px)').matches;
+        if (wasMobile !== this.isMobile) this._renderDots();
         if (this.mode === '360') this._updateSlotPositions();
       });
       this._ro.observe(this);

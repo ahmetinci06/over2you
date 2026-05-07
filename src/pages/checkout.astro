@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const items = Cart.getItems();
 
   if (items.length === 0) {
-    wrapper.innerHTML = '<div style="text-align:center;padding:4rem;grid-column:1/-1;"><h2 style="font:var(--heading-font-style) 800 1.25rem/1.2 var(--heading-font-family);text-transform:uppercase;margin-bottom:1rem;">Your cart is empty</h2><p style="color:rgb(var(--text-color)/0.5);margin-bottom:1.5rem;">Add some products before checking out.</p><a href="'+B+'shop" class="btn-primary" style="display:inline-block;padding:0.75rem 2rem;">CONTINUE SHOPPING</a></div>';
+    wrapper.innerHTML = '<div style="text-align:center;padding:4rem;grid-column:1/-1;"><h2 data-i18n="cart.empty" style="font:var(--heading-font-style) 800 1.25rem/1.2 var(--heading-font-family);text-transform:uppercase;margin-bottom:1rem;">Sepetiniz boş</h2><p style="color:rgb(var(--text-color)/0.5);margin-bottom:1.5rem;">Ödeme öncesi ürün ekleyin.</p><a href="'+B+'shop" class="btn-primary" style="display:inline-block;padding:0.75rem 2rem;">ALIŞVERİŞE DEVAM</a></div>';
     return;
   }
 
@@ -66,41 +66,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
   wrapper.innerHTML = `
     <div class="checkout-form">
-      <h1 class="checkout-title">Checkout</h1>
+      <h1 class="checkout-title" data-i18n="checkout.title">SİPARİŞ</h1>
       <form id="orderForm">
-        <div class="form-section"><div class="form-section-title">Contact Information</div>
-          <div class="form-row two-col"><div class="form-group"><label>Email *</label><input type="email" id="email" required placeholder="your@email.com"></div><div class="form-group"><label>Phone *</label><input type="tel" id="phone" required placeholder="+90 5XX XXX XX XX"></div></div>
+        <div class="form-section"><div class="form-section-title" data-i18n="checkout.contactInfo">İLETİŞİM BİLGİLERİ</div>
+          <div class="form-row two-col"><div class="form-group"><label data-i18n="checkout.email">E-POSTA</label><input type="email" id="email" required placeholder="your@email.com"></div><div class="form-group"><label data-i18n="checkout.phone">TELEFON</label><input type="tel" id="phone" required placeholder="+90 5XX XXX XX XX"></div></div>
         </div>
-        <div class="form-section"><div class="form-section-title">Shipping Address</div>
-          <div class="form-row two-col"><div class="form-group"><label>First Name *</label><input type="text" id="firstName" required></div><div class="form-group"><label>Last Name *</label><input type="text" id="lastName" required></div></div>
-          <div class="form-row"><div class="form-group"><label>Address *</label><input type="text" id="address" required></div></div>
-          <div class="form-row two-col"><div class="form-group"><label>Apartment (optional)</label><input type="text" id="address2"></div><div class="form-group"><label>Postal Code *</label><input type="text" id="postalCode" required></div></div>
-          <div class="form-row two-col"><div class="form-group"><label>City *</label><input type="text" id="city" required></div><div class="form-group"><label>Country *</label><select id="country" required><option value="TR" selected>Turkey</option><option value="DE">Germany</option><option value="GB">United Kingdom</option><option value="US">United States</option><option value="FR">France</option><option value="NL">Netherlands</option></select></div></div>
-          <div class="form-row"><div class="form-group"><label>Notes (optional)</label><textarea id="notes" rows="2"></textarea></div></div>
+        <div class="form-section"><div class="form-section-title" data-i18n="checkout.shippingAddress">TESLİMAT ADRESİ</div>
+          <div class="form-row two-col"><div class="form-group"><label data-i18n="checkout.firstName">AD</label><input type="text" id="firstName" required></div><div class="form-group"><label data-i18n="checkout.lastName">SOYAD</label><input type="text" id="lastName" required></div></div>
+          <div class="form-row"><div class="form-group"><label data-i18n="checkout.address">ADRES</label><input type="text" id="address" required></div></div>
+          <div class="form-row two-col"><div class="form-group"><label>Daire / Apartman</label><input type="text" id="address2"></div><div class="form-group"><label data-i18n="checkout.postalCode">POSTA KODU</label><input type="text" id="postalCode" required></div></div>
+          <div class="form-row two-col"><div class="form-group"><label data-i18n="checkout.city">ŞEHİR</label><input type="text" id="city" required></div><div class="form-group"><label data-i18n="checkout.country">ÜLKE</label><select id="country" required><option value="TR" selected>Türkiye</option><option value="DE">Almanya</option><option value="GB">Birleşik Krallık</option><option value="US">Amerika Birleşik Devletleri</option><option value="FR">Fransa</option><option value="NL">Hollanda</option></select></div></div>
+          <div class="form-row"><div class="form-group"><label>Not (opsiyonel)</label><textarea id="notes" rows="2"></textarea></div></div>
         </div>
-        <div class="form-section"><div class="form-section-title">Payment Method</div>
+        <div class="form-section"><div class="form-section-title" data-i18n="checkout.paymentMethod">ÖDEME YÖNTEMİ</div>
           <div class="payment-methods">
-            <label class="payment-option selected" data-method="card"><input type="radio" name="payment" value="card" checked><div><div class="payment-option-label">Credit / Debit Card</div><div class="payment-option-desc">Visa, Mastercard, Amex — Secure payment via iyzico</div></div></label>
-            <label class="payment-option" data-method="bank"><input type="radio" name="payment" value="bank"><div><div class="payment-option-label">Bank Transfer (EFT/Havale)</div><div class="payment-option-desc">Order ships after payment confirmation</div></div></label>
-            <label class="payment-option" data-method="whatsapp"><input type="radio" name="payment" value="whatsapp"><div><div class="payment-option-label">Order via WhatsApp</div><div class="payment-option-desc">Send order directly via WhatsApp</div></div></label>
+            <label class="payment-option selected" data-method="card"><input type="radio" name="payment" value="card" checked><div><div class="payment-option-label" data-i18n="checkout.creditCard">KREDİ / DEBİT KART</div><div class="payment-option-desc">Visa, Mastercard, Amex — iyzico ile güvenli ödeme</div></div></label>
+            <label class="payment-option" data-method="bank"><input type="radio" name="payment" value="bank"><div><div class="payment-option-label">Banka Havalesi (EFT)</div><div class="payment-option-desc">Sipariş ödeme onayı sonrası kargoya verilir</div></div></label>
+            <label class="payment-option" data-method="whatsapp"><input type="radio" name="payment" value="whatsapp"><div><div class="payment-option-label">WhatsApp ile Sipariş</div><div class="payment-option-desc">Siparişi doğrudan WhatsApp üzerinden gönder</div></div></label>
           </div>
-          <div class="bank-details" id="bankDetails"><strong>Over2You</strong><br>IBAN: TR00 0000 0000 0000 0000 0000 00<br>Bank: [Bank Name]<br><br><em>Include your order number in transfer description.</em></div>
+          <div class="bank-details" id="bankDetails"><strong>Over2You</strong><br>IBAN: TR00 0000 0000 0000 0000 0000 00<br>Banka: [Banka Adı]<br><br><em>Havale açıklamasına sipariş numaranızı yazın.</em></div>
         </div>
-        <button type="submit" class="btn-place-order" id="placeOrderBtn">PLACE ORDER — €${total.toFixed(2)}</button>
-        <button type="button" class="btn-whatsapp" id="whatsappBtn" style="display:none;">ORDER VIA WHATSAPP</button>
-        <div class="secure-badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>SECURE CHECKOUT — 256-BIT SSL ENCRYPTED</div>
+        <button type="submit" class="btn-place-order" id="placeOrderBtn"><span data-i18n="checkout.placeOrder">SİPARİŞİ TAMAMLA</span> — €${total.toFixed(2)}</button>
+        <button type="button" class="btn-whatsapp" id="whatsappBtn" style="display:none;">WHATSAPP İLE SİPARİŞ</button>
+        <div class="secure-badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>GÜVENLİ ÖDEME — 256-BIT SSL ŞİFRELEME</div>
       </form>
     </div>
     <div class="order-summary">
-      <div class="order-summary-title">ORDER SUMMARY (${items.reduce((s,i)=>s+i.qty,0)} items)</div>
-      ${items.map(i => '<div class="summary-item"><div class="summary-item-swatch" style="background:'+(i.color||'#eee')+';"></div><div><div class="summary-item-name">'+i.name+'</div><div class="summary-item-variant">Size: '+i.selectedSize+' · Qty: '+i.qty+'</div></div><div class="summary-item-price">€'+(i.price*i.qty).toFixed(2)+'</div></div>').join('')}
+      <div class="order-summary-title"><span data-i18n="checkout.summary">SİPARİŞ ÖZETİ</span> (${items.reduce((s,i)=>s+i.qty,0)})</div>
+      ${items.map(i => '<div class="summary-item"><div class="summary-item-swatch" style="background:'+(i.color||'#eee')+';"></div><div><div class="summary-item-name">'+i.name+'</div><div class="summary-item-variant">Beden: '+i.selectedSize+' · Adet: '+i.qty+'</div></div><div class="summary-item-price">€'+(i.price*i.qty).toFixed(2)+'</div></div>').join('')}
       <div class="summary-totals">
-        <div class="summary-row"><span>Subtotal</span><span>€${subtotal.toFixed(2)}</span></div>
-        <div class="summary-row"><span>Shipping</span><span>${shipping===0?'FREE':'€'+shipping.toFixed(2)}</span></div>
-        <div class="summary-row total"><span>Total</span><span>€${total.toFixed(2)}</span></div>
+        <div class="summary-row"><span data-i18n="checkout.subtotal">Ara Toplam</span><span>€${subtotal.toFixed(2)}</span></div>
+        <div class="summary-row"><span data-i18n="checkout.shippingFee">Kargo</span><span>${shipping===0?'<span data-i18n="checkout.free">ÜCRETSİZ</span>':'€'+shipping.toFixed(2)}</span></div>
+        <div class="summary-row total"><span data-i18n="checkout.totalLabel">Toplam</span><span>€${total.toFixed(2)}</span></div>
       </div>
     </div>
   `;
+  if (typeof window.o2yApplyLang === 'function') window.o2yApplyLang(window.o2yLang || 'tr');
 
   // Payment method switching
   document.querySelectorAll('.payment-option').forEach(opt => {
