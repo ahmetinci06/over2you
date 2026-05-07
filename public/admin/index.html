@@ -96,6 +96,11 @@
     .color-thumb.drag-over { transform: translateY(-2px); }
     .color-thumb.drag-over::before { content: ''; position: absolute; inset: -3px; border: 2px solid var(--accent); border-radius: 5px; pointer-events: none; z-index: 2; }
 
+    /* Form preview */
+    .form-preview { margin-top: 1rem; border: 1px solid var(--border); border-radius: var(--radius); background: #fff; overflow: hidden; }
+    .form-preview__banner { background: #fff3cd; color: #5c4400; padding: 0.5rem 0.75rem; font-size: 11px; font-weight: 600; border-bottom: 1px solid #ffc107; }
+    #formPreviewContent { padding: 1rem; }
+
     /* Save state indicator */
     .modal-title { gap: 0.75rem; }
     .save-state { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; padding: 3px 10px; border-radius: 12px; background: rgba(0,0,0,0.04); margin-left: auto; margin-right: 0.5rem; transition: background 0.15s, color 0.15s; }
@@ -507,9 +512,16 @@
         </div></div>
       </div>
     </details>
-    <div class="btn-group" style="margin-top:1.25rem;justify-content:flex-end;">
-      <button class="btn btn-outline" onclick="closeProductModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="saveProduct()" id="saveProductBtn">Save Product</button>
+    <div class="form-preview" id="formPreview" hidden>
+      <div class="form-preview__banner">⚠ Henüz kaydedilmedi — sadece önizleme</div>
+      <div id="formPreviewContent"></div>
+    </div>
+    <div class="btn-group" style="margin-top:1.25rem;justify-content:space-between;align-items:center;">
+      <button type="button" class="btn btn-outline" onclick="togglePreview()" id="previewBtn">👁 Önizleme</button>
+      <div class="btn-group" style="gap:0.5rem;">
+        <button class="btn btn-outline" onclick="closeProductModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveProduct()" id="saveProductBtn">Save Product</button>
+      </div>
     </div>
   </div>
 </div>
@@ -558,6 +570,53 @@ let editCategories = [];
 let editTags = [];
 
 // ===== CHIP INPUT (shared by categories + tags) =====
+// ===== FORM PREVIEW =====
+function togglePreview() {
+  const el = document.getElementById('formPreview');
+  if (!el) return;
+  if (el.hidden) { renderFormPreview(); el.hidden = false; }
+  else { el.hidden = true; }
+}
+function renderFormPreview() {
+  const out = document.getElementById('formPreviewContent');
+  if (!out) return;
+  const name = document.getElementById('p_name').value.trim() || '(adsız)';
+  const price = parseFloat(document.getElementById('p_price').value) || 0;
+  const cmpPrice = parseFloat(document.getElementById('p_comparePrice').value);
+  const desc = document.getElementById('p_description').value;
+  const sku = document.getElementById('p_sku').value;
+  const badge = document.getElementById('p_badge').value;
+  const oos = document.getElementById('p_outOfStock').checked;
+  const sizes = document.getElementById('p_sizes').value;
+  const previewImg = (editImages[0] && editImages[0].file)
+    ? URL.createObjectURL(editImages[0].file)
+    : (editImages[0] && editImages[0].src ? '../img/' + editImages[0].src : '');
+  const priceHtml = (cmpPrice && cmpPrice > price)
+    ? `<span style="text-decoration:line-through;color:var(--muted);font-size:12px;">€${cmpPrice.toFixed(2)}</span> <strong style="color:var(--danger);">€${price.toFixed(2)}</strong>`
+    : `<strong>€${price.toFixed(2)}</strong>`;
+  out.innerHTML = `
+    <div style="display:flex;gap:1rem;align-items:flex-start;">
+      ${previewImg
+        ? `<img src="${previewImg}" style="width:120px;aspect-ratio:3/4;object-fit:cover;background:#eee;border-radius:4px;">`
+        : '<div style="width:120px;aspect-ratio:3/4;background:#eee;border-radius:4px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:11px;">no image</div>'}
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.35rem;">
+          ${badge ? `<span class="badge badge-${badge==='NEW'?'new':badge==='SALE'?'sale':'stock'}">${escapeHtml(badge)}</span>` : ''}
+          ${oos ? '<span style="font-size:10px;font-weight:700;color:var(--danger);">STOKTA YOK</span>' : ''}
+        </div>
+        <h3 style="margin:0 0 .25rem;font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:0.02em;">${escapeHtml(name)}</h3>
+        ${sku ? `<p style="font-size:11px;color:var(--muted);margin:0 0 .35rem;letter-spacing:0.04em;">SKU: ${escapeHtml(sku)}</p>` : ''}
+        <p style="font-size:14px;margin:0 0 .5rem;">${priceHtml}</p>
+        ${editColors.length ? `<p style="font-size:11px;color:var(--muted);margin:.35rem 0 .25rem;">RENK: <strong style="color:var(--text);">${escapeHtml(editColors.find(c=>c.default)?.name || editColors[0]?.name || '')}</strong></p><div style="display:flex;gap:5px;margin-bottom:.5rem;">${editColors.map(c => `<span style="display:inline-block;width:18px;height:18px;border-radius:50%;background:${c.hex || '#000'};border:1px solid #ccc;" title="${escapeHtml(c.name||'')}"></span>`).join('')}</div>` : ''}
+        ${sizes ? `<p style="font-size:11px;color:var(--muted);margin:.25rem 0;">BEDENLER: ${escapeHtml(sizes)}</p>` : ''}
+        ${editCategories.length ? `<p style="font-size:11px;color:var(--muted);margin:.25rem 0;">Kategoriler: ${editCategories.map(escapeHtml).join(', ')}</p>` : ''}
+        ${editTags.length ? `<p style="font-size:11px;color:var(--muted);margin:.25rem 0;">Etiketler: ${editTags.map(escapeHtml).join(', ')}</p>` : ''}
+        ${desc ? `<p style="font-size:12px;color:var(--muted);line-height:1.55;margin-top:.65rem;">${escapeHtml(desc.slice(0,220))}${desc.length>220?'…':''}</p>` : ''}
+      </div>
+    </div>
+  `;
+}
+
 // ===== SAVE STATE INDICATOR =====
 function setSaveState(state, text) {
   const el = document.getElementById('saveState');
