@@ -67,7 +67,16 @@ const base = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL :
   .footer-newsletter {
     background: rgba(255, 255, 255, 0.03);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    padding: 2.5rem var(--container-gutter);
+    padding: 2.5rem var(--container-gutter) 3rem;
+  }
+  /* Visible separation between newsletter band and the 4-col grid. */
+  .footer .footer-grid {
+    padding-top: 3rem;
+  }
+  @media (max-width: 768px) {
+    .footer .footer-grid {
+      padding-top: 2rem;
+    }
   }
   .footer-newsletter-inner {
     max-width: 85rem;
