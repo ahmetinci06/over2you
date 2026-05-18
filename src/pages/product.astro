@@ -72,6 +72,45 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
         .replace(/'/g, '&#39;');
     }
 
+    // Resolve effective gallery for product+color. Used by both initial
+    // render and color-swatch rebuild — single source of truth for the
+    // flat/360 fallback chain.
+    //
+    // Color-accuracy:
+    //   - color=null OR color.default → fall back to baseFrames360 (default
+    //     IS base by data convention; default colors typically don't
+    //     duplicate base.images360).
+    //   - non-default color without own images360 → empty (no cross-color
+    //     leak; carousel-3d hides toggle when data-has360="false" or
+    //     frames.length < 4).
+    //   - eImages always falls back to baseImages — flat photos are shared
+    //     when a color hasn't been re-shot.
+    //   - eFlatImages falls back to images360 frame srcs when no flat
+    //     images exist (very old data).
+    //
+    // thumbToFrameIdx maps thumb index → carousel frame index. Without it
+    // a 2-thumb rail (front/back) over a 4-frame ring lands "back" on the
+    // ring's side-r instead of the actual back angle.
+    function effectiveGallery(product, color, baseImages, baseFrames360) {
+      const isBase = !color || !!color.default;
+      const colorHasImages = !!(color && Array.isArray(color.images) && color.images.length > 0);
+      const colorHas360    = !!(color && Array.isArray(color.images360) && color.images360.length > 0);
+      const eImages    = colorHasImages ? color.images : baseImages;
+      const eFrames360 = colorHas360    ? color.images360 : (isBase ? baseFrames360 : []);
+      const eHas360    = eFrames360.length >= 4 && eFrames360.every(f => f && typeof f === 'object' && f.src);
+      const eFlatImages = eImages.length > 0 ? eImages : eFrames360.map(f => f.src);
+      const eThumbs = eFlatImages.map((src, i) => {
+        const matched = eFrames360.find(f => f.src === src);
+        return { src, label: (matched && matched.label) || ('View ' + (i+1)), flip: !!(matched && matched.flip) };
+      });
+      const thumbToFrameIdx = eFlatImages.map(src => {
+        const i = eFrames360.findIndex(f => f.src === src);
+        return i >= 0 ? i : 0;
+      });
+      const eFramesData = eHas360 ? eFrames360 : eFlatImages;
+      return { eImages, eFrames360, eHas360, eFlatImages, eThumbs, thumbToFrameIdx, eFramesData };
+    }
+
     function render() {
       const params = new URLSearchParams(window.location.search);
       const id = parseInt(params.get('id'));
@@ -94,9 +133,6 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
       const imgBase = B + 'img/';
       const related = list.filter(r => r.category === product.category && r.id !== product.id).slice(0, 8);
 
-      const frames360 = Array.isArray(product.images360) ? product.images360 : [];
-      const has360 = frames360.length >= 4 && frames360.every(f => f && typeof f === 'object' && f.src);
-
       // Related products for below-fold section: max 4 from other products,
       // shuffled so repeat visits feel fresh. Single-product fallback handled
       // in the section template.
@@ -114,25 +150,20 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
       const defaultColorIdx = Math.max(0, variantColors.findIndex(c => c.default));
       const defaultColor = variantColors[defaultColorIdx] || variantColors[0];
 
-      const framesData = has360
-        ? frames360
-        : (Array.isArray(product.images) ? product.images : []);
+      const baseImages = Array.isArray(product.images) ? product.images : [];
+      const baseFrames360 = Array.isArray(product.images360) ? product.images360 : [];
+      const g = effectiveGallery(product, defaultColor, baseImages, baseFrames360);
 
-      const thumbsSource = has360
-        ? frames360.map((f, i) => ({ src: f.src, label: f.label || ('View ' + (i+1)), flip: !!f.flip }))
-        : (product.images || []).map((src, i) => ({ src, label: 'View ' + (i+1), flip: false }));
+      const showThumbs = g.eThumbs.length >= 2;
 
-      const N = thumbsSource.length;
-      const showThumbs = N >= 2;
-
-      const thumbsHTML = showThumbs ? thumbsSource.map((t, i) => `
+      const thumbsHTML = showThumbs ? g.eThumbs.map((t, i) => `
         <button class="pd-thumb${i === 0 ? ' active' : ''}" type="button" data-idx="${i}" aria-label="${t.label}">
           <img src="${imgBase}${t.src}" alt="${t.label}" style="${t.flip ? 'transform:scaleX(-1);' : ''}">
         </button>
       `).join('') : '';
 
       const stageHTML =
-        `<carousel-3d data-frames='${attrJSON(framesData)}' data-img-base="${imgBase}" data-has360="${has360}"></carousel-3d>`;
+        `<carousel-3d data-frames='${attrJSON(g.eFramesData)}' data-img-base="${imgBase}" data-has360="${g.eHas360}"></carousel-3d>`;
 
       layout.innerHTML = `
         <div class="product-breadcrumb" style="font-size:11px;color:rgb(var(--text-color)/0.4);margin-bottom:1.5rem;">
@@ -278,9 +309,9 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
         </section>
       `;
 
-      wireInteractions(product);
-      wireColorSwatches(product, variantColors, frames360, imgBase);
-      wireLightbox(thumbsSource, imgBase);
+      wireInteractions(product, g.thumbToFrameIdx);
+      wireColorSwatches(product, variantColors, baseImages, baseFrames360, imgBase);
+      wireLightbox(g.eThumbs, imgBase);
       wireBundle(product, list, imgBase);
       wireMagnify();
       // Re-apply translations to the dynamically rendered PDP DOM.
@@ -289,7 +320,7 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
       }
     }
 
-    function wireColorSwatches(product, variantColors, baseFrames360, imgBase) {
+    function wireColorSwatches(product, variantColors, baseImages, baseFrames360, imgBase) {
       const swatches = document.querySelectorAll('.pdp-color-swatch');
       if (!swatches.length) return;
 
@@ -304,46 +335,47 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
           const nameEl = document.getElementById('activeColorName');
           if (nameEl) nameEl.textContent = color.name;
 
-          // 2. gallery / 360 — compute effective thumbs (used by both DOM
-          //    rebuild and lightbox sync below).
-          const colorHasImages = Array.isArray(color.images) && color.images.length > 0;
-          const colorHas360 = Array.isArray(color.images360) && color.images360.length > 0;
-          const eImages = colorHasImages ? color.images : (product.images || []);
-          const eFrames360 = colorHas360 ? color.images360 : (baseFrames360 || []);
-          const eHas360 = eFrames360.length >= 4 && eFrames360.every(f => f && typeof f === 'object' && f.src);
-          const eThumbs = eHas360
-            ? eFrames360.map((f, i) => ({ src: f.src, label: f.label || ('View ' + (i+1)), flip: !!f.flip }))
-            : eImages.map((src, i) => ({ src, label: 'View ' + (i+1), flip: false }));
-          // Sync lightbox so it always reflects the active color's images.
-          if (window.__pdpLightboxSet) window.__pdpLightboxSet(eThumbs, imgBase);
-          if (colorHasImages || colorHas360) {
-            const thumbsEl = document.getElementById('pdThumbs');
-            if (thumbsEl && eThumbs.length >= 2) {
-              thumbsEl.innerHTML = eThumbs.map((t, i) => `
-                <button class="pd-thumb${i===0?' active':''}" type="button" data-idx="${i}" aria-label="${t.label}">
-                  <img src="${imgBase}${t.src}" alt="${t.label}" style="${t.flip?'transform:scaleX(-1);':''}">
-                </button>
-              `).join('');
-            }
+          // 2. gallery / 360 — recompute via shared helper. Stage + thumbs
+          //    ALWAYS rebuild now; the old `if (colorHasImages || colorHas360)`
+          //    guard left the stage stale on B→A when B had no own photos.
+          const g = effectiveGallery(product, color, baseImages, baseFrames360);
+          if (window.__pdpLightboxSet) window.__pdpLightboxSet(g.eThumbs, imgBase);
 
-            const stageWrap = document.querySelector('.pd-stage-wrap');
-            if (stageWrap) {
-              const framesData = eHas360 ? eFrames360 : eImages;
-              stageWrap.innerHTML = '<carousel-3d data-frames=\'' + attrJSON(framesData) + '\' data-img-base="' + imgBase + '" data-has360="' + eHas360 + '"></carousel-3d>';
-            }
+          const thumbsEl = document.getElementById('pdThumbs');
+          if (thumbsEl) {
+            thumbsEl.innerHTML = g.eThumbs.length >= 2 ? g.eThumbs.map((t, i) => `
+              <button class="pd-thumb${i===0?' active':''}" type="button" data-idx="${i}" aria-label="${t.label}">
+                <img src="${imgBase}${t.src}" alt="${t.label}" style="${t.flip?'transform:scaleX(-1);':''}">
+              </button>
+            `).join('') : '';
+          }
 
-            // Re-attach thumb click handlers — DOM was rebuilt above.
-            const newCarousel = document.querySelector('carousel-3d');
-            document.querySelectorAll('.pd-thumb').forEach(t => {
-              t.addEventListener('click', () => {
-                document.querySelectorAll('.pd-thumb').forEach(x => x.classList.remove('active'));
-                t.classList.add('active');
-                const i = parseInt(t.dataset.idx, 10);
-                if (newCarousel && typeof newCarousel.setIdx === 'function') {
-                  newCarousel.setIdx(i);
-                  newCarousel.setMode('flat');
-                }
-              });
+          const stageWrap = document.querySelector('.pd-stage-wrap');
+          if (stageWrap) {
+            stageWrap.innerHTML = '<carousel-3d data-frames=\'' + attrJSON(g.eFramesData) + '\' data-img-base="' + imgBase + '" data-has360="' + g.eHas360 + '"></carousel-3d>';
+          }
+
+          // Re-wire thumb click + carousel sync — DOM was rebuilt above.
+          // Use thumbToFrameIdx so thumb i lands on the right ring slot.
+          const newCarousel = document.querySelector('carousel-3d');
+          const thumbs = document.querySelectorAll('.pd-thumb');
+          thumbs.forEach(t => {
+            t.addEventListener('click', () => {
+              thumbs.forEach(x => x.classList.remove('active'));
+              t.classList.add('active');
+              const i = parseInt(t.dataset.idx, 10);
+              if (newCarousel && typeof newCarousel.setIdx === 'function') {
+                newCarousel.setIdx(g.thumbToFrameIdx[i] || 0);
+                newCarousel.setMode('flat');
+              }
+            });
+          });
+          if (newCarousel) {
+            newCarousel.addEventListener('c3d:idx-change', (e) => {
+              const fi = e.detail && e.detail.idx;
+              if (typeof fi !== 'number') return;
+              const ti = g.thumbToFrameIdx.indexOf(fi);
+              thumbs.forEach((t, n) => t.classList.toggle('active', n === ti));
             });
           }
 
@@ -377,7 +409,7 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
             el.style.color = color.hex;
           });
 
-          // 6. own-images yok hint — pill on stage when fallback path used
+          // 6. empty-gallery hint — pill on stage when there's nothing to show
           const stageHost = document.querySelector('.pd-stage-wrap');
           if (stageHost) {
             let hint = stageHost.querySelector('.pdp-color-hint');
@@ -386,7 +418,7 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
               hint.className = 'pdp-color-hint';
               stageHost.appendChild(hint);
             }
-            if (!colorHasImages && !color.default) {
+            if (g.eFlatImages.length === 0) {
               hint.textContent = color.name.toLowerCase() + ' için fotoğraflar yakında';
               hint.classList.add('visible');
             } else {
@@ -642,7 +674,7 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
       section.removeAttribute('hidden');
     }
 
-    function wireInteractions(product) {
+    function wireInteractions(product, thumbToFrameIdx) {
       const logoEls = document.querySelectorAll('.header .logo-text');
       logoEls.forEach(el => el.style.color = product.color);
       // Old .swatch-product hover handlers were tied to the now-removed
@@ -659,7 +691,7 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
           t.classList.add('active');
           const i = parseInt(t.dataset.idx, 10);
           if (carousel && typeof carousel.setIdx === 'function') {
-            carousel.setIdx(i);
+            carousel.setIdx(thumbToFrameIdx[i] || 0);
             carousel.setMode('flat');
           }
         });
@@ -667,9 +699,10 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
 
       if (carousel) {
         carousel.addEventListener('c3d:idx-change', (e) => {
-          const i = e.detail && e.detail.idx;
-          if (typeof i !== 'number') return;
-          thumbs.forEach((t, n) => t.classList.toggle('active', n === i));
+          const fi = e.detail && e.detail.idx;
+          if (typeof fi !== 'number') return;
+          const ti = thumbToFrameIdx.indexOf(fi);
+          thumbs.forEach((t, n) => t.classList.toggle('active', n === ti));
         });
       }
 
