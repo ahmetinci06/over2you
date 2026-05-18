@@ -88,9 +88,10 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
     //   - eFlatImages falls back to images360 frame srcs when no flat
     //     images exist (very old data).
     //
-    // thumbToFrameIdx maps thumb index → carousel frame index. Without it
-    // a 2-thumb rail (front/back) over a 4-frame ring lands "back" on the
-    // ring's side-r instead of the actual back angle.
+    // eThumbs is the flat-mode source (rendered as both pd-thumbs rail and
+    // passed to carousel-3d as data-flat-frames). eFrames360 drives the
+    // separate 360 ring via data-frames. No thumb→ring index mapping —
+    // carousel-3d keeps two independent cursors (flatIdx, spinIdx).
     function effectiveGallery(product, color, baseImages, baseFrames360) {
       const isBase = !color || !!color.default;
       const colorHasImages = !!(color && Array.isArray(color.images) && color.images.length > 0);
@@ -103,12 +104,7 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
         const matched = eFrames360.find(f => f.src === src);
         return { src, label: (matched && matched.label) || ('View ' + (i+1)), flip: !!(matched && matched.flip) };
       });
-      const thumbToFrameIdx = eFlatImages.map(src => {
-        const i = eFrames360.findIndex(f => f.src === src);
-        return i >= 0 ? i : 0;
-      });
-      const eFramesData = eHas360 ? eFrames360 : eFlatImages;
-      return { eImages, eFrames360, eHas360, eFlatImages, eThumbs, thumbToFrameIdx, eFramesData };
+      return { eImages, eFrames360, eHas360, eFlatImages, eThumbs };
     }
 
     function render() {
@@ -163,7 +159,7 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
       `).join('') : '';
 
       const stageHTML =
-        `<carousel-3d data-frames='${attrJSON(g.eFramesData)}' data-img-base="${imgBase}" data-has360="${g.eHas360}"></carousel-3d>`;
+        `<carousel-3d data-flat-frames='${attrJSON(g.eThumbs)}' data-frames='${attrJSON(g.eFrames360)}' data-img-base="${imgBase}" data-has360="${g.eHas360}"></carousel-3d>`;
 
       layout.innerHTML = `
         <div class="product-breadcrumb" style="font-size:11px;color:rgb(var(--text-color)/0.4);margin-bottom:1.5rem;">
@@ -309,7 +305,7 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
         </section>
       `;
 
-      wireInteractions(product, g.thumbToFrameIdx);
+      wireInteractions(product);
       wireColorSwatches(product, variantColors, baseImages, baseFrames360, imgBase);
       wireLightbox(g.eThumbs, imgBase);
       wireBundle(product, list, imgBase);
@@ -352,11 +348,11 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
 
           const stageWrap = document.querySelector('.pd-stage-wrap');
           if (stageWrap) {
-            stageWrap.innerHTML = '<carousel-3d data-frames=\'' + attrJSON(g.eFramesData) + '\' data-img-base="' + imgBase + '" data-has360="' + g.eHas360 + '"></carousel-3d>';
+            stageWrap.innerHTML = '<carousel-3d data-flat-frames=\'' + attrJSON(g.eThumbs) + '\' data-frames=\'' + attrJSON(g.eFrames360) + '\' data-img-base="' + imgBase + '" data-has360="' + g.eHas360 + '"></carousel-3d>';
           }
 
           // Re-wire thumb click + carousel sync — DOM was rebuilt above.
-          // Use thumbToFrameIdx so thumb i lands on the right ring slot.
+          // Thumb idx now maps 1:1 to carousel.flatIdx (no off-by-N hack).
           const newCarousel = document.querySelector('carousel-3d');
           const thumbs = document.querySelectorAll('.pd-thumb');
           thumbs.forEach(t => {
@@ -365,17 +361,17 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
               t.classList.add('active');
               const i = parseInt(t.dataset.idx, 10);
               if (newCarousel && typeof newCarousel.setIdx === 'function') {
-                newCarousel.setIdx(g.thumbToFrameIdx[i] || 0);
                 newCarousel.setMode('flat');
+                newCarousel.setIdx(i);
               }
             });
           });
           if (newCarousel) {
             newCarousel.addEventListener('c3d:idx-change', (e) => {
-              const fi = e.detail && e.detail.idx;
+              if (!e.detail || e.detail.mode !== 'flat') return;
+              const fi = e.detail.idx;
               if (typeof fi !== 'number') return;
-              const ti = g.thumbToFrameIdx.indexOf(fi);
-              thumbs.forEach((t, n) => t.classList.toggle('active', n === ti));
+              thumbs.forEach((t, n) => t.classList.toggle('active', n === fi));
             });
           }
 
@@ -674,7 +670,7 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
       section.removeAttribute('hidden');
     }
 
-    function wireInteractions(product, thumbToFrameIdx) {
+    function wireInteractions(product) {
       const logoEls = document.querySelectorAll('.header .logo-text');
       logoEls.forEach(el => el.style.color = product.color);
       // Old .swatch-product hover handlers were tied to the now-removed
@@ -691,18 +687,18 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
           t.classList.add('active');
           const i = parseInt(t.dataset.idx, 10);
           if (carousel && typeof carousel.setIdx === 'function') {
-            carousel.setIdx(thumbToFrameIdx[i] || 0);
             carousel.setMode('flat');
+            carousel.setIdx(i);
           }
         });
       });
 
       if (carousel) {
         carousel.addEventListener('c3d:idx-change', (e) => {
-          const fi = e.detail && e.detail.idx;
+          if (!e.detail || e.detail.mode !== 'flat') return;
+          const fi = e.detail.idx;
           if (typeof fi !== 'number') return;
-          const ti = thumbToFrameIdx.indexOf(fi);
-          thumbs.forEach((t, n) => t.classList.toggle('active', n === ti));
+          thumbs.forEach((t, n) => t.classList.toggle('active', n === fi));
         });
       }
 

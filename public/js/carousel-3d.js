@@ -1,17 +1,23 @@
 /* <carousel-3d> — flat ↔ cylinder ring 360 viewer
  *
- * Accepted data-frames shapes:
- *   - object array (new schema):  [{ id, src, label, deg, flip }, ...]
- *   - string array (legacy):      ["products/foo.png", ...]
- *   - empty:                      [] → renders a "no image" placeholder
+ * Two independent frame sources:
+ *   - data-flat-frames (optional, object array): drives flat mode + thumbs.
+ *   - data-frames (object or string array): drives the 360 ring (spin).
  *
- * Per-N rendering:
- *   N=0      → placeholder, no toggle
- *   N=1      → flat single image, no toggle
- *   N=2..3   → flat with idx switching (driven by external thumb rail)
- *   N>=4     → flat default + 360 toggle, IF data-has360="true". Otherwise
- *              flat-only with idx switching (e.g. 4 plain images, no
- *              dedicated turntable shot).
+ * Backwards compat: if data-flat-frames is missing/empty, flat mode falls
+ * back to data-frames (single-source legacy behavior). Slot HTML and the
+ * cylinder ring always read from spinFrames (the data-frames source).
+ *
+ * State model:
+ *   - this.flatFrames / this.spinFrames — separate normalized arrays.
+ *   - this.flatIdx / this.spinIdx — separate cursors, preserved across
+ *     mode switches so closing 360 returns the user to where they were
+ *     in flat (and vice versa).
+ *   - this.has360 = (data-has360 === 'true') && spinFrames.length >= 4.
+ *
+ * Events:
+ *   c3d:idx-change   detail: { idx, mode, frame }   — idx is mode-local.
+ *   c3d:mode-change  detail: { idx, mode, frame }   — idx is the new mode's.
  *
  * NOTE: attribute is data-has360 (no hyphen before the digit). HTML's dataset
  *       translation only converts hyphen+lowercase-letter to camelCase, so a
@@ -67,16 +73,21 @@
       if (this._mounted) return;
       this._mounted = true;
 
-      this.frames = normalizeFrames(this.dataset.frames);
+      const parsedFlat = normalizeFrames(this.dataset.flatFrames);
+      const parsedSpin = normalizeFrames(this.dataset.frames);
+      this.spinFrames = parsedSpin;
+      this.flatFrames = parsedFlat.length > 0 ? parsedFlat : parsedSpin;
+
       this.imgBase = this.dataset.imgBase || '';
       // dataset.has360 reads the data-has360 attribute (note: no hyphen before
       // the digit, otherwise dataset translation breaks — see header comment).
-      this.has360 = this.dataset.has360 === 'true' && this.frames.length >= 4;
-      this.idx = 0;
+      this.has360 = this.dataset.has360 === 'true' && this.spinFrames.length >= 4;
+      this.flatIdx = 0;
+      this.spinIdx = 0;
       this.mode = 'flat';
       this.isMobile = window.matchMedia('(max-width: 768px)').matches;
 
-      if (!this.frames.length) { this._renderEmpty(); return; }
+      if (!this.flatFrames.length && !this.spinFrames.length) { this._renderEmpty(); return; }
 
       this._renderShell();
       this._renderModeView();
@@ -107,9 +118,21 @@
       if (this._ro) { this._ro.disconnect(); this._ro = null; }
     }
 
+    // Mode-local accessors. Public read-only `frames` / `idx` getters are
+    // kept for external callers (lightbox, eyeball scripts) that previously
+    // peeked at the single-array state model.
+    _frames() { return this.mode === '360' ? this.spinFrames : this.flatFrames; }
+    _idx()    { return this.mode === '360' ? this.spinIdx    : this.flatIdx; }
+    get frames() { return this._frames(); }
+    get idx()    { return this._idx(); }
+
     setIdx(i) {
-      const N = this.frames.length;
-      this.idx = ((i % N) + N) % N;
+      const frames = this._frames();
+      const N = frames.length;
+      if (N === 0) return;
+      const newIdx = ((i % N) + N) % N;
+      if (this.mode === '360') this.spinIdx = newIdx;
+      else this.flatIdx = newIdx;
       this._renderModeView();
       this._renderDots();
       this._preloadAdjacent();
@@ -117,11 +140,13 @@
     }
 
     _preloadAdjacent() {
-      const N = this.frames.length;
+      const frames = this._frames();
+      const N = frames.length;
       if (N <= 1) return;
-      [this.idx - 1, this.idx + 1].forEach(j => {
+      const idx = this._idx();
+      [idx - 1, idx + 1].forEach(j => {
         const k = ((j % N) + N) % N;
-        const f = this.frames[k];
+        const f = frames[k];
         if (!f || !f.src) return;
         const img = new Image();
         img.src = this.imgBase + f.src;
@@ -131,20 +156,24 @@
     setMode(mode) {
       if (mode !== 'flat' && mode !== '360') return;
       if (mode === '360' && !this.has360) return;
+      if (this.mode === mode) return;
       this.mode = mode;
       this._renderModeView();
+      this._renderDots();
       this._emit('mode-change');
     }
 
     _emit(name) {
+      const frames = this._frames();
+      const idx = this._idx();
       this.dispatchEvent(new CustomEvent('c3d:' + name, {
-        detail: { idx: this.idx, mode: this.mode, frame: this.frames[this.idx] },
+        detail: { idx: idx, mode: this.mode, frame: frames[idx] },
         bubbles: true,
       }));
     }
 
     _renderShell() {
-      const slotsHTML = this.has360 ? this.frames.map((f, i) => `
+      const slotsHTML = this.has360 ? this.spinFrames.map((f, i) => `
         <button class="c3d-slot" type="button" data-slot="${i}" aria-label="View ${f.label || ('frame ' + (i+1))}">
           <img src="${this.imgBase}${f.src}" alt="${f.label || ''}"
                draggable="false"
@@ -186,13 +215,13 @@
 
       const al = this.querySelector('.c3d-arrow-l');
       const ar = this.querySelector('.c3d-arrow-r');
-      if (al) al.addEventListener('click', () => this.setIdx(this.idx - 1));
-      if (ar) ar.addEventListener('click', () => this.setIdx(this.idx + 1));
+      if (al) al.addEventListener('click', () => this.setIdx(this.spinIdx - 1));
+      if (ar) ar.addEventListener('click', () => this.setIdx(this.spinIdx + 1));
 
       this.querySelectorAll('.c3d-slot').forEach(slot => {
         slot.addEventListener('click', () => {
           const i = parseInt(slot.dataset.slot, 10);
-          if (i !== this.idx) this.setIdx(i);
+          if (i !== this.spinIdx) this.setIdx(i);
         });
       });
     }
@@ -203,7 +232,9 @@
       const ring = this.querySelector('.c3d-360');
       const lbl = this.querySelector('.c3d-toggle .c3d-lbl');
       const counter = this.querySelector('.c3d-counter');
-      const cur = this.frames[this.idx];
+      const frames = this._frames();
+      const idx = this._idx();
+      const cur = frames[idx];
       if (!stage || !flat || !cur) return;
 
       stage.dataset.mode = this.mode;
@@ -228,18 +259,20 @@
         this._updateSlotPositions();
         if (counter) {
           counter.textContent =
-            String(this.idx + 1).padStart(2, '0') + ' / ' +
-            String(this.frames.length).padStart(2, '0') +
+            String(idx + 1).padStart(2, '0') + ' / ' +
+            String(this.spinFrames.length).padStart(2, '0') +
             (cur.label ? ' · ' + cur.label : '');
         }
       }
     }
 
     _updateSlotPositions() {
-      const N = this.frames.length;
+      const N = this.spinFrames.length;
+      if (N === 0) return;
+      const idx = this.spinIdx;
       this.querySelectorAll('.c3d-slot').forEach(slot => {
         const i = parseInt(slot.dataset.slot, 10);
-        let d = ((i - this.idx) % N + N) % N;
+        let d = ((i - idx) % N + N) % N;
         if (d > N / 2) d -= N;
 
         const p = POS[d];
@@ -277,14 +310,13 @@
         if (lb && !lb.hasAttribute('hidden')) return;
 
         if (this.mode === '360') {
-          if (e.key === 'ArrowRight') { e.preventDefault(); this.setIdx(this.idx + 1); }
-          else if (e.key === 'ArrowLeft') { e.preventDefault(); this.setIdx(this.idx - 1); }
+          if (e.key === 'ArrowRight') { e.preventDefault(); this.setIdx(this.spinIdx + 1); }
+          else if (e.key === 'ArrowLeft') { e.preventDefault(); this.setIdx(this.spinIdx - 1); }
           else if (e.key === 'Escape') { e.preventDefault(); this.setMode('flat'); }
         } else {
-          // Flat mode: navigate the image list (only meaningful for multi-frame).
-          if (this.frames.length <= 1) return;
-          if (e.key === 'ArrowRight') { e.preventDefault(); this.setIdx(this.idx + 1); }
-          else if (e.key === 'ArrowLeft') { e.preventDefault(); this.setIdx(this.idx - 1); }
+          if (this.flatFrames.length <= 1) return;
+          if (e.key === 'ArrowRight') { e.preventDefault(); this.setIdx(this.flatIdx + 1); }
+          else if (e.key === 'ArrowLeft') { e.preventDefault(); this.setIdx(this.flatIdx - 1); }
         }
       };
       window.addEventListener('keydown', this._keyHandler);
@@ -294,11 +326,11 @@
       const dotsEl = this.querySelector('.c3d-dots');
       if (!dotsEl) return;
       // Mobile-only, flat-mode-only, multi-image-only.
-      const showDots = this.isMobile && this.mode === 'flat' && this.frames.length > 1;
+      const showDots = this.isMobile && this.mode === 'flat' && this.flatFrames.length > 1;
       dotsEl.hidden = !showDots;
       if (!showDots) return;
-      dotsEl.innerHTML = this.frames.map((_, i) =>
-        `<button class="c3d-dot${i === this.idx ? ' active' : ''}" type="button" data-dot="${i}" aria-label="Görsel ${i + 1}"></button>`
+      dotsEl.innerHTML = this.flatFrames.map((_, i) =>
+        `<button class="c3d-dot${i === this.flatIdx ? ' active' : ''}" type="button" data-dot="${i}" aria-label="Görsel ${i + 1}"></button>`
       ).join('');
       dotsEl.querySelectorAll('.c3d-dot').forEach(d => {
         d.addEventListener('click', () => this.setIdx(parseInt(d.dataset.dot, 10)));
@@ -311,7 +343,7 @@
       let startX = 0, startY = 0, deltaX = 0, isHoriz = false;
 
       flat.addEventListener('touchstart', (e) => {
-        if (this.mode !== 'flat' || this.frames.length <= 1) return;
+        if (this.mode !== 'flat' || this.flatFrames.length <= 1) return;
         startX = e.touches[0].clientX;
         startY = e.touches[0].clientY;
         deltaX = 0;
@@ -319,7 +351,7 @@
       }, { passive: true });
 
       flat.addEventListener('touchmove', (e) => {
-        if (this.mode !== 'flat' || this.frames.length <= 1) return;
+        if (this.mode !== 'flat' || this.flatFrames.length <= 1) return;
         deltaX = e.touches[0].clientX - startX;
         const dy = e.touches[0].clientY - startY;
         if (!isHoriz && Math.abs(deltaX) > 8 && Math.abs(deltaX) > Math.abs(dy)) {
@@ -332,7 +364,7 @@
       flat.addEventListener('touchend', () => {
         if (this.mode !== 'flat' || !isHoriz) return;
         if (Math.abs(deltaX) > 50) {
-          this.setIdx(deltaX < 0 ? this.idx + 1 : this.idx - 1);
+          this.setIdx(deltaX < 0 ? this.flatIdx + 1 : this.flatIdx - 1);
         }
         deltaX = 0;
         isHoriz = false;
