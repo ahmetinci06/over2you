@@ -287,8 +287,12 @@
         slot.style.opacity = String(p.o);
         slot.style.zIndex = String(p.z);
         slot.style.transition = TRANSITION;
-        slot.style.pointerEvents = isActive ? 'none' : 'auto';
-        slot.style.cursor = isActive ? 'default' : 'pointer';
+        // Active slot keeps pointer-events enabled so taps bubble out to the
+        // PDP-level click delegation (G3-C: mobile tap → open lightbox over
+        // spin frames). Internal slot click handler stays no-op when
+        // i === spinIdx, so re-clicking the centre frame doesn't churn idx.
+        slot.style.pointerEvents = 'auto';
+        slot.style.cursor = isActive ? 'zoom-in' : 'pointer';
         slot.classList.toggle('c3d-slot-active', isActive);
       });
     }

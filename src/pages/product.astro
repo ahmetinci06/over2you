@@ -530,34 +530,64 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
       const nextBtn = lb.querySelector('.lightbox-next');
       const closeBtn = lb.querySelector('.lightbox-close');
 
-      let thumbs = (initialThumbs || []).slice();
+      // Two thumb lists: baseThumbs reflects the PDP gallery (flat + showcase
+      // concat), displayThumbs is what the lightbox is currently navigating.
+      // open(at, overrideFrames) sets displayThumbs to the override (e.g.
+      // 360 spin frames) for that session; close() restores it.
+      let baseThumbs = (initialThumbs || []).slice();
+      let displayThumbs = baseThumbs;
       let base = imgBase;
       let idx = 0;
       let isOpen = false;
       let pinchScale = 1;
+      let panX = 0, panY = 0;
+      let baseW = 0, baseH = 0;
 
+      function applyTransform() {
+        const t = displayThumbs[idx];
+        const flipped = !!(t && t.flip);
+        const flipPrefix = flipped ? 'scaleX(-1) ' : '';
+        if (pinchScale === 1 && panX === 0 && panY === 0) {
+          img.style.transform = flipPrefix.trim();
+          return;
+        }
+        img.style.transform = flipPrefix + 'translate(' + panX + 'px,' + panY + 'px) scale(' + pinchScale + ')';
+      }
       function resetZoom() {
         pinchScale = 1;
-        img.style.transform = '';
+        panX = panY = 0;
+        img.style.transition = '';
+        applyTransform();
+      }
+      function clampPan() {
+        // Boundary keeps the zoomed image from drifting past the visible area
+        // on either axis. Uses offsetWidth/Height (layout box) so the math
+        // isn't poisoned by the currently-applied transform.
+        const w = baseW || img.offsetWidth || 1;
+        const h = baseH || img.offsetHeight || 1;
+        const overflowX = (w * (pinchScale - 1)) / 2;
+        const overflowY = (h * (pinchScale - 1)) / 2;
+        panX = Math.max(-overflowX, Math.min(overflowX, panX));
+        panY = Math.max(-overflowY, Math.min(overflowY, panY));
       }
 
       function update() {
-        const t = thumbs[idx];
+        const t = displayThumbs[idx];
         if (!t) return;
         img.src = base + t.src;
         img.alt = t.label || '';
-        // base flip preserves; pinch reset on image change.
+        // Image change always resets pan + zoom; flip stays via applyTransform.
         resetZoom();
-        if (t.flip) img.style.transform = 'scaleX(-1)';
-        const single = thumbs.length <= 1;
-        if (counter) counter.textContent = thumbs.length > 0 ? (idx + 1) + ' / ' + thumbs.length : '';
+        const single = displayThumbs.length <= 1;
+        if (counter) counter.textContent = displayThumbs.length > 0 ? (idx + 1) + ' / ' + displayThumbs.length : '';
         prevBtn.style.visibility = (single || idx === 0) ? 'hidden' : 'visible';
-        nextBtn.style.visibility = (single || idx === thumbs.length - 1) ? 'hidden' : 'visible';
+        nextBtn.style.visibility = (single || idx === displayThumbs.length - 1) ? 'hidden' : 'visible';
       }
 
-      function open(at) {
-        if (!thumbs.length) return;
-        idx = Math.max(0, Math.min(thumbs.length - 1, at || 0));
+      function open(at, overrideFrames) {
+        displayThumbs = (overrideFrames && overrideFrames.length) ? overrideFrames.slice() : baseThumbs;
+        if (!displayThumbs.length) return;
+        idx = Math.max(0, Math.min(displayThumbs.length - 1, at || 0));
         update();
         lb.removeAttribute('hidden');
         document.body.style.overflow = 'hidden';
@@ -567,20 +597,38 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
         lb.setAttribute('hidden', '');
         document.body.style.overflow = '';
         isOpen = false;
+        displayThumbs = baseThumbs;
         resetZoom();
       }
 
-      // Pinch-to-zoom (mobile) + double-tap reset.
+      // Touch handling: 2-finger pinch (scale 1-4) + 1-finger pan when zoomed.
+      // touch-action:none on .pdp-lightbox guarantees no native browser pan
+      // or pinch interferes, so JS owns every gesture.
       let startDist = 0;
       let startScale = 1;
+      let startPanX = 0, startPanY = 0;
+      let lastPanX = 0, lastPanY = 0;
+      let isPanning = false;
       let lastTap = 0;
       function dist(touches) {
         return Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
       }
       img.addEventListener('touchstart', (e) => {
+        img.style.transition = 'none';
         if (e.touches.length === 2) {
           startDist = dist(e.touches);
           startScale = pinchScale;
+          // Capture base size once per pinch — offsetWidth/Height ignore the
+          // current transform, so clamp math stays correct as scale grows.
+          baseW = img.offsetWidth;
+          baseH = img.offsetHeight;
+          isPanning = false;
+        } else if (e.touches.length === 1 && pinchScale > 1) {
+          startPanX = e.touches[0].clientX;
+          startPanY = e.touches[0].clientY;
+          lastPanX = panX;
+          lastPanY = panY;
+          isPanning = true;
         }
       }, { passive: true });
       img.addEventListener('touchmove', (e) => {
@@ -588,13 +636,30 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
           e.preventDefault();
           const ratio = dist(e.touches) / startDist;
           pinchScale = Math.max(1, Math.min(4, startScale * ratio));
-          const flip = thumbs[idx] && thumbs[idx].flip ? 'scaleX(-1)' : '';
-          img.style.transform = (flip ? flip + ' ' : '') + 'scale(' + pinchScale + ')';
+          // Pinching down to 1 also drops pan — image should snap back home.
+          if (pinchScale === 1) { panX = 0; panY = 0; }
+          else clampPan();
+          applyTransform();
+        } else if (e.touches.length === 1 && isPanning && pinchScale > 1) {
+          e.preventDefault();
+          const t = displayThumbs[idx];
+          const flipped = !!(t && t.flip);
+          // Mirror axis flips horizontal motion in the transform composition,
+          // so invert dx for flipped frames to keep "finger left → image left".
+          const dx = e.touches[0].clientX - startPanX;
+          const dy = e.touches[0].clientY - startPanY;
+          panX = lastPanX + (flipped ? -dx : dx);
+          panY = lastPanY + dy;
+          clampPan();
+          applyTransform();
         }
       }, { passive: false });
       img.addEventListener('touchend', (e) => {
         if (e.touches.length < 2) startDist = 0;
-        // Double-tap reset.
+        if (e.touches.length < 1) isPanning = false;
+        // Re-enable the smooth transition for resetZoom + image change.
+        img.style.transition = '';
+        // Double-tap reset (single-finger tap pair within 300ms while zoomed).
         if (e.changedTouches.length === 1 && e.touches.length === 0) {
           const now = Date.now();
           if (now - lastTap < 300 && pinchScale > 1) resetZoom();
@@ -603,7 +668,7 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
       });
 
       prevBtn.addEventListener('click', () => { if (idx > 0) { idx--; update(); } });
-      nextBtn.addEventListener('click', () => { if (idx < thumbs.length - 1) { idx++; update(); } });
+      nextBtn.addEventListener('click', () => { if (idx < displayThumbs.length - 1) { idx++; update(); } });
       closeBtn.addEventListener('click', close);
       lb.addEventListener('click', (e) => { if (e.target === lb) close(); });
 
@@ -611,29 +676,42 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
         if (!isOpen) return;
         if (e.key === 'Escape') { e.preventDefault(); close(); }
         else if (e.key === 'ArrowLeft' && idx > 0) { e.preventDefault(); idx--; update(); }
-        else if (e.key === 'ArrowRight' && idx < thumbs.length - 1) { e.preventDefault(); idx++; update(); }
+        else if (e.key === 'ArrowRight' && idx < displayThumbs.length - 1) { e.preventDefault(); idx++; update(); }
       });
 
-      // Click on the flat-mode main image (.c3d-flat inside carousel-3d) opens
-      // the lightbox at the carousel's current idx. Delegated on .pd-stage-wrap
-      // so re-rendered carousel-3d (color switch) still works.
+      // Click delegation on .pd-stage-wrap: tap on .c3d-flat opens lightbox at
+      // the carousel's flat idx. In 360 mode a tap on the centre slot
+      // (.c3d-slot-active) opens lightbox over the spin frames instead, so
+      // mobile users get pinch + pan on the 360 frame they were viewing.
       const stageWrap = document.querySelector('.pd-stage-wrap');
       if (stageWrap) {
         stageWrap.addEventListener('click', (e) => {
-          if (!e.target.closest('.c3d-flat')) return;
           const carousel = document.querySelector('carousel-3d');
-          const at = (carousel && typeof carousel.idx === 'number') ? carousel.idx : 0;
-          open(at);
+          if (!carousel) return;
+          if (e.target.closest('.c3d-flat')) {
+            const at = (typeof carousel.idx === 'number') ? carousel.idx : 0;
+            open(at);
+          } else if (carousel.mode === '360' && e.target.closest('.c3d-slot.c3d-slot-active')) {
+            const at = (typeof carousel.spinIdx === 'number') ? carousel.spinIdx : 0;
+            open(at, carousel.spinFrames);
+          }
         });
       }
 
-      // Color switch updates this state via window.__pdpLightboxSet.
+      // Color switch updates baseThumbs via window.__pdpLightboxSet. If the
+      // lightbox is closed (or showing baseThumbs) we adopt the new list
+      // immediately; if it's open over an override (360 spin), we leave the
+      // override alone and let close() restore.
       window.__pdpLightboxSet = (newThumbs, newBase) => {
-        thumbs = (newThumbs || []).slice();
+        baseThumbs = (newThumbs || []).slice();
         if (newBase) base = newBase;
-        if (isOpen) {
-          idx = Math.min(idx, Math.max(0, thumbs.length - 1));
-          update();
+        const showingBase = displayThumbs === baseThumbs || !isOpen;
+        if (showingBase) {
+          displayThumbs = baseThumbs;
+          if (isOpen) {
+            idx = Math.min(idx, Math.max(0, displayThumbs.length - 1));
+            update();
+          }
         }
       };
     }
@@ -1427,6 +1505,11 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
   }
   /* C3D flat-mode container becomes clickable for lightbox. */
   .pd-stage-wrap .c3d-flat { cursor: zoom-in; }
+  /* Mobile gesture routing: vertical scroll belongs to the page, horizontal
+     belongs to _setupSwipe in carousel-3d.js. Without this the diagonal
+     touchmove can start scrolling the page before the JS handler decides
+     the gesture was horizontal, leaving the user stuck mid-swipe. */
+  .c3d-stage, .c3d-flat { touch-action: pan-y; }
 
   /* Hover magnify lens — desktop only, hidden by media query on touch. */
   .magnify-lens {
@@ -1478,6 +1561,15 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
     display: flex;
     align-items: center;
     justify-content: center;
+    /* Mobile gesture isolation: page underneath cannot scroll, pull-to-refresh
+       is killed, every touch on the modal is handled by JS (none = no native
+       pan/pinch/zoom). lightbox-img inherits the same lockdown. */
+    overscroll-behavior: contain;
+    touch-action: none;
+    /* Clip the zoomed image inside the modal so the (scale 3) visual cannot
+       overflow on top of close/prev/next/counter — those need to stay
+       interactive at any zoom level. */
+    overflow: hidden;
   }
   .pdp-lightbox[hidden] { display: none; }
   .pdp-lightbox .lightbox-img {
@@ -1487,7 +1579,7 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
     user-select: none;
     -webkit-user-drag: none;
     transform-origin: center center;
-    touch-action: pan-y pinch-zoom;
+    touch-action: none;
     transition: transform 0.18s ease;
   }
   .pdp-lightbox button {
@@ -1507,6 +1599,7 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
     height: 44px;
     border-radius: 50%;
     transition: background 0.2s;
+    z-index: 2;
   }
   .pdp-lightbox .lightbox-close:hover { background: rgba(255, 255, 255, 0.1); }
   .pdp-lightbox .lightbox-prev,
@@ -1518,6 +1611,7 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
     padding: 8px 18px;
     border-radius: 4px;
     transition: background 0.2s;
+    z-index: 2;
   }
   .pdp-lightbox .lightbox-prev:hover,
   .pdp-lightbox .lightbox-next:hover { background: rgba(255, 255, 255, 0.1); }
@@ -1531,6 +1625,7 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
     color: rgba(255, 255, 255, 0.75);
     font-size: 13px;
     letter-spacing: 0.06em;
+    z-index: 2;
   }
   @media (max-width: 600px) {
     .pdp-lightbox .lightbox-close { top: 12px; right: 12px; font-size: 30px; width: 40px; height: 40px; }
