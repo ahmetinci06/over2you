@@ -82,29 +82,43 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
     //     duplicate base.images360).
     //   - non-default color without own images360 → empty (no cross-color
     //     leak; carousel-3d hides toggle when data-has360="false" or
-    //     frames.length < 4).
+    //     frames.length < 2).
     //   - eImages always falls back to baseImages — flat photos are shared
     //     when a color hasn't been re-shot.
     //   - eFlatImages falls back to images360 frame srcs when no flat
     //     images exist (very old data).
     //
+    // Mode (G6-PR3):
+    //   - 'rotation' (default): cylinder ring toggle visible; frames.length
+    //     >= 2 enables 360 spin (was >= 4, partial-upload now allowed).
+    //   - 'showcase': cylinder ring disabled (eHas360 forced false). The
+    //     images360 frame srcs are concatenated into eFlatImages so the
+    //     storefront thumb rail shows every shot side-by-side. Dedup keeps
+    //     a shared src from doubling. Per-color override lives on
+    //     color.images360Mode; product-level on product.images360Mode.
+    //
     // eThumbs is the flat-mode source (rendered as both pd-thumbs rail and
     // passed to carousel-3d as data-flat-frames). eFrames360 drives the
-    // separate 360 ring via data-frames. No thumb→ring index mapping —
-    // carousel-3d keeps two independent cursors (flatIdx, spinIdx).
+    // separate 360 ring via data-frames when eHas360. No thumb→ring index
+    // mapping — carousel-3d keeps two independent cursors.
     function effectiveGallery(product, color, baseImages, baseFrames360) {
       const isBase = !color || !!color.default;
       const colorHasImages = !!(color && Array.isArray(color.images) && color.images.length > 0);
       const colorHas360    = !!(color && Array.isArray(color.images360) && color.images360.length > 0);
       const eImages    = colorHasImages ? color.images : baseImages;
       const eFrames360 = colorHas360    ? color.images360 : (isBase ? baseFrames360 : []);
-      const eHas360    = eFrames360.length >= 4 && eFrames360.every(f => f && typeof f === 'object' && f.src);
-      const eFlatImages = eImages.length > 0 ? eImages : eFrames360.map(f => f.src);
+      const mode = (color && color.images360Mode) || product.images360Mode || 'rotation';
+      const validFrames = eFrames360.length >= 2 && eFrames360.every(f => f && typeof f === 'object' && f.src);
+      const eHas360    = mode !== 'showcase' && validFrames;
+      const baseFlat   = eImages.length > 0 ? eImages : eFrames360.map(f => f.src);
+      const eFlatImages = (mode === 'showcase' && validFrames)
+        ? [...baseFlat, ...eFrames360.filter(f => !baseFlat.includes(f.src)).map(f => f.src)]
+        : baseFlat;
       const eThumbs = eFlatImages.map((src, i) => {
         const matched = eFrames360.find(f => f.src === src);
         return { src, label: (matched && matched.label) || ('View ' + (i+1)), flip: !!(matched && matched.flip) };
       });
-      return { eImages, eFrames360, eHas360, eFlatImages, eThumbs };
+      return { eImages, eFrames360, eHas360, eFlatImages, eThumbs, mode };
     }
 
     function render() {

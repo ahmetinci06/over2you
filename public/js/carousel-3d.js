@@ -13,7 +13,8 @@
  *   - this.flatIdx / this.spinIdx — separate cursors, preserved across
  *     mode switches so closing 360 returns the user to where they were
  *     in flat (and vice versa).
- *   - this.has360 = (data-has360 === 'true') && spinFrames.length >= 4.
+ *   - this.has360 = (data-has360 === 'true') && spinFrames.length >= 2.
+ *     (Was >= 4 before partial-upload support — see G6-PR3.)
  *
  * Events:
  *   c3d:idx-change   detail: { idx, mode, frame }   — idx is mode-local.
@@ -81,7 +82,7 @@
       this.imgBase = this.dataset.imgBase || '';
       // dataset.has360 reads the data-has360 attribute (note: no hyphen before
       // the digit, otherwise dataset translation breaks — see header comment).
-      this.has360 = this.dataset.has360 === 'true' && this.spinFrames.length >= 4;
+      this.has360 = this.dataset.has360 === 'true' && this.spinFrames.length >= 2;
       this.flatIdx = 0;
       this.spinIdx = 0;
       this.mode = 'flat';

@@ -207,7 +207,8 @@
     }
 
     /* 360° angle slot grid (4 fixed slots: front, side-r, back, side-l) */
-    .img360-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-top: 0.5rem; }
+    .img360-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.5rem; margin-top: 0.5rem; }
+    .img360-slot-label { position: absolute; left: 4px; right: 4px; bottom: 30px; padding: 3px 6px; font-size: 10px; font-weight: 600; border: 1px solid var(--border); border-radius: 3px; background: rgba(255,255,255,0.95); color: var(--text); z-index: 2; box-sizing: border-box; }
     .img360-slot { aspect-ratio: 3 / 4; border: 2px dashed var(--border); border-radius: 6px; position: relative; cursor: pointer; overflow: hidden; background: #fafafa; transition: border-color 0.15s; }
     .img360-slot:hover { border-color: var(--accent); }
     .img360-slot.has-image { border-style: solid; border-color: var(--accent); }
@@ -223,7 +224,8 @@
     .color-thumb-flip { position: absolute; bottom: 2px; right: 2px; width: 16px; height: 16px; background: rgba(255,255,255,0.92); color: var(--text); border: 1px solid var(--border); border-radius: 50%; font-size: 10px; cursor: pointer; line-height: 1; padding: 0; display: flex; align-items: center; justify-content: center; z-index: 2; }
     .color-thumb-flip.on { background: var(--accent); color: #fff; border-color: var(--accent); }
     .img360-hint { font-size: 11px; color: var(--muted); margin-top: 0.5rem; }
-    @media (max-width: 600px) { .img360-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 768px) { .img360-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 480px) { .img360-grid { grid-template-columns: repeat(2, 1fr); } }
 
     /* Login */
     .login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem; }
@@ -504,11 +506,19 @@
     </details>
 
     <details class="form-section">
-      <summary>360° Fotolar</summary>
+      <summary>360° / Showcase Fotolar</summary>
       <div class="form-section-body">
-        <div class="form-row single"><div class="form-group"><label>360° View — 4 angle shots (optional)</label>
+        <div class="form-row single"><div class="form-group">
+          <label>Mod</label>
+          <select id="p_360_mode" onchange="setEdit360Mode(this.value)">
+            <option value="rotation">Rotation — cylinder 360 toggle (2-6 görsel)</option>
+            <option value="showcase">Showcase — thumb rail concat (toggle gizli)</option>
+          </select>
+          <p class="img360-hint" id="img360ModeHint" style="margin-top:6px;">Rotation: 2-6 görsel yükleyin; daha fazla görsel pürüzsüz rotation sağlar. Eşit aralıklı yerleştirilir.</p>
+        </div></div>
+        <div class="form-row single"><div class="form-group"><label>Görseller — en az 2, en çok 6</label>
           <div class="img360-grid" id="img360Grid"></div>
-          <p class="img360-hint">All 4 slots required for the 360° viewer to enable. Use transparent PNGs.</p>
+          <p class="img360-hint" id="img360CountHint">Minimum 2 görsel gerekli. Boş slot atlanır.</p>
         </div></div>
       </div>
     </details>
@@ -665,29 +675,34 @@ function authHeaders(extra) {
   return extra ? Object.assign(h, extra) : h;
 }
 
-// 360° angle slot definitions (must match storefront's expectations).
-// `flip` is no longer hardcoded per slot — it now defaults to false and the
-// admin user toggles it per slot via the "Aynala" checkbox. Save serialize
-// reads runtime slot.flip, not def.flip.
-const SLOT_DEFS = [
-  { id: 'front',  label: 'FRONT', deg: '0°',   flip: false },
-  { id: 'side-r', label: '3/4 R', deg: '90°',  flip: false },
-  { id: 'back',   label: 'BACK',  deg: '180°', flip: false },
-  { id: 'side-l', label: '3/4 L', deg: '270°', flip: false }
-];
+// 360° angle slot template — 6 generic frames, no hardcoded label/deg/flip.
+// In rotation mode the storefront ring spaces frames evenly (deg computed at
+// save time from filledCount: i * 360 / N). In showcase mode the admin types
+// free-form labels per slot (preserved on save, ignored by the storefront —
+// thumb rail concats images + images360 instead of opening the ring toggle).
+// `flip` defaults to false everywhere; user toggles per slot via "Aynala".
+const SLOT_COUNT = 6;
+const SLOT_DEFS = Array.from({ length: SLOT_COUNT }, (_, i) => ({
+  id: 'frame-' + i,
+  label: '',
+  flip: false
+}));
 
 // Pending state for the product modal:
 //   editImages: array of { src: 'products/foo.png', file?: File } — File present when not yet uploaded
 //   edit360Slots: 4 entries (one per SLOT_DEFS), each null OR { src, file?, flip }
 //   editColors: array of { id, name, hex, default, ... advanced fields filled in turn 10 commit 5 }
 let editImages = [];
-let edit360Slots = [null, null, null, null];
+let edit360Slots = Array(SLOT_COUNT).fill(null);
 let editColors = [];
 let editCategories = [];
 let editTags = [];
 // Top-level size→qty map; populated when product has no colors[]. Per-color
 // sizeStock lives on editColors[i].sizeStock (sibling of stock/priceOverride).
 let editSizeStock = {};
+// 'rotation' (cylinder ring) or 'showcase' (concat thumb rail, toggle hidden).
+// Per-color override lives on editColors[i].images360Mode.
+let edit360Mode = 'rotation';
 
 // ===== CHIP INPUT (shared by categories + tags) =====
 // ===== FORM PREVIEW (side panel) =====
@@ -1151,7 +1166,7 @@ function openProductModal(product) {
   document.getElementById('productModal').classList.add('open');
   document.getElementById('modalTitle').textContent = product ? 'Edit Product' : 'Add Product';
   editImages = [];
-  edit360Slots = [null, null, null, null];
+  edit360Slots = Array(SLOT_COUNT).fill(null);
   if (product) {
     document.getElementById('p_id').value = product.id;
     document.getElementById('p_name').value = product.name;
@@ -1178,22 +1193,29 @@ function openProductModal(product) {
     document.getElementById('p_bundleWith').value = Array.isArray(product.bundleWith) ? product.bundleWith.join(', ') : '';
     document.getElementById('p_description').value = product.description || '';
     editImages = (product.images || []).map(src => ({ src, file: null }));
-    if (Array.isArray(product.images360) && product.images360.length === 4) {
-      edit360Slots = SLOT_DEFS.map((def, i) => {
+    if (Array.isArray(product.images360) && product.images360.length >= 2 && product.images360.length <= SLOT_COUNT) {
+      // Pad up to SLOT_COUNT — existing entries map 1:1, empty trailing slots
+      // remain null so the admin can add more without re-uploading anything.
+      edit360Slots = Array.from({ length: SLOT_COUNT }, (_, i) => {
         const f = product.images360[i];
-        return f && f.src ? { src: f.src, file: null, flip: !!f.flip } : null;
+        return f && f.src ? { src: f.src, file: null, flip: !!f.flip, label: f.label || '' } : null;
       });
     }
     editColors = Array.isArray(product.colors) ? product.colors.map(c => ({
       ...c,
       advanced: !!(c.images || c.images360 || typeof c.stock === 'number' || typeof c.priceOverride === 'number' || (c.sizeStock && Object.keys(c.sizeStock).length > 0)),
       colorImages: Array.isArray(c.images) ? c.images.map(src => ({ src, file: null })) : [],
-      color360: Array.isArray(c.images360) && c.images360.length === 4
-        ? c.images360.map(f => f && f.src ? { src: f.src, file: null, flip: !!f.flip } : null)
-        : [null, null, null, null],
+      color360: Array.isArray(c.images360) && c.images360.length >= 2 && c.images360.length <= SLOT_COUNT
+        ? Array.from({ length: SLOT_COUNT }, (_, i) => {
+            const f = c.images360[i];
+            return f && f.src ? { src: f.src, file: null, flip: !!f.flip, label: f.label || '' } : null;
+          })
+        : Array(SLOT_COUNT).fill(null),
       sizeStock: (c.sizeStock && typeof c.sizeStock === 'object') ? { ...c.sizeStock } : {},
+      images360Mode: c.images360Mode || 'rotation',
     })) : [];
     editSizeStock = (product.sizeStock && typeof product.sizeStock === 'object') ? { ...product.sizeStock } : {};
+    edit360Mode = product.images360Mode || 'rotation';
   } else {
     document.getElementById('p_id').value = '';
     document.querySelectorAll('#productModal input:not([type=hidden]):not([type=color]):not([type=file]), #productModal textarea').forEach(i => i.value = '');
@@ -1203,9 +1225,13 @@ function openProductModal(product) {
     editCategories = [];
     editTags = [];
     editSizeStock = {};
+    edit360Mode = 'rotation';
   }
+  const modeSelect = document.getElementById('p_360_mode');
+  if (modeSelect) modeSelect.value = edit360Mode;
   renderImageThumbs();
   render360Slots();
+  setEdit360Mode(edit360Mode);
   renderColorList();
   renderSizeStockGrid();
   renderChips('category');
@@ -1275,7 +1301,7 @@ function renderColorList() {
   `).join('');
 }
 function addColor() {
-  editColors.push({ id: '', name: '', hex: '#000000', default: editColors.length === 0, advanced: false, colorImages: [], color360: [null, null, null, null], stock: null, priceOverride: null, sizeStock: {} });
+  editColors.push({ id: '', name: '', hex: '#000000', default: editColors.length === 0, advanced: false, colorImages: [], color360: Array(SLOT_COUNT).fill(null), stock: null, priceOverride: null, sizeStock: {} });
   renderColorList();
 }
 function removeColor(i) {
@@ -1331,7 +1357,7 @@ function toggleColorAdvanced(i, on) {
   editColors[i].advanced = !!on;
   if (on) {
     if (!editColors[i].colorImages) editColors[i].colorImages = [];
-    if (!editColors[i].color360) editColors[i].color360 = [null, null, null, null];
+    if (!editColors[i].color360) editColors[i].color360 = Array(SLOT_COUNT).fill(null);
   }
   renderColorList();
 }
@@ -1350,7 +1376,7 @@ function removeColorImage(i, ei) {
 }
 function handleColor360(i, files) {
   if (!editColors[i]) return;
-  if (!editColors[i].color360) editColors[i].color360 = [null, null, null, null];
+  if (!editColors[i].color360) editColors[i].color360 = Array(SLOT_COUNT).fill(null);
   let slot = 0;
   for (const f of files) {
     if (slot >= 4) break;
@@ -1505,27 +1531,36 @@ async function saveProduct() {
       }
     }
 
-    // Phase 2: upload pending 360 slot files (only if all 4 slots filled)
+    // Phase 2: upload pending 360 slot files. Partial allowed (>=2, <=6).
+    // 1 filled slot is blocked upstream (updateSaveBlocker disables the
+    // button) so we only ever land here with 0 or 2+. Mode = rotation
+    // computes deg dynamically (i * 360 / N); showcase preserves the
+    // user's free-form label and drops deg entirely.
     let images360 = [];
-    const allFilled = edit360Slots.every(s => s);
-    if (allFilled) {
+    const filledSlots = edit360Slots
+      .map((s, i) => s ? { slot: s, originalIdx: i } : null)
+      .filter(Boolean);
+    const N360 = filledSlots.length;
+    if (N360 >= 2) {
       btn.textContent = 'Uploading 360°…';
-      for (let i = 0; i < SLOT_DEFS.length; i++) {
-        const def = SLOT_DEFS[i];
-        const slot = edit360Slots[i];
+      const isShowcase = edit360Mode === 'showcase';
+      for (let i = 0; i < filledSlots.length; i++) {
+        const { slot } = filledSlots[i];
+        const slotId = 'frame-' + i;
         if (slot.file) {
           const ext = getExt(slot.file.name);
-          const filename = `${slug}-${def.id}${ext}`;
+          const filename = `${slug}-${slotId}${ext}`;
           slot.src = await uploadImageWithFilename(slot.file, filename);
           slot.file = null;
         }
-        images360.push({
-          id: def.id,
+        const entry = {
+          id: slotId,
           src: slot.src,
-          label: def.label,
-          deg: def.deg,
+          label: isShowcase ? (slot.label || `Slot ${i + 1}`) : '',
           flip: !!slot.flip
-        });
+        };
+        if (!isShowcase) entry.deg = (i * 360 / N360) + '°';
+        images360.push(entry);
       }
     }
 
@@ -1559,22 +1594,37 @@ async function saveProduct() {
           }
           if (colorImageSrcs.length > 0) out.images = colorImageSrcs;
         }
-        // images360 (4 slots, only saved if all 4 filled)
-        if (c.color360 && c.color360.every(s => s)) {
-          btn.textContent = 'Renk 360 yükleniyor…';
-          const color360Out = [];
-          for (let si = 0; si < SLOT_DEFS.length; si++) {
-            const def = SLOT_DEFS[si];
-            const slot = c.color360[si];
-            if (slot.file) {
-              const ext = getExt(slot.file.name);
-              const filename = `${slug}-${cid}-${def.id}${ext}`;
-              slot.src = await uploadImageWithFilename(slot.file, filename);
-              slot.file = null;
+        // images360 — partial allowed (>=2, <=6). Mode override per-color
+        // via c.images360Mode (defaults to product-level mode).
+        if (c.color360) {
+          const colorFilled = c.color360.filter(s => s);
+          if (colorFilled.length >= 2) {
+            btn.textContent = 'Renk 360 yükleniyor…';
+            const cN = colorFilled.length;
+            const colorMode = c.images360Mode || edit360Mode;
+            const isShowcase = colorMode === 'showcase';
+            const color360Out = [];
+            for (let si = 0; si < colorFilled.length; si++) {
+              const slot = colorFilled[si];
+              const slotId = 'frame-' + si;
+              if (slot.file) {
+                const ext = getExt(slot.file.name);
+                const filename = `${slug}-${cid}-${slotId}${ext}`;
+                slot.src = await uploadImageWithFilename(slot.file, filename);
+                slot.file = null;
+              }
+              const entry = {
+                id: slotId,
+                src: slot.src,
+                label: isShowcase ? (slot.label || `Slot ${si + 1}`) : '',
+                flip: !!slot.flip
+              };
+              if (!isShowcase) entry.deg = (si * 360 / cN) + '°';
+              color360Out.push(entry);
             }
-            color360Out.push({ id: def.id, src: slot.src, label: def.label, deg: def.deg, flip: !!slot.flip });
+            out.images360 = color360Out;
+            if (c.images360Mode && c.images360Mode !== edit360Mode) out.images360Mode = c.images360Mode;
           }
-          out.images360 = color360Out;
         }
         // stock + priceOverride
         if (typeof c.stock === 'number' && !isNaN(c.stock)) out.stock = c.stock;
@@ -1626,6 +1676,7 @@ async function saveProduct() {
       description: document.getElementById('p_description').value,
       images: imageSrcs,
       images360: images360,
+      images360Mode: (images360.length >= 2 && edit360Mode === 'showcase') ? 'showcase' : undefined,
       colors: colors,
       seo: {
         metaTitle: document.getElementById('p_metaTitle').value.trim() || null,
@@ -1743,26 +1794,67 @@ function handleImageUpload(files) {
 
 function render360Slots() {
   const grid = document.getElementById('img360Grid');
+  if (!grid) return;
+  const isShowcase = edit360Mode === 'showcase';
   grid.innerHTML = SLOT_DEFS.map((def, i) => {
     const slot = edit360Slots[i];
     const has = !!slot;
     const url = has ? previewURL(slot) : '';
     const flipped = has && !!slot.flip;
+    const slotLabel = (has && slot.label) || '';
+    const labelInput = (has && isShowcase)
+      ? `<input type="text" class="img360-slot-label" placeholder="Slot ${i + 1}" value="${escapeHtml(slotLabel)}" onclick="event.stopPropagation();" oninput="event.stopPropagation();updateSlotLabel(${i}, this.value);">`
+      : '';
     return `
       <div class="img360-slot ${has ? 'has-image' : ''}" onclick="pickSlot(${i})">
-        ${has ? `<img src="${url}" alt="${def.label}" style="${flipped ? 'transform:scaleX(-1);' : ''}"><button class="img360-slot-rm" onclick="event.stopPropagation();clearSlot(${i})">×</button>` : ''}
-        <div class="img360-slot-meta"><span>${def.label}</span><span class="img360-slot-deg">${def.deg}</span></div>
+        ${has ? `<img src="${url}" alt="Slot ${i + 1}" style="${flipped ? 'transform:scaleX(-1);' : ''}"><button class="img360-slot-rm" onclick="event.stopPropagation();clearSlot(${i})">×</button>` : ''}
+        <div class="img360-slot-meta"><span>${isShowcase ? (slotLabel || 'Slot ' + (i + 1)) : ('Slot ' + (i + 1))}</span></div>
+        ${labelInput}
         ${has ? `<label class="img360-slot-flip" onclick="event.stopPropagation();" title="Bu görseli yatay aynala"><input type="checkbox" ${flipped ? 'checked' : ''} onchange="event.stopPropagation();toggle360Flip(${i}, this.checked);"><span>Aynala</span></label>` : ''}
         ${has ? '' : '<div class="img360-slot-empty"><span>+</span><span>Click to upload</span></div>'}
       </div>
     `;
   }).join('');
+  updateSaveBlocker();
 }
 
 function toggle360Flip(i, checked) {
   if (!edit360Slots[i]) return;
   edit360Slots[i].flip = !!checked;
   render360Slots();
+}
+function updateSlotLabel(i, value) {
+  if (!edit360Slots[i]) return;
+  edit360Slots[i].label = String(value || '').slice(0, 40);
+}
+function setEdit360Mode(mode) {
+  edit360Mode = (mode === 'showcase') ? 'showcase' : 'rotation';
+  const hint = document.getElementById('img360ModeHint');
+  if (hint) {
+    hint.textContent = edit360Mode === 'showcase'
+      ? 'Showcase: 2-6 görsel. Her slot için etiket yazabilirsin (sadece admin organization — storefront\'ta görünmez). Görseller storefront\'ta thumb rail\'de birlikte gösterilir, 360 toggle gizlenir.'
+      : 'Rotation: 2-6 görsel yükleyin; daha fazla görsel pürüzsüz rotation sağlar. Eşit aralıklı yerleştirilir.';
+  }
+  render360Slots();
+}
+
+// Save blocker: 1 filled slot is invalid (need either 0 or >=2). Disables the
+// save button + shows inline error so the user can't accidentally lose work.
+function updateSaveBlocker() {
+  const filled = edit360Slots.filter(s => s).length;
+  const hint = document.getElementById('img360CountHint');
+  const saveBtn = document.getElementById('saveProductBtn');
+  const invalid = filled === 1;
+  if (hint) {
+    hint.textContent = invalid
+      ? `${filled}/2 — en az 2 görsel gerekli (veya hepsini temizle).`
+      : (filled === 0 ? 'Minimum 2 görsel gerekli. Boş slot atlanır.' : `${filled} görsel — kayıt için hazır.`);
+    hint.style.color = invalid ? 'var(--danger)' : 'var(--muted)';
+  }
+  if (saveBtn) {
+    saveBtn.disabled = invalid;
+    saveBtn.title = invalid ? '360 için 1 görsel yetersiz — en az 2 gerek' : '';
+  }
 }
 
 function pickSlot(i) {
@@ -1771,10 +1863,12 @@ function pickSlot(i) {
   input.onchange = () => {
     const file = input.files && input.files[0];
     if (!file) return;
-    // Preserve a previously-toggled flip choice if the user is re-uploading
-    // into the same slot (default false otherwise — SLOT_DEFS hardcodes are gone).
-    const prevFlip = edit360Slots[i] && typeof edit360Slots[i].flip === 'boolean' ? edit360Slots[i].flip : false;
-    edit360Slots[i] = { src: null, file, flip: prevFlip };
+    // Preserve a previously-toggled flip / label choice if the user is
+    // re-uploading into the same slot.
+    const prev = edit360Slots[i];
+    const prevFlip = prev && typeof prev.flip === 'boolean' ? prev.flip : false;
+    const prevLabel = prev && prev.label || '';
+    edit360Slots[i] = { src: null, file, flip: prevFlip, label: prevLabel };
     render360Slots();
   };
   input.click();
