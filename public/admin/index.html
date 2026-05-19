@@ -487,7 +487,7 @@
         <div class="form-row single"><div class="form-group"><label>Images (gallery — first is the listing thumbnail)</label>
           <div class="img-upload-zone" id="imgDropZone" onclick="document.getElementById('imgFileInput').click()">
             📁 Sürükle bırak veya tıkla
-            <input type="file" id="imgFileInput" accept="image/*" multiple style="display:none;" onchange="handleImageUpload(this.files)">
+            <input type="file" id="imgFileInput" accept="image/*" multiple style="display:none;" onchange="handleImageUpload(this.files); this.value='';">
           </div>
           <div class="img-thumbs" id="imgThumbs"></div>
         </div></div>
@@ -1189,10 +1189,10 @@ function renderColorList() {
             📁 Sürükle bırak veya tıkla
             <input type="file" multiple accept="image/*" style="display:none;" onchange="handleColorImages(${i}, this.files); this.value='';" onclick="event.stopPropagation();">
           </div>
-          <div class="color-thumb-row" data-color-images-idx="${i}">${(c.colorImages || []).map((entry, ei) => `
-            <div class="color-thumb" draggable="true" data-sort-idx="${ei}" title="Sürükleyerek sırala">
-              <img src="${colorEntryPreview(entry)}" alt="">
-              <button type="button" onclick="event.stopPropagation();removeColorImage(${i}, ${ei})" aria-label="Kaldır">×</button>
+          <div class="img-thumbs" data-color-images-idx="${i}">${(c.colorImages || []).map((entry, ei) => `
+            <div class="img-thumb-wrap" draggable="true" data-sort-idx="${ei}" title="Sürükleyerek sırala">
+              <img src="${previewURL(entry)}" class="img-thumb" onerror="this.style.background='#eee'">
+              <button class="img-thumb-rm" type="button" onclick="event.stopPropagation();removeColorImage(${i}, ${ei})" aria-label="Kaldır">×</button>
               <span class="thumb-order">${ei + 1}</span>
             </div>
           `).join('')}</div>
@@ -1205,7 +1205,7 @@ function renderColorList() {
           </div>
           <div class="color-thumb-row color-360-row">${SLOT_DEFS.map((def, si) => {
             const slot = (c.color360 && c.color360[si]) || null;
-            return `<div class="color-thumb color-thumb-360 ${slot ? '' : 'empty'}" title="${def.label}"><span class="color-thumb-tag">${def.id}</span>${slot ? `<img src="${colorEntryPreview(slot)}" alt="${def.label}"><button type="button" onclick="clearColor360Slot(${i}, ${si})" aria-label="Sil">×</button>` : ''}</div>`;
+            return `<div class="color-thumb color-thumb-360 ${slot ? '' : 'empty'}" title="${def.label}"><span class="color-thumb-tag">${def.id}</span>${slot ? `<img src="${previewURL(slot)}" alt="${def.label}"><button type="button" onclick="clearColor360Slot(${i}, ${si})" aria-label="Sil">×</button>` : ''}</div>`;
           }).join('')}</div>
         </fieldset>
         <fieldset>
@@ -1218,12 +1218,6 @@ function renderColorList() {
       </div>
     </div>
   `).join('');
-}
-function colorEntryPreview(entry) {
-  if (!entry) return '';
-  if (entry.file) return URL.createObjectURL(entry.file);
-  if (entry.src) return '../img/' + entry.src;
-  return '';
 }
 function addColor() {
   editColors.push({ id: '', name: '', hex: '#000000', default: editColors.length === 0, advanced: false, colorImages: [], color360: [null, null, null, null], stock: null, priceOverride: null });
@@ -1255,6 +1249,28 @@ renderColorList = function() {
   __renderColorList_inner();
   if (typeof attachColorDropZones === 'function') attachColorDropZones();
 };
+// Re-render only one color's flat image rail (in-place innerHTML swap on the
+// existing [data-color-images-idx] container). Preserves scroll/focus on the
+// surrounding form. makeSortable is idempotent — refreshes _onReorder closure.
+function renderColorRail(i) {
+  const c = editColors[i];
+  if (!c) return;
+  const row = document.querySelector(`[data-color-images-idx="${i}"]`);
+  if (!row) return;
+  row.innerHTML = (c.colorImages || []).map((entry, ei) => `
+    <div class="img-thumb-wrap" draggable="true" data-sort-idx="${ei}" title="Sürükleyerek sırala">
+      <img src="${previewURL(entry)}" class="img-thumb" onerror="this.style.background='#eee'">
+      <button class="img-thumb-rm" type="button" onclick="event.stopPropagation();removeColorImage(${i}, ${ei})" aria-label="Kaldır">×</button>
+      <span class="thumb-order">${ei + 1}</span>
+    </div>
+  `).join('');
+  makeSortable(row, newOrder => {
+    const cc = editColors[i];
+    if (!cc || !cc.colorImages) return;
+    cc.colorImages = newOrder.map(k => cc.colorImages[k]);
+    renderColorRail(i);
+  });
+}
 function toggleColorAdvanced(i, on) {
   if (!editColors[i]) return;
   editColors[i].advanced = !!on;
@@ -1270,12 +1286,12 @@ function handleColorImages(i, files) {
   for (const f of files) {
     if (f.type && f.type.startsWith('image/')) editColors[i].colorImages.push({ src: null, file: f });
   }
-  renderColorList();
+  renderColorRail(i);
 }
 function removeColorImage(i, ei) {
   if (!editColors[i] || !editColors[i].colorImages) return;
   editColors[i].colorImages.splice(ei, 1);
-  renderColorList();
+  renderColorRail(i);
 }
 function handleColor360(i, files) {
   if (!editColors[i]) return;
@@ -1730,7 +1746,7 @@ function attachColorDropZones() {
       const c = editColors[colorIdx];
       if (!c || !c.colorImages) return;
       c.colorImages = newOrder.map(i => c.colorImages[i]);
-      renderColorList();
+      renderColorRail(colorIdx);
     });
   });
 }
