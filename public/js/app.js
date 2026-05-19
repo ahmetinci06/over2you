@@ -177,6 +177,73 @@ function getPageBase() {
   }
 })();
 
+// ===== STOCK RESOLUTION =====
+// Single source of truth for size/color stock lookups. Mirrors the
+// effectiveGallery pattern in product.astro — both PDP and Cart query
+// these via window.O2Y.*. product.outOfStock master override wins.
+//
+// Fallback chain (effectiveStock):
+//   color present → color.sizeStock[size] → color.stock → null
+//   color absent  → product.sizeStock[size] → product.stockQty → null
+//
+// null means "unknown" — caller treats as unlimited. 0 means OOS.
+function effectiveStock(product, color, size) {
+  if (!product) return null;
+  if (product.outOfStock) return 0;
+  if (color) {
+    const ss = color.sizeStock;
+    if (ss && typeof ss[size] === 'number') return ss[size];
+    if (typeof color.stock === 'number') return color.stock;
+    return null;
+  }
+  const ss = product.sizeStock;
+  if (ss && typeof ss[size] === 'number') return ss[size];
+  if (typeof product.stockQty === 'number') return product.stockQty;
+  return null;
+}
+function effectiveStockSum(product, color) {
+  if (!product) return null;
+  if (product.outOfStock) return 0;
+  const obj = color ? color.sizeStock : product.sizeStock;
+  if (obj && typeof obj === 'object') {
+    const vals = Object.values(obj).filter(v => typeof v === 'number');
+    if (vals.length > 0) return vals.reduce((a, b) => a + b, 0);
+  }
+  if (color && typeof color.stock === 'number') return color.stock;
+  if (!color && typeof product.stockQty === 'number') return product.stockQty;
+  return null;
+}
+
+// ===== TOAST =====
+// Single toast slot at bottom-center. New toasts replace the current one
+// (no queue). CSS injected lazily on first call. Idempotent.
+let __o2yToastTimeout = null;
+function toast(msg, opts) {
+  if (!document.getElementById('o2yToastStyle')) {
+    const s = document.createElement('style');
+    s.id = 'o2yToastStyle';
+    s.textContent = '.o2y-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgb(20,20,20);color:#fff;padding:0.7rem 1.2rem;font:600 13px/1.4 var(--heading-font-family,system-ui);letter-spacing:0.02em;z-index:9999;opacity:0;pointer-events:none;transition:opacity 0.2s;border-radius:2px;max-width:90vw;text-align:center}.o2y-toast.show{opacity:1}.o2y-toast.error{background:#c94c4c}';
+    document.head.appendChild(s);
+  }
+  let el = document.getElementById('o2yToast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'o2yToast';
+    el.className = 'o2y-toast';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.className = 'o2y-toast' + (opts && opts.error ? ' error' : '');
+  requestAnimationFrame(() => el.classList.add('show'));
+  if (__o2yToastTimeout) clearTimeout(__o2yToastTimeout);
+  __o2yToastTimeout = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+window.O2Y = window.O2Y || {};
+window.O2Y.effectiveStock = effectiveStock;
+window.O2Y.effectiveStockSum = effectiveStockSum;
+window.O2Y.toast = toast;
+
 // ===== CART =====
 const Cart = (function() {
   let items = JSON.parse(localStorage.getItem('over2you_cart') || '[]');
@@ -216,6 +283,13 @@ const Cart = (function() {
     // separate cart lines.
     const key = `${product.id}-${selectedSize}-${colorId}`;
     const existing = items.find(i => i.key === key);
+    // Stock hard limit (color × size aware). null = unknown → unlimited.
+    const stockLimit = effectiveStock(product, colorObj, selectedSize);
+    const currentQty = existing ? existing.qty : 0;
+    if (stockLimit !== null && currentQty + 1 > stockLimit) {
+      toast(stockLimit === 0 ? 'Bu beden stokta yok' : `Stokta sadece ${stockLimit} adet kaldı`, { error: true });
+      return;
+    }
     if (existing) {
       existing.qty += 1;
     } else {
@@ -249,6 +323,16 @@ const Cart = (function() {
   function updateQty(key, delta) {
     const item = items.find(i => i.key === key);
     if (!item) return;
+    if (delta > 0) {
+      // item carries product.colors (via spread in add()); find the variant
+      // by selectedColorId so per-color sizeStock honours its fallback chain.
+      const itemColor = (Array.isArray(item.colors) && item.colors.find(c => c.id === item.selectedColorId)) || null;
+      const stockLimit = effectiveStock(item, itemColor, item.selectedSize);
+      if (stockLimit !== null && item.qty + delta > stockLimit) {
+        toast(`Stokta sadece ${stockLimit} adet kaldı`, { error: true });
+        return;
+      }
+    }
     item.qty += delta;
     if (item.qty <= 0) { remove(key); return; }
     save(); render();

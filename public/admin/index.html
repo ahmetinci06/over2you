@@ -195,6 +195,11 @@
     .color-thumb-tag { position: absolute; bottom: 2px; left: 2px; font-size: 8px; font-weight: 700; background: rgba(255,255,255,0.9); padding: 1px 4px; border-radius: 2px; letter-spacing: 0.02em; }
     .color-num-row { display: flex; gap: 0.4rem; flex-wrap: wrap; }
     .color-num-row input { flex: 1; min-width: 120px; padding: 6px 10px; font-size: 12px; border: 1px solid var(--border); border-radius: 4px; }
+    .size-stock-grid { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.4rem; }
+    .size-stock-cell { display: flex; flex-direction: column; gap: 2px; min-width: 64px; }
+    .size-stock-cell label { font-size: 10px; font-weight: 700; letter-spacing: 0.04em; color: var(--muted); text-transform: uppercase; }
+    .size-stock-cell input { padding: 5px 8px; font-size: 12px; border: 1px solid var(--border); border-radius: 3px; width: 100%; box-sizing: border-box; }
+    .size-stock-empty { font-size: 11px; color: var(--muted); font-style: italic; padding: 0.3rem 0; }
     @media (max-width: 600px) {
       .color-card { grid-template-columns: 1fr 60px; gap: 0.4rem; }
       .color-card .color-default-label { grid-column: 1 / -1; }
@@ -508,7 +513,11 @@
       <summary>Beden ve Stok</summary>
       <div class="form-section-body">
         <div class="form-row"><div class="form-group"><label>Sizes (comma-separated)</label><input id="p_sizes" value="XXS,XS,S,M,L,XL,XXL"></div><div class="form-group"></div></div>
-        <div class="form-row"><div class="form-group"><label>Stock Status</label><select id="p_stock"><option value="in-stock">In Stock</option><option value="low-stock">Low Stock</option><option value="out-of-stock">Out of Stock</option></select></div><div class="form-group"><label>Stock Quantity</label><input type="number" id="p_stockQty" placeholder="∞"></div></div>
+        <div class="form-row"><div class="form-group"><label>Stock Status</label><select id="p_stock"><option value="in-stock">In Stock</option><option value="low-stock">Low Stock</option><option value="out-of-stock">Out of Stock</option></select></div><div class="form-group"><label>Stock Quantity (toplam — bedene göre yazılmadıysa fallback)</label><input type="number" id="p_stockQty" placeholder="∞"></div></div>
+        <div class="form-row single"><div class="form-group">
+          <label>Bedene göre stok <span style="color:var(--muted);font-weight:400;">— boş bırakılan beden için toplam stok kullanılır. Renk varsa her renge ayrı yazılabilir (aşağıda)</span></label>
+          <div id="sizeStockGrid" class="size-stock-grid"></div>
+        </div></div>
         <div class="form-row single"><div class="form-group">
           <label class="oos-toggle"><input type="checkbox" id="p_outOfStock"> <strong>Stokta yok</strong> — PDP'de "Stokta Yok" gösterilir, ADD TO CART devre dışı</label>
         </div></div>
@@ -581,7 +590,14 @@
     <h3 style="font-size:15px;font-weight:800;margin-bottom:0.75rem;">Toplu Stok Güncelle</h3>
     <p style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:1rem;"><strong id="bulkStockCount" style="color:var(--text);">0</strong> ürünün stoğu güncellenecek.</p>
     <div class="form-group">
-      <label>Yeni stok adedi</label>
+      <label>Mod</label>
+      <select id="bulkStockMode">
+        <option value="total">Toplam stok ata (mevcut bedene-göre stok silinmez)</option>
+        <option value="perSize">Her bedene aynı adet dağıt (sizeStock'u yeniden yaz)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label id="bulkStockValueLabel">Yeni stok adedi</label>
       <input type="number" id="bulkStockValue" min="0" step="1" placeholder="örn: 25">
     </div>
     <div class="form-group">
@@ -662,6 +678,9 @@ let edit360Slots = [null, null, null, null];
 let editColors = [];
 let editCategories = [];
 let editTags = [];
+// Top-level size→qty map; populated when product has no colors[]. Per-color
+// sizeStock lives on editColors[i].sizeStock (sibling of stock/priceOverride).
+let editSizeStock = {};
 
 // ===== CHIP INPUT (shared by categories + tags) =====
 // ===== FORM PREVIEW (side panel) =====
@@ -1027,20 +1046,39 @@ function closeBulkStock() {
 }
 async function applyBulkStock() {
   const v = document.getElementById('bulkStockValue').value;
-  const stockQty = parseInt(v, 10);
-  if (isNaN(stockQty) || stockQty < 0) {
+  const value = parseInt(v, 10);
+  if (isNaN(value) || value < 0) {
     toast('Geçerli bir stok değeri gir (≥ 0)', true);
     return;
   }
+  const mode = document.getElementById('bulkStockMode').value;
   const clearOOS = document.getElementById('bulkStockClearOOS').checked;
   const targets = [...selectedProducts].map(i => products[i]).filter(Boolean);
   closeBulkStock();
   try {
     for (const p of targets) {
-      const updated = Object.assign({}, p, {
-        stockQty,
-        stock: stockQty === 0 ? 'out-of-stock' : (stockQty <= 5 ? 'low-stock' : 'in-stock'),
-      });
+      let updated;
+      if (mode === 'perSize') {
+        // Distribute value across every size on this product. If colors exist,
+        // write to each color's sizeStock so per-variant matrices stay consistent.
+        const sizes = Array.isArray(p.sizes) ? p.sizes : [];
+        const newSizeStock = {};
+        sizes.forEach(sz => { newSizeStock[sz] = value; });
+        const total = value * sizes.length;
+        updated = Object.assign({}, p, {
+          stockQty: total,
+          stock: total === 0 ? 'out-of-stock' : (total <= 5 ? 'low-stock' : 'in-stock'),
+          sizeStock: sizes.length > 0 ? newSizeStock : null,
+        });
+        if (Array.isArray(p.colors) && p.colors.length > 0) {
+          updated.colors = p.colors.map(c => Object.assign({}, c, { sizeStock: sizes.length > 0 ? { ...newSizeStock } : undefined }));
+        }
+      } else {
+        updated = Object.assign({}, p, {
+          stockQty: value,
+          stock: value === 0 ? 'out-of-stock' : (value <= 5 ? 'low-stock' : 'in-stock'),
+        });
+      }
       if (clearOOS && p.outOfStock) updated.outOfStock = false;
       await api('/api/products/' + p.id, { method: 'PUT', body: JSON.stringify(updated) });
     }
@@ -1141,12 +1179,14 @@ function openProductModal(product) {
     }
     editColors = Array.isArray(product.colors) ? product.colors.map(c => ({
       ...c,
-      advanced: !!(c.images || c.images360 || typeof c.stock === 'number' || typeof c.priceOverride === 'number'),
+      advanced: !!(c.images || c.images360 || typeof c.stock === 'number' || typeof c.priceOverride === 'number' || (c.sizeStock && Object.keys(c.sizeStock).length > 0)),
       colorImages: Array.isArray(c.images) ? c.images.map(src => ({ src, file: null })) : [],
       color360: Array.isArray(c.images360) && c.images360.length === 4
         ? c.images360.map(f => f && f.src ? { src: f.src, file: null } : null)
         : [null, null, null, null],
+      sizeStock: (c.sizeStock && typeof c.sizeStock === 'object') ? { ...c.sizeStock } : {},
     })) : [];
+    editSizeStock = (product.sizeStock && typeof product.sizeStock === 'object') ? { ...product.sizeStock } : {};
   } else {
     document.getElementById('p_id').value = '';
     document.querySelectorAll('#productModal input:not([type=hidden]):not([type=color]):not([type=file]), #productModal textarea').forEach(i => i.value = '');
@@ -1155,10 +1195,12 @@ function openProductModal(product) {
     document.getElementById('p_stock').value = 'in-stock';
     editCategories = [];
     editTags = [];
+    editSizeStock = {};
   }
   renderImageThumbs();
   render360Slots();
   renderColorList();
+  renderSizeStockGrid();
   renderChips('category');
   renderChips('tag');
   setSaveState('clean');
@@ -1211,16 +1253,21 @@ function renderColorList() {
         <fieldset>
           <legend>Stok ve fiyat (opsiyonel)</legend>
           <div class="color-num-row">
-            <input type="number" placeholder="Stok adedi" min="0" value="${typeof c.stock === 'number' ? c.stock : ''}" oninput="updateColorNum(${i}, 'stock', this.value)">
+            <input type="number" placeholder="Stok adedi (toplam — bedene göre yazılmadıysa fallback)" min="0" value="${typeof c.stock === 'number' ? c.stock : ''}" oninput="updateColorNum(${i}, 'stock', this.value)">
             <input type="number" step="0.01" placeholder="Bu rengin fiyatı (boşsa ana fiyat)" value="${typeof c.priceOverride === 'number' ? c.priceOverride : ''}" oninput="updateColorNum(${i}, 'priceOverride', this.value)">
           </div>
+          <label style="font-size:11px;font-weight:600;color:var(--muted);margin-top:0.5rem;display:block;">Bu renge özel bedene-göre stok <span style="font-weight:400;">— boş bırakılan beden için yukarıdaki toplam kullanılır</span></label>
+          <div class="size-stock-grid">${currentSizes().map(sz => {
+            const val = (c.sizeStock && typeof c.sizeStock[sz] === 'number') ? c.sizeStock[sz] : '';
+            return `<div class="size-stock-cell"><label>${sz}</label><input type="number" min="0" step="1" placeholder="∞" data-size="${sz}" value="${val}" oninput="updateColorSizeStock(${i}, this.dataset.size, this.value)"></div>`;
+          }).join('')}</div>
         </fieldset>
       </div>
     </div>
   `).join('');
 }
 function addColor() {
-  editColors.push({ id: '', name: '', hex: '#000000', default: editColors.length === 0, advanced: false, colorImages: [], color360: [null, null, null, null], stock: null, priceOverride: null });
+  editColors.push({ id: '', name: '', hex: '#000000', default: editColors.length === 0, advanced: false, colorImages: [], color360: [null, null, null, null], stock: null, priceOverride: null, sizeStock: {} });
   renderColorList();
 }
 function removeColor(i) {
@@ -1516,10 +1563,33 @@ async function saveProduct() {
         // stock + priceOverride
         if (typeof c.stock === 'number' && !isNaN(c.stock)) out.stock = c.stock;
         if (typeof c.priceOverride === 'number' && !isNaN(c.priceOverride)) out.priceOverride = c.priceOverride;
+        // sizeStock — keep only the entries with valid numeric values and
+        // whose size still exists in the current sizes[]. Drop empty objects
+        // entirely so old records aren't littered with `{}` placeholders.
+        const activeSizes = new Set(document.getElementById('p_sizes').value.split(',').map(s => s.trim()).filter(Boolean));
+        if (c.sizeStock && typeof c.sizeStock === 'object') {
+          const cleaned = {};
+          for (const [sz, qty] of Object.entries(c.sizeStock)) {
+            if (activeSizes.has(sz) && typeof qty === 'number' && !isNaN(qty) && qty >= 0) cleaned[sz] = qty;
+          }
+          if (Object.keys(cleaned).length > 0) out.sizeStock = cleaned;
+        }
       }
       colors.push(out);
     }
     if (colors.length > 0 && !colors.some(c => c.default)) colors[0].default = true;
+
+    // Top-level sizeStock: same cleanup as per-color. Active when colors[]
+    // is empty (or as a fallback when per-color values are missing entries).
+    const topSizes = new Set(document.getElementById('p_sizes').value.split(',').map(s => s.trim()).filter(Boolean));
+    let topSizeStock = null;
+    if (editSizeStock && typeof editSizeStock === 'object') {
+      const cleaned = {};
+      for (const [sz, qty] of Object.entries(editSizeStock)) {
+        if (topSizes.has(sz) && typeof qty === 'number' && !isNaN(qty) && qty >= 0) cleaned[sz] = qty;
+      }
+      if (Object.keys(cleaned).length > 0) topSizeStock = cleaned;
+    }
 
     // Phase 4: send product to backend (POST creates new id, PUT replaces by id)
     const productBody = {
@@ -1535,6 +1605,7 @@ async function saveProduct() {
       colorFamily: document.getElementById('p_colorFamily').value,
       stock: document.getElementById('p_stock').value,
       stockQty: document.getElementById('p_stockQty').value ? parseInt(document.getElementById('p_stockQty').value) : null,
+      sizeStock: topSizeStock,
       outOfStock: document.getElementById('p_outOfStock').checked,
       description: document.getElementById('p_description').value,
       images: imageSrcs,
@@ -1752,6 +1823,51 @@ function attachColorDropZones() {
 }
 
 document.getElementById('p_color').addEventListener('input', e => { document.getElementById('p_colorHex').textContent = e.target.value; });
+
+// ===== SIZE STOCK GRID =====
+// Read current sizes from the p_sizes input, then render one number input per
+// size for the top-level editSizeStock map (visible when no advanced colors
+// override per-color sizeStock). Per-color size stock grids live in
+// renderColorList() and follow the same shape.
+function currentSizes() {
+  return document.getElementById('p_sizes').value
+    .split(',').map(s => s.trim()).filter(Boolean);
+}
+function renderSizeStockGrid() {
+  const grid = document.getElementById('sizeStockGrid');
+  if (!grid) return;
+  const sizes = currentSizes();
+  if (sizes.length === 0) {
+    grid.innerHTML = '<div class="size-stock-empty">Önce yukarıya beden listesi gir.</div>';
+    return;
+  }
+  grid.innerHTML = sizes.map(sz => {
+    const val = (editSizeStock && typeof editSizeStock[sz] === 'number') ? editSizeStock[sz] : '';
+    return `<div class="size-stock-cell"><label>${sz}</label><input type="number" min="0" step="1" placeholder="∞" data-size="${sz}" value="${val}" oninput="updateSizeStock(this.dataset.size, this.value)"></div>`;
+  }).join('');
+}
+function updateSizeStock(size, raw) {
+  if (raw === '' || raw === null) { delete editSizeStock[size]; return; }
+  const n = parseInt(raw, 10);
+  if (isNaN(n) || n < 0) { delete editSizeStock[size]; return; }
+  editSizeStock[size] = n;
+}
+function updateColorSizeStock(colorIdx, size, raw) {
+  const c = editColors[colorIdx];
+  if (!c) return;
+  if (!c.sizeStock) c.sizeStock = {};
+  if (raw === '' || raw === null) { delete c.sizeStock[size]; return; }
+  const n = parseInt(raw, 10);
+  if (isNaN(n) || n < 0) { delete c.sizeStock[size]; return; }
+  c.sizeStock[size] = n;
+}
+// p_sizes change → re-render top-level grid + all color grids (size set
+// changed, so per-color rows need to reshape). On blur/Enter only, so
+// keystroke-by-keystroke re-renders don't yank focus.
+document.getElementById('p_sizes').addEventListener('change', () => {
+  renderSizeStockGrid();
+  renderColorList();
+});
 
 // ===== PAGE CONTENT =====
 function renderPageContent() {

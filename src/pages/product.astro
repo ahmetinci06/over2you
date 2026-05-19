@@ -145,6 +145,11 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
         : [{ id: 'default', name: product.colorName || '—', hex: product.color || '#000000', default: true }];
       const defaultColorIdx = Math.max(0, variantColors.findIndex(c => c.default));
       const defaultColor = variantColors[defaultColorIdx] || variantColors[0];
+      // Stock helpers expect either a real product color or null (so top-level
+      // product.sizeStock / stockQty kicks in when colors[] is empty). When we
+      // synthesised the default from top-level fields, treat it as "no color".
+      const hasRealColors = Array.isArray(product.colors) && product.colors.length > 0;
+      const stockColor = (c) => hasRealColors ? c : null;
 
       const baseImages = Array.isArray(product.images) ? product.images : [];
       const baseFrames360 = Array.isArray(product.images360) ? product.images360 : [];
@@ -203,22 +208,36 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
             <div style="margin-bottom:1.25rem;" id="sizeSection">
               <span data-i18n="pdp.size" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:rgb(var(--text-color)/0.5);display:block;margin-bottom:0.5rem;">BEDEN:</span>
               <div style="display:flex;gap:6px;flex-wrap:wrap;" id="sizeButtons">
-                ${product.sizes.map(s => `<button class="size-btn" data-size="${s}" style="padding:0.5rem 1rem;border:1px solid rgb(var(--border-color));background:transparent;font:var(--heading-font-style) 600 11px/1 var(--heading-font-family);cursor:pointer;transition:all 0.2s;">${s}</button>`).join('')}
+                ${product.sizes.map(s => {
+                  const qty = window.O2Y && window.O2Y.effectiveStock ? window.O2Y.effectiveStock(product, stockColor(defaultColor), s) : null;
+                  const oos = qty === 0;
+                  return `<button class="size-btn${oos ? ' out-of-stock' : ''}" data-size="${s}" ${oos ? 'disabled' : ''} style="padding:0.5rem 1rem;border:1px solid rgb(var(--border-color));background:transparent;font:var(--heading-font-style) 600 11px/1 var(--heading-font-family);cursor:pointer;transition:all 0.2s;">${s}</button>`;
+                }).join('')}
               </div>
             </div>
 
-            ${product.outOfStock
-              ? `<div class="pdp-stock pdp-stock--oos">
-                  <span class="pdp-stock-dot" aria-hidden="true" style="background:#dc3545"></span>
-                  <strong>Stokta Yok</strong> <span>— stok yenilendiğinde haber veririz</span>
-                </div>`
-              : `<div class="pdp-stock">
-                  <span class="pdp-stock-dot" aria-hidden="true"></span>
-                  <strong>Stokta</strong> <span>— ${(typeof product.stockQty === 'number' && product.stockQty > 0 && product.stockQty < 10) ? `son ${product.stockQty} adet` : '3-5 iş günü içinde kargoda'}</span>
-                </div>`
-            }
+            ${(() => {
+              if (product.outOfStock) {
+                return `<div class="pdp-stock pdp-stock--oos">
+                          <span class="pdp-stock-dot" aria-hidden="true" style="background:#dc3545"></span>
+                          <strong>Stokta Yok</strong> <span>— stok yenilendiğinde haber veririz</span>
+                        </div>`;
+              }
+              const sum = window.O2Y && window.O2Y.effectiveStockSum ? window.O2Y.effectiveStockSum(product, stockColor(defaultColor)) : null;
+              const oos = sum === 0;
+              const low = typeof sum === 'number' && sum > 0 && sum < 10;
+              const dot = `<span class="pdp-stock-dot" aria-hidden="true"${oos ? ' style="background:#dc3545"' : ''}></span>`;
+              const body = oos
+                ? '<strong>Stokta Yok</strong> <span>— stok yenilendiğinde haber veririz</span>'
+                : `<strong>Stokta</strong> <span>— ${low ? `son ${sum} adet` : '3-5 iş günü içinde kargoda'}</span>`;
+              return `<div class="pdp-stock${oos ? ' pdp-stock--oos' : ''}">${dot}${body}</div>`;
+            })()}
 
-            <button id="addToCartBtn" ${product.outOfStock ? 'disabled' : ''} style="width:100%;padding:1rem;background:${product.outOfStock ? 'rgb(var(--text-color)/0.2)' : 'rgb(var(--button-background))'};color:${product.outOfStock ? 'rgb(var(--text-color)/0.5)' : 'rgb(var(--button-text-color))'};border:none;font:var(--heading-font-style) 800 var(--text-sm)/1.65 var(--heading-font-family);text-transform:uppercase;letter-spacing:0.03em;cursor:${product.outOfStock ? 'not-allowed' : 'pointer'};transition:all 0.3s;margin-bottom:0.85rem;">${product.outOfStock ? 'STOKTA YOK' : 'ADD TO CART'}</button>
+            ${(() => {
+              const sum = window.O2Y && window.O2Y.effectiveStockSum ? window.O2Y.effectiveStockSum(product, stockColor(defaultColor)) : null;
+              const disabled = product.outOfStock || sum === 0;
+              return `<button id="addToCartBtn" ${disabled ? 'disabled' : ''} style="width:100%;padding:1rem;background:${disabled ? 'rgb(var(--text-color)/0.2)' : 'rgb(var(--button-background))'};color:${disabled ? 'rgb(var(--text-color)/0.5)' : 'rgb(var(--button-text-color))'};border:none;font:var(--heading-font-style) 800 var(--text-sm)/1.65 var(--heading-font-family);text-transform:uppercase;letter-spacing:0.03em;cursor:${disabled ? 'not-allowed' : 'pointer'};transition:all 0.3s;margin-bottom:0.85rem;">${disabled ? 'STOKTA YOK' : 'ADD TO CART'}</button>`;
+            })()}
 
             <div class="pdp-banner">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -375,17 +394,10 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
             });
           }
 
-          // 3. stock indicator (only if color carries its own stock count)
-          if (typeof color.stock === 'number') {
-            const stockEl = document.querySelector('.pdp-stock');
-            if (stockEl) {
-              if (color.stock > 0) {
-                stockEl.innerHTML = '<span class="pdp-stock-dot" aria-hidden="true"></span><strong>Stokta</strong> <span>— ' + color.stock + ' adet</span>';
-              } else {
-                stockEl.innerHTML = '<span class="pdp-stock-dot" aria-hidden="true" style="background:#dc3545"></span><strong>Stokta yok</strong>';
-              }
-            }
-          }
+          // 3. stock indicator + per-size disabled states + add-to-cart button.
+          //    All three depend on (color × size) — refresh together so the UI
+          //    cannot show "Stokta" while a size is disabled or vice versa.
+          updateStockAndSizeStates(color);
 
           // 4. price override / sale aware
           const priceEl = document.querySelector('.pd-info > p');
@@ -423,6 +435,65 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
           }
         });
       });
+    }
+
+    // Refresh the stock indicator + per-size disabled state + add-to-cart
+    // button as a unit. Called from the color-swatch handler so (color × size)
+    // dependencies never drift. Top-level products (colors[] empty) hand a
+    // null activeColor — synthesised swatches don't carry real stock data.
+    function updateStockAndSizeStates(product, activeColor) {
+      if (!window.O2Y) return;
+      const hasRealColors = Array.isArray(product.colors) && product.colors.length > 0;
+      const sc = hasRealColors ? activeColor : null;
+      const stockEl = document.querySelector('.pdp-stock');
+      if (stockEl) {
+        if (product.outOfStock) {
+          stockEl.className = 'pdp-stock pdp-stock--oos';
+          stockEl.innerHTML = '<span class="pdp-stock-dot" aria-hidden="true" style="background:#dc3545"></span><strong>Stokta Yok</strong> <span>— stok yenilendiğinde haber veririz</span>';
+        } else {
+          const sum = window.O2Y.effectiveStockSum(product, sc);
+          const oos = sum === 0;
+          const low = typeof sum === 'number' && sum > 0 && sum < 10;
+          stockEl.className = 'pdp-stock' + (oos ? ' pdp-stock--oos' : '');
+          const dot = '<span class="pdp-stock-dot" aria-hidden="true"' + (oos ? ' style="background:#dc3545"' : '') + '></span>';
+          const body = oos
+            ? '<strong>Stokta Yok</strong> <span>— stok yenilendiğinde haber veririz</span>'
+            : '<strong>Stokta</strong> <span>— ' + (low ? 'son ' + sum + ' adet' : '3-5 iş günü içinde kargoda') + '</span>';
+          stockEl.innerHTML = dot + body;
+        }
+      }
+      document.querySelectorAll('.size-btn').forEach(btn => {
+        const sz = btn.dataset.size;
+        const qty = window.O2Y.effectiveStock(product, sc, sz);
+        const oos = qty === 0;
+        btn.classList.toggle('out-of-stock', oos);
+        btn.disabled = oos;
+        if (oos && btn.dataset.selected === 'true') {
+          // Clear stale selection when switching to a color where this size is OOS.
+          btn.style.background = 'transparent';
+          btn.style.color = 'inherit';
+          delete btn.dataset.selected;
+        }
+      });
+      updateAddToCartState(product, activeColor);
+    }
+
+    function updateAddToCartState(product, activeColor) {
+      const btn = document.getElementById('addToCartBtn');
+      if (!btn || !window.O2Y) return;
+      const hasRealColors = Array.isArray(product.colors) && product.colors.length > 0;
+      const sc = hasRealColors ? activeColor : null;
+      const selectedBtn = document.querySelector('.size-btn[data-selected="true"]');
+      const selectedSize = selectedBtn ? selectedBtn.dataset.size : null;
+      const sum = window.O2Y.effectiveStockSum(product, sc);
+      const sumZero = sum === 0;
+      const sizeZero = selectedSize && window.O2Y.effectiveStock(product, sc, selectedSize) === 0;
+      const disable = !!(product.outOfStock || sumZero || sizeZero);
+      btn.disabled = disable;
+      btn.style.background = disable ? 'rgb(var(--text-color)/0.2)' : 'rgb(var(--button-background))';
+      btn.style.color = disable ? 'rgb(var(--text-color)/0.5)' : 'rgb(var(--button-text-color))';
+      btn.style.cursor = disable ? 'not-allowed' : 'pointer';
+      btn.textContent = disable ? (sizeZero ? 'BU BEDEN STOKTA YOK' : 'STOKTA YOK') : 'ADD TO CART';
     }
 
     function wireLightbox(initialThumbs, imgBase) {
@@ -705,10 +776,25 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
       let selectedSize = null;
       document.querySelectorAll('.size-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-          document.querySelectorAll('.size-btn').forEach(b => { b.style.background = 'transparent'; b.style.color = 'inherit'; });
+          if (btn.disabled) return;
+          document.querySelectorAll('.size-btn').forEach(b => {
+            b.style.background = 'transparent';
+            b.style.color = 'inherit';
+            delete b.dataset.selected;
+          });
           btn.style.background = 'rgb(var(--button-background))';
           btn.style.color = 'rgb(var(--button-text-color))';
+          btn.dataset.selected = 'true';
           selectedSize = btn.dataset.size;
+          // Refresh add-to-cart button (e.g. enable after master OOS swatch
+          // switch left it disabled). Read active swatch from DOM.
+          const activeSwatch = document.querySelector('.pdp-color-swatch.active');
+          const aci = activeSwatch ? parseInt(activeSwatch.dataset.colorIdx, 10) : -1;
+          const colorList = (Array.isArray(product.colors) && product.colors.length > 0)
+            ? product.colors
+            : [{ id: 'default', name: product.colorName || '', hex: product.color || '', default: true }];
+          const activeColor = (aci >= 0 && colorList[aci]) ? colorList[aci] : (colorList.find(c => c.default) || colorList[0]);
+          updateAddToCartState(product, activeColor);
         });
       });
 
@@ -882,6 +968,15 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
     color: rgb(var(--text-color));
     font-weight: 700;
   }
+  .pdp-stock--oos strong { color: #dc3545; }
+
+  /* ===== Size button states ===== */
+  .size-btn.out-of-stock {
+    opacity: 0.4;
+    text-decoration: line-through;
+    cursor: not-allowed !important;
+  }
+  .size-btn.out-of-stock:hover { background: transparent !important; color: inherit !important; }
 
   /* ===== Accordion (4 tabs) ===== */
   .product-accordion {
