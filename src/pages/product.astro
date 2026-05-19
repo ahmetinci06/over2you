@@ -367,7 +367,18 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
 
           const stageWrap = document.querySelector('.pd-stage-wrap');
           if (stageWrap) {
-            stageWrap.innerHTML = '<carousel-3d data-flat-frames=\'' + attrJSON(g.eThumbs) + '\' data-frames=\'' + attrJSON(g.eFrames360) + '\' data-img-base="' + imgBase + '" data-has360="' + g.eHas360 + '"></carousel-3d>';
+            // Build the new <carousel-3d> in a detached wrapper, then swap
+            // it in via replaceWith so sibling DOM (notably .magnify-lens)
+            // survives. Previous innerHTML rebuild blew the lens div away
+            // and was the root cause of the "magnify dies after color
+            // switch" regression (G4). The custom element's
+            // connectedCallback fires once replaceWith mounts the node.
+            const tmp = document.createElement('div');
+            tmp.innerHTML = '<carousel-3d data-flat-frames=\'' + attrJSON(g.eThumbs) + '\' data-frames=\'' + attrJSON(g.eFrames360) + '\' data-img-base="' + imgBase + '" data-has360="' + g.eHas360 + '"></carousel-3d>';
+            const newCarousel = tmp.firstElementChild;
+            const oldCarousel = stageWrap.querySelector('carousel-3d');
+            if (newCarousel && oldCarousel) oldCarousel.replaceWith(newCarousel);
+            else if (newCarousel) stageWrap.insertBefore(newCarousel, stageWrap.firstChild);
           }
 
           // Re-wire thumb click + carousel sync — DOM was rebuilt above.
@@ -624,14 +635,30 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
       const ZOOM = 2;
 
       function getCurrentImg() {
+        // Mode is read live from the custom element. In 360 the focal
+        // frame is whichever slot has .c3d-slot-active — side slots end
+        // up not containing the cursor (their imgRect fails the bounds
+        // check below), so magnify only fires on the center frame.
+        const carousel = wrap.querySelector('carousel-3d');
+        if (carousel && carousel.mode === '360') {
+          return wrap.querySelector('.c3d-slot.c3d-slot-active img');
+        }
         return wrap.querySelector('.c3d-flat img');
+      }
+
+      function syncLensBackground(img) {
+        if (!img || !img.src) return false;
+        const newBg = 'url("' + img.src + '")';
+        if (lens.style.backgroundImage !== newBg) {
+          lens.style.backgroundImage = newBg;
+          lens.style.backgroundSize = (img.clientWidth * ZOOM) + 'px ' + (img.clientHeight * ZOOM) + 'px';
+        }
+        return true;
       }
 
       wrap.addEventListener('mouseenter', () => {
         const img = getCurrentImg();
-        if (!img || !img.src) return;
-        lens.style.backgroundImage = `url("${img.src}")`;
-        lens.style.backgroundSize = (img.clientWidth * ZOOM) + 'px ' + (img.clientHeight * ZOOM) + 'px';
+        if (!syncLensBackground(img)) return;
         lens.removeAttribute('hidden');
       });
 
@@ -640,26 +667,44 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
       });
 
       wrap.addEventListener('mousemove', (e) => {
-        if (lens.hasAttribute('hidden')) return;
         const img = getCurrentImg();
-        if (!img) return;
+        if (!img) { lens.setAttribute('hidden', ''); return; }
         const imgRect = img.getBoundingClientRect();
-        // If cursor leaves the image area (carousel padding), hide lens.
-        if (e.clientX < imgRect.left || e.clientX > imgRect.right ||
-            e.clientY < imgRect.top  || e.clientY > imgRect.bottom) {
+        const inBounds =
+          e.clientX >= imgRect.left && e.clientX <= imgRect.right &&
+          e.clientY >= imgRect.top  && e.clientY <= imgRect.bottom;
+        if (!inBounds) {
+          // Cursor over carousel padding, toggle button, or a side slot —
+          // bounded by the active image rect, so hide.
           lens.setAttribute('hidden', '');
           return;
         }
+        // Bounds-driven re-show — covers cases where lens was hidden by a
+        // prior event (mode swap, arrow click that pushed cursor out of
+        // bounds, etc.) and the user returns to the active image.
+        syncLensBackground(img);
+        if (lens.hasAttribute('hidden')) lens.removeAttribute('hidden');
         const wrapRect = wrap.getBoundingClientRect();
         const lx = e.clientX - wrapRect.left - LENS / 2;
         const ly = e.clientY - wrapRect.top - LENS / 2;
         lens.style.left = lx + 'px';
         lens.style.top  = ly + 'px';
-        // bg position — center the zoomed point under the cursor.
         const px = e.clientX - imgRect.left;
         const py = e.clientY - imgRect.top;
         lens.style.backgroundPosition =
           (-(px * ZOOM - LENS / 2)) + 'px ' + (-(py * ZOOM - LENS / 2)) + 'px';
+      });
+
+      // carousel-3d events bubble through .pd-stage-wrap (the wrap is
+      // stable across replaceWith), so listeners attach once. Mode swap
+      // forces a hide so mouseenter re-syncs with the correct image; idx
+      // change inside a hover refreshes background proactively.
+      wrap.addEventListener('c3d:mode-change', () => {
+        lens.setAttribute('hidden', '');
+      });
+      wrap.addEventListener('c3d:idx-change', () => {
+        if (lens.hasAttribute('hidden')) return;
+        syncLensBackground(getCurrentImg());
       });
     }
 
