@@ -218,6 +218,10 @@
     .img360-slot-empty span:first-child { font-size: 22px; margin-bottom: 4px; }
     .img360-slot-rm { position: absolute; top: 4px; right: 4px; width: 18px; height: 18px; background: var(--danger); color: #fff; border: none; border-radius: 50%; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 2; opacity: 0; transition: opacity 0.15s; }
     .img360-slot.has-image:hover .img360-slot-rm { opacity: 1; }
+    .img360-slot-flip { position: absolute; bottom: 6px; left: 6px; right: 6px; display: flex; align-items: center; gap: 4px; padding: 3px 6px; background: rgba(255,255,255,0.92); border-radius: 3px; font-size: 10px; font-weight: 600; letter-spacing: 0.03em; color: var(--text); cursor: pointer; user-select: none; z-index: 2; }
+    .img360-slot-flip input { margin: 0; cursor: pointer; }
+    .color-thumb-flip { position: absolute; bottom: 2px; right: 2px; width: 16px; height: 16px; background: rgba(255,255,255,0.92); color: var(--text); border: 1px solid var(--border); border-radius: 50%; font-size: 10px; cursor: pointer; line-height: 1; padding: 0; display: flex; align-items: center; justify-content: center; z-index: 2; }
+    .color-thumb-flip.on { background: var(--accent); color: #fff; border-color: var(--accent); }
     .img360-hint { font-size: 11px; color: var(--muted); margin-top: 0.5rem; }
     @media (max-width: 600px) { .img360-grid { grid-template-columns: repeat(2, 1fr); } }
 
@@ -661,12 +665,15 @@ function authHeaders(extra) {
   return extra ? Object.assign(h, extra) : h;
 }
 
-// 360° angle slot definitions (must match storefront's expectations)
+// 360° angle slot definitions (must match storefront's expectations).
+// `flip` is no longer hardcoded per slot — it now defaults to false and the
+// admin user toggles it per slot via the "Aynala" checkbox. Save serialize
+// reads runtime slot.flip, not def.flip.
 const SLOT_DEFS = [
   { id: 'front',  label: 'FRONT', deg: '0°',   flip: false },
   { id: 'side-r', label: '3/4 R', deg: '90°',  flip: false },
   { id: 'back',   label: 'BACK',  deg: '180°', flip: false },
-  { id: 'side-l', label: '3/4 L', deg: '270°', flip: true  }
+  { id: 'side-l', label: '3/4 L', deg: '270°', flip: false }
 ];
 
 // Pending state for the product modal:
@@ -1182,7 +1189,7 @@ function openProductModal(product) {
       advanced: !!(c.images || c.images360 || typeof c.stock === 'number' || typeof c.priceOverride === 'number' || (c.sizeStock && Object.keys(c.sizeStock).length > 0)),
       colorImages: Array.isArray(c.images) ? c.images.map(src => ({ src, file: null })) : [],
       color360: Array.isArray(c.images360) && c.images360.length === 4
-        ? c.images360.map(f => f && f.src ? { src: f.src, file: null } : null)
+        ? c.images360.map(f => f && f.src ? { src: f.src, file: null, flip: !!f.flip } : null)
         : [null, null, null, null],
       sizeStock: (c.sizeStock && typeof c.sizeStock === 'object') ? { ...c.sizeStock } : {},
     })) : [];
@@ -1247,7 +1254,8 @@ function renderColorList() {
           </div>
           <div class="color-thumb-row color-360-row">${SLOT_DEFS.map((def, si) => {
             const slot = (c.color360 && c.color360[si]) || null;
-            return `<div class="color-thumb color-thumb-360 ${slot ? '' : 'empty'}" title="${def.label}"><span class="color-thumb-tag">${def.id}</span>${slot ? `<img src="${previewURL(slot)}" alt="${def.label}"><button type="button" onclick="clearColor360Slot(${i}, ${si})" aria-label="Sil">×</button>` : ''}</div>`;
+            const flipped = slot && !!slot.flip;
+            return `<div class="color-thumb color-thumb-360 ${slot ? '' : 'empty'}" title="${def.label}"><span class="color-thumb-tag">${def.id}</span>${slot ? `<img src="${previewURL(slot)}" alt="${def.label}" style="${flipped ? 'transform:scaleX(-1);' : ''}"><button type="button" onclick="event.stopPropagation();clearColor360Slot(${i}, ${si})" aria-label="Sil">×</button><button type="button" class="color-thumb-flip ${flipped ? 'on' : ''}" onclick="event.stopPropagation();toggleColor360Flip(${i}, ${si})" aria-label="Aynala" title="Aynala">↔</button>` : ''}</div>`;
           }).join('')}</div>
         </fieldset>
         <fieldset>
@@ -1347,10 +1355,18 @@ function handleColor360(i, files) {
   for (const f of files) {
     if (slot >= 4) break;
     if (f.type && f.type.startsWith('image/')) {
-      editColors[i].color360[slot] = { src: null, file: f };
+      // Preserve any flip choice the admin already toggled in this slot.
+      const prev = editColors[i].color360[slot];
+      const prevFlip = prev && typeof prev.flip === 'boolean' ? prev.flip : false;
+      editColors[i].color360[slot] = { src: null, file: f, flip: prevFlip };
       slot++;
     }
   }
+  renderColorList();
+}
+function toggleColor360Flip(ci, si) {
+  if (!editColors[ci] || !editColors[ci].color360 || !editColors[ci].color360[si]) return;
+  editColors[ci].color360[si].flip = !editColors[ci].color360[si].flip;
   renderColorList();
 }
 function clearColor360Slot(i, si) {
@@ -1508,7 +1524,7 @@ async function saveProduct() {
           src: slot.src,
           label: def.label,
           deg: def.deg,
-          flip: typeof slot.flip === 'boolean' ? slot.flip : def.flip
+          flip: !!slot.flip
         });
       }
     }
@@ -1556,7 +1572,7 @@ async function saveProduct() {
               slot.src = await uploadImageWithFilename(slot.file, filename);
               slot.file = null;
             }
-            color360Out.push({ id: def.id, src: slot.src, label: def.label, deg: def.deg, flip: def.flip });
+            color360Out.push({ id: def.id, src: slot.src, label: def.label, deg: def.deg, flip: !!slot.flip });
           }
           out.images360 = color360Out;
         }
@@ -1731,14 +1747,22 @@ function render360Slots() {
     const slot = edit360Slots[i];
     const has = !!slot;
     const url = has ? previewURL(slot) : '';
+    const flipped = has && !!slot.flip;
     return `
       <div class="img360-slot ${has ? 'has-image' : ''}" onclick="pickSlot(${i})">
-        ${has ? `<img src="${url}" alt="${def.label}"><button class="img360-slot-rm" onclick="event.stopPropagation();clearSlot(${i})">×</button>` : ''}
+        ${has ? `<img src="${url}" alt="${def.label}" style="${flipped ? 'transform:scaleX(-1);' : ''}"><button class="img360-slot-rm" onclick="event.stopPropagation();clearSlot(${i})">×</button>` : ''}
         <div class="img360-slot-meta"><span>${def.label}</span><span class="img360-slot-deg">${def.deg}</span></div>
+        ${has ? `<label class="img360-slot-flip" onclick="event.stopPropagation();" title="Bu görseli yatay aynala"><input type="checkbox" ${flipped ? 'checked' : ''} onchange="event.stopPropagation();toggle360Flip(${i}, this.checked);"><span>Aynala</span></label>` : ''}
         ${has ? '' : '<div class="img360-slot-empty"><span>+</span><span>Click to upload</span></div>'}
       </div>
     `;
   }).join('');
+}
+
+function toggle360Flip(i, checked) {
+  if (!edit360Slots[i]) return;
+  edit360Slots[i].flip = !!checked;
+  render360Slots();
 }
 
 function pickSlot(i) {
@@ -1747,7 +1771,10 @@ function pickSlot(i) {
   input.onchange = () => {
     const file = input.files && input.files[0];
     if (!file) return;
-    edit360Slots[i] = { src: null, file, flip: SLOT_DEFS[i].flip };
+    // Preserve a previously-toggled flip choice if the user is re-uploading
+    // into the same slot (default false otherwise — SLOT_DEFS hardcodes are gone).
+    const prevFlip = edit360Slots[i] && typeof edit360Slots[i].flip === 'boolean' ? edit360Slots[i].flip : false;
+    edit360Slots[i] = { src: null, file, flip: prevFlip };
     render360Slots();
   };
   input.click();

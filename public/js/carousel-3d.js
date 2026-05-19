@@ -191,7 +191,6 @@
           <button class="c3d-arrow c3d-arrow-r" type="button" aria-label="Next angle">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 6l6 6-6 6"/></svg>
           </button>
-          <div class="c3d-counter" aria-live="polite"></div>
         </div>
       ` : '';
 
@@ -231,7 +230,6 @@
       const flat = this.querySelector('.c3d-flat');
       const ring = this.querySelector('.c3d-360');
       const lbl = this.querySelector('.c3d-toggle .c3d-lbl');
-      const counter = this.querySelector('.c3d-counter');
       const frames = this._frames();
       const idx = this._idx();
       const cur = frames[idx];
@@ -257,12 +255,6 @@
         flat.hidden = true;
         ring.hidden = false;
         this._updateSlotPositions();
-        if (counter) {
-          counter.textContent =
-            String(idx + 1).padStart(2, '0') + ' / ' +
-            String(this.spinFrames.length).padStart(2, '0') +
-            (cur.label ? ' · ' + cur.label : '');
-        }
       }
     }
 

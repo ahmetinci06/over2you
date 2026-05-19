@@ -1666,20 +1666,6 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
   .c3d-arrow-l { left: 12px; }
   .c3d-arrow-r { right: 12px; }
 
-  /* Counter */
-  .c3d-counter {
-    position: absolute;
-    top: 24px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 5;
-    font: 500 10px/1 var(--heading-font-family);
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: rgb(var(--text-color) / 0.5);
-    pointer-events: none;
-  }
-
   /* ===== Mobile breakpoint ===== */
   @media (max-width: 768px) {
     .product-grid-layout {
@@ -1703,6 +1689,5 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
     .c3d-stage { min-height: 380px; }
     .c3d-toggle { width: 48px; height: 48px; top: 12px; right: 12px; }
     .c3d-arrow { width: 38px; height: 38px; }
-    .c3d-counter { font-size: 9px; }
   }
 </style>
