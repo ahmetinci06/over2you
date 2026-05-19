@@ -139,6 +139,57 @@ const mockBDG = {
   // Spin frames have 4 entries — counter should read "1 / 4" or similar
   /\/ 4$/.test(lbAfterSlotTap.counter) ? PASS(`lightbox using spin frames (counter ${lbAfterSlotTap.counter})`) : FAIL(`counter=${lbAfterSlotTap.counter}, expected ".../4"`);
 
+  // 6. G5 lazy pan: simulate pinch (2-finger) → lift one finger mid-gesture
+  //    → continue with single-finger pan. Mid-pinch finger-lift means the
+  //    1-finger touchstart branch never fires; the touchmove handler must
+  //    seed pan anchors on its first 1-finger event when isPanning === false.
+  console.log('Scenario 6: G5 lazy pan — pinch, lift finger, single-finger drag');
+  const lazyResult = await page.evaluate(() => {
+    const img = document.querySelector('.lightbox-img');
+    if (!img) return { error: 'no img' };
+    const r = img.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    function touch(x, y, id) {
+      return new Touch({ identifier: id, target: img, clientX: x, clientY: y, pageX: x, pageY: y });
+    }
+    function fire(type, list, changed) {
+      img.dispatchEvent(new TouchEvent(type, {
+        touches: list, targetTouches: list,
+        changedTouches: changed || list,
+        bubbles: true, cancelable: true,
+      }));
+    }
+    try {
+      // Reset to a known zoomed state via a fresh pinch
+      img.style.transform = '';
+      fire('touchstart', [touch(cx - 30, cy, 0), touch(cx + 30, cy, 1)]);
+      fire('touchmove',  [touch(cx - 90, cy, 0), touch(cx + 90, cy, 1)]);
+      // Lift finger 1 — touchend with one remaining finger (id 1 stays)
+      fire('touchend', [touch(cx + 90, cy, 1)], [touch(cx - 90, cy, 0)]);
+      const afterLift = img.style.transform;
+      // Now drag with the remaining finger — no preceding touchstart 1-finger.
+      // First touchmove seeds anchors; the second produces actual translate.
+      fire('touchmove', [touch(cx + 90, cy, 1)]);
+      fire('touchmove', [touch(cx + 190, cy + 60, 1)]);
+      const afterDrag = img.style.transform;
+      fire('touchend', [], [touch(cx + 200, cy + 80, 1)]);
+      return { afterLift, afterDrag, ok: true };
+    } catch (e) {
+      return { error: e.message };
+    }
+  });
+  INFO('lazy pan result: ' + JSON.stringify(lazyResult));
+  if (lazyResult.error) {
+    FAIL('lazy pan dispatch failed: ' + lazyResult.error);
+  } else {
+    /scale\(3/.test(lazyResult.afterLift) ? PASS('pinch produced scale(3) before lift') : FAIL(`pre-lift transform: ${lazyResult.afterLift}`);
+    // Match a non-zero translate so the assertion can tell "lazy pan actually
+    // moved" from "init fired with dx=0". Need at least one non-zero coord.
+    /translate\(\s*(?!0px,\s*0px)/.test(lazyResult.afterDrag)
+      ? PASS('single-finger drag after lift produced non-zero translate')
+      : FAIL(`post-drag transform: ${lazyResult.afterDrag}`);
+  }
+
   await browser.close();
   console.log('\nExit code: ' + (process.exitCode || 0));
 })();

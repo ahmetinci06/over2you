@@ -1277,6 +1277,14 @@ p {
   letter-spacing: 0.08em;
   padding: 0.3rem 0.5rem;
 }
+.product-badge--oos {
+  top: 0.5rem;
+  left: auto;
+  right: 0.5rem;
+  background: #fff;
+  color: #111;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+}
 
 .product-quick-add {
   position: absolute;

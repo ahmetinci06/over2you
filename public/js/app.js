@@ -425,6 +425,16 @@ function renderProducts(filter, targetEl) {
                </div>`}
         </a>
         ${product.badge ? `<span class="product-badge">${product.badge}</span>` : ''}
+        ${(() => {
+          // Out-of-stock badge: master override (product.outOfStock) OR a
+          // computed sum that's actually zero. effectiveStockSum returns null
+          // when nothing is declared — that's "unknown", not OOS, so we leave
+          // the badge off. Color-level matrices aren't iterated here on
+          // purpose; per-color OOS belongs on PDP.
+          if (product.outOfStock) return '<span class="product-badge product-badge--oos">STOKTA YOK</span>';
+          const sum = (window.O2Y && window.O2Y.effectiveStockSum) ? window.O2Y.effectiveStockSum(product, null) : null;
+          return sum === 0 ? '<span class="product-badge product-badge--oos">STOKTA YOK</span>' : '';
+        })()}
         <div class="product-quick-add" onclick="Cart.add(products.find(p=>p.id===${product.id}))">+ QUICK ADD</div>
       </div>
       <div class="product-sizes">

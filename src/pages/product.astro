@@ -49,6 +49,7 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
     <img class="lightbox-img" src="" alt="" />
     <button class="lightbox-next" type="button" aria-label="Sonraki">›</button>
     <div class="lightbox-counter" aria-live="polite"></div>
+    <div class="pinch-hint" aria-hidden="true" hidden>🤏 İki parmakla yakınlaştır</div>
   </div>
 
   <script is:inline>
@@ -584,6 +585,36 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
         nextBtn.style.visibility = (single || idx === displayThumbs.length - 1) ? 'hidden' : 'visible';
       }
 
+      // First-time pinch hint on mobile (touch + no-hover). One shot per
+      // device — localStorage flag persists, so frequent visitors don't see
+      // the prompt again. Desktop never gets it.
+      const pinchHint = lb.querySelector('.pinch-hint');
+      let pinchHintTimer = null;
+      function maybeShowPinchHint() {
+        if (!pinchHint) return;
+        if (!window.matchMedia('(hover: none)').matches) return;
+        try {
+          if (localStorage.getItem('o2y_pinch_hint_seen') === '1') return;
+        } catch (e) { /* localStorage blocked → still show */ }
+        pinchHint.hidden = false;
+        // Defer the class flip so the transition has a starting frame.
+        requestAnimationFrame(() => pinchHint.classList.add('visible'));
+        clearTimeout(pinchHintTimer);
+        pinchHintTimer = setTimeout(() => {
+          pinchHint.classList.remove('visible');
+          // Fade-out lasts 400ms (CSS transition) — hide after that to keep
+          // the element out of the accessibility tree.
+          setTimeout(() => { pinchHint.hidden = true; }, 450);
+        }, 2500);
+        try { localStorage.setItem('o2y_pinch_hint_seen', '1'); } catch (e) {}
+      }
+      function hidePinchHint() {
+        if (!pinchHint) return;
+        clearTimeout(pinchHintTimer);
+        pinchHint.classList.remove('visible');
+        pinchHint.hidden = true;
+      }
+
       function open(at, overrideFrames) {
         displayThumbs = (overrideFrames && overrideFrames.length) ? overrideFrames.slice() : baseThumbs;
         if (!displayThumbs.length) return;
@@ -592,6 +623,7 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
         lb.removeAttribute('hidden');
         document.body.style.overflow = 'hidden';
         isOpen = true;
+        maybeShowPinchHint();
       }
       function close() {
         lb.setAttribute('hidden', '');
@@ -599,6 +631,7 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
         isOpen = false;
         displayThumbs = baseThumbs;
         resetZoom();
+        hidePinchHint();
       }
 
       // Touch handling: 2-finger pinch (scale 1-4) + 1-finger pan when zoomed.
@@ -640,7 +673,18 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
           if (pinchScale === 1) { panX = 0; panY = 0; }
           else clampPan();
           applyTransform();
-        } else if (e.touches.length === 1 && isPanning && pinchScale > 1) {
+        } else if (e.touches.length === 1 && pinchScale > 1) {
+          // Lazy pan start: user pinched, lifted one finger, and is now
+          // dragging with the remaining finger. The touchstart 1-finger
+          // branch never fired (gesture began as 2-finger), so seed pan
+          // anchors here on the first touchmove that sees 1 touch.
+          if (!isPanning) {
+            startPanX = e.touches[0].clientX;
+            startPanY = e.touches[0].clientY;
+            lastPanX = panX;
+            lastPanY = panY;
+            isPanning = true;
+          }
           e.preventDefault();
           const t = displayThumbs[idx];
           const flipped = !!(t && t.flip);
@@ -1627,6 +1671,25 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
     letter-spacing: 0.06em;
     z-index: 2;
   }
+  .pdp-lightbox .pinch-hint {
+    position: absolute;
+    top: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #fff;
+    color: #111;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font: 600 13px/1.2 var(--heading-font-family);
+    letter-spacing: 0.02em;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+    z-index: 3;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+  }
+  .pdp-lightbox .pinch-hint.visible { opacity: 1; }
+  .pdp-lightbox .pinch-hint[hidden] { display: none; }
   @media (max-width: 600px) {
     .pdp-lightbox .lightbox-close { top: 12px; right: 12px; font-size: 30px; width: 40px; height: 40px; }
     .pdp-lightbox .lightbox-prev,
