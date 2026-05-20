@@ -6,7 +6,12 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "eyeball": "for f in scripts/eyeball-*.cjs; do echo \"--- $f ---\"; node \"$f\" || exit 1; done",
+    "eyeball:pdp": "for f in pdp-thumbs pdp-swatches pdp-sizestock pdp-magnify pdp-360-partial; do echo \"--- eyeball-$f ---\"; node \"scripts/eyeball-$f.cjs\" || exit 1; done",
+    "eyeball:mobile": "for f in mobile-zoom mobile-pan mobile-scroll mobile-pinch-hint; do echo \"--- eyeball-$f ---\"; node \"scripts/eyeball-$f.cjs\" || exit 1; done",
+    "eyeball:shop": "node scripts/eyeball-shop-oos.cjs",
+    "eyeball:misc": "for f in 360-counter cart multi; do echo \"--- eyeball-$f ---\"; node \"scripts/eyeball-$f.cjs\" || exit 1; done"
   },
   "dependencies": {
     "astro": "^5.17.1"
