@@ -21,7 +21,7 @@ const mockBDG = {
     { id:'front',  src:'products/bdg-jacket-front.png', label:'FRONT', deg:'0°',   flip:false },
     { id:'side-r', src:'products/bdg-jacket-side.png',  label:'3/4 R', deg:'90°',  flip:false },
     { id:'back',   src:'products/bdg-jacket-back.png',  label:'BACK',  deg:'180°', flip:false },
-    { id:'side-l', src:'products/bdg-jacket-left.png',  label:'3/4 L', deg:'270°', flip:false }
+    { id:'side-l', src:'products/bdg-jacket-left.png',  label:'3/4 L', deg:'270°', flip:true }
   ],
   colors: [
     { id:'tan',   name:'TAN',   hex:'#c4a47a', default:true },
@@ -50,6 +50,7 @@ const mockBDG = {
     return await page.$eval('.magnify-lens', el => ({
       hidden: el.hasAttribute('hidden'),
       bg: el.style.backgroundImage,
+      transform: el.style.transform || '',
     }));
   }
   async function moveToCenterOf(selector) {
@@ -125,6 +126,39 @@ const mockBDG = {
     await page.waitForTimeout(250);
     s = await lensState();
     s.hidden ? PASS('lens hidden on side slot hover') : FAIL('lens visible on side slot');
+  }
+
+  // 6. Mirror sync — slot with flip:true must propagate scaleX(-1) to lens.
+  // mockBDG.images360[3] (side-l) is flipped; jump via the carousel-3d's
+  // public setIdx() since the side-l c3d-slot is z-order-behind the active
+  // slot and Playwright click can't reach it without DOM overlap acrobatics.
+  console.log('Scenario 6: Flipped slot hover → lens transform matches source');
+  await moveAwayFromStage();
+  const jumped = await page.evaluate(() => {
+    const c = document.querySelector('carousel-3d');
+    if (!c || typeof c.setIdx !== 'function') return false;
+    c.setIdx(3);
+    return true;
+  });
+  if (!jumped) {
+    FAIL('carousel-3d.setIdx unavailable');
+  } else {
+    await page.waitForTimeout(500);
+    const activeImg = await page.$eval('.c3d-slot.c3d-slot-active img', el => ({
+      transform: el.style.transform || '',
+      src: el.src.split('/').pop(),
+    }));
+    activeImg.transform.includes('scaleX(-1)')
+      ? PASS(`active slot is flipped (img.transform=${activeImg.transform})`)
+      : FAIL(`active slot expected flip:true; transform=${activeImg.transform}`);
+    await moveToCenterOf('.c3d-slot.c3d-slot-active img');
+    s = await lensState();
+    !s.hidden
+      ? PASS('lens visible over flipped slot')
+      : FAIL('lens hidden over flipped slot');
+    s.transform.includes('scaleX(-1)')
+      ? PASS(`lens mirrors source (lens.transform=${s.transform})`)
+      : FAIL(`lens transform mismatch — source has scaleX(-1) but lens.transform="${s.transform}"`);
   }
 
   await browser.close();

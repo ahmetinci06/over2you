@@ -782,6 +782,12 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
         return wrap.querySelector('.c3d-flat img');
       }
 
+      function isFlipped(img) {
+        // carousel-3d renders flipped frames with an inline `transform: scaleX(-1)`
+        // (carousel-3d.js lines 181, 253). Read the inline style directly — cheaper
+        // than getComputedStyle and resilient to future CSS classes for flip.
+        return !!(img && img.style && img.style.transform && img.style.transform.includes('scaleX(-1)'));
+      }
       function syncLensBackground(img) {
         if (!img || !img.src) return false;
         const newBg = 'url("' + img.src + '")';
@@ -789,6 +795,11 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
           lens.style.backgroundImage = newBg;
           lens.style.backgroundSize = (img.clientWidth * ZOOM) + 'px ' + (img.clientHeight * ZOOM) + 'px';
         }
+        // Mirror the lens whenever the source image is flipped so the magnified
+        // view shows the same visual orientation the customer sees on stage.
+        // bg-position is flipped in the mousemove handler to match.
+        const newTransform = isFlipped(img) ? 'scaleX(-1)' : '';
+        if (lens.style.transform !== newTransform) lens.style.transform = newTransform;
         return true;
       }
 
@@ -827,8 +838,13 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
         lens.style.top  = ly + 'px';
         const px = e.clientX - imgRect.left;
         const py = e.clientY - imgRect.top;
+        // When source is mirrored, the cursor's screen-x corresponds to natural
+        // pixel (clientWidth - px). The bg-position must center on that natural
+        // pixel; the lens transform: scaleX(-1) (applied in syncLensBackground)
+        // then flips the magnified view back so it visually matches the stage.
+        const bgX = isFlipped(img) ? (img.clientWidth - px) : px;
         lens.style.backgroundPosition =
-          (-(px * ZOOM - LENS / 2)) + 'px ' + (-(py * ZOOM - LENS / 2)) + 'px';
+          (-(bgX * ZOOM - LENS / 2)) + 'px ' + (-(py * ZOOM - LENS / 2)) + 'px';
       });
 
       // carousel-3d events bubble through .pd-stage-wrap (the wrap is
