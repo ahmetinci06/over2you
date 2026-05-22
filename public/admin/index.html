@@ -1007,7 +1007,7 @@ function filterProducts() {
       : `<div class="btn-group"><button class="btn btn-sm btn-outline" onclick="editProduct(${idx})" title="Düzenle">Edit</button><button class="btn btn-sm btn-outline" onclick="duplicateProduct(${idx})" title="Bu ürünün bir kopyasını oluştur">Kopyala</button><button class="btn btn-sm btn-outline" style="color:var(--danger);" onclick="deleteProduct(${idx})" title="Sil">×</button></div>`;
     return `<tr${isDeleted ? ' style="opacity:0.45;"' : ''}>
       <td>${isDeleted ? '' : `<input type="checkbox" data-idx="${idx}" class="product-cb" ${selectedProducts.has(idx)?'checked':''} onchange="toggleSelect(${idx})">`}</td>
-      <td><div class="product-cell"><div class="swatch" style="background:${p.color};"></div><div><div class="product-name">${p.name}${isDeleted ? ' <span style="font-size:10px;color:var(--danger);font-weight:600;">(SİLİNDİ)</span>' : ''}</div><div class="product-id">#${p.id}</div></div></div></td>
+      <td><div class="product-cell"><div class="swatch" style="background:${(p.colors && p.colors[0] && p.colors[0].hex) || '#ccc'};"></div><div><div class="product-name">${p.name}${isDeleted ? ' <span style="font-size:10px;color:var(--danger);font-weight:600;">(SİLİNDİ)</span>' : ''}</div><div class="product-id">#${p.id}</div></div></div></td>
       <td style="text-transform:capitalize;">${p.category}</td>
       <td>${(typeof p.salePrice === 'number' && p.salePrice < p.price) ? `<strong>₺${p.salePrice.toFixed(2)}</strong> <span style="text-decoration:line-through;color:var(--muted);font-size:11px;">₺${p.price.toFixed(2)}</span>` : `₺${p.price.toFixed(2)}`}</td>
       <td style="font-size:11px;">${p.sizes.join(', ')}</td>
