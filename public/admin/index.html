@@ -498,7 +498,7 @@
         <div class="form-row single"><div class="form-group"><label>Images (gallery — first is the listing thumbnail)</label>
           <div class="img-upload-zone" id="imgDropZone" onclick="document.getElementById('imgFileInput').click()">
             📁 Sürükle bırak veya tıkla
-            <input type="file" id="imgFileInput" accept="image/*" multiple style="display:none;" onchange="handleImageUpload(this.files); this.value='';">
+            <input type="file" id="imgFileInput" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" multiple style="display:none;" onchange="handleImageUpload(this.files); this.value='';">
           </div>
           <div class="img-thumbs" id="imgThumbs"></div>
         </div></div>
@@ -1262,7 +1262,7 @@ function renderColorList() {
           <legend>Bu renge özel galeri fotoları (boşsa ana fotolar kullanılır)</legend>
           <div class="img-upload-zone color-upload-zone" data-color-idx="${i}" data-kind="images" onclick="this.querySelector('input').click()">
             📁 Sürükle bırak veya tıkla
-            <input type="file" multiple accept="image/*" style="display:none;" onchange="handleColorImages(${i}, this.files); this.value='';" onclick="event.stopPropagation();">
+            <input type="file" multiple accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" style="display:none;" onchange="handleColorImages(${i}, this.files); this.value='';" onclick="event.stopPropagation();">
           </div>
           <div class="img-thumbs" data-color-images-idx="${i}">${(c.colorImages || []).map((entry, ei) => `
             <div class="img-thumb-wrap" draggable="true" data-sort-idx="${ei}" title="Sürükleyerek sırala">
@@ -1276,7 +1276,7 @@ function renderColorList() {
           <legend>Bu renge özel 360° fotoları (4 görsel: front, side-r, back, side-l sırasıyla)</legend>
           <div class="img-upload-zone color-upload-zone" data-color-idx="${i}" data-kind="360" onclick="this.querySelector('input').click()">
             📁 Sürükle bırak veya tıkla (ilk 4 görsel slot'lara dağıtılır)
-            <input type="file" multiple accept="image/*" style="display:none;" onchange="handleColor360(${i}, this.files); this.value='';" onclick="event.stopPropagation();">
+            <input type="file" multiple accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" style="display:none;" onchange="handleColor360(${i}, this.files); this.value='';" onclick="event.stopPropagation();">
           </div>
           <div class="color-thumb-row color-360-row">${SLOT_DEFS.map((def, si) => {
             const slot = (c.color360 && c.color360[si]) || null;
@@ -1364,8 +1364,10 @@ function toggleColorAdvanced(i, on) {
 function handleColorImages(i, files) {
   if (!editColors[i]) return;
   if (!editColors[i].colorImages) editColors[i].colorImages = [];
-  for (const f of files) {
-    if (f.type && f.type.startsWith('image/')) editColors[i].colorImages.push({ src: null, file: f });
+  const cname = editColors[i].name || `Renk ${i + 1}`;
+  const valid = filterValidImageFiles(files, `${cname} görselleri`);
+  for (const f of valid) {
+    editColors[i].colorImages.push({ src: null, file: f });
   }
   renderColorRail(i);
 }
@@ -1377,16 +1379,16 @@ function removeColorImage(i, ei) {
 function handleColor360(i, files) {
   if (!editColors[i]) return;
   if (!editColors[i].color360) editColors[i].color360 = Array(SLOT_COUNT).fill(null);
+  const cname = editColors[i].name || `Renk ${i + 1}`;
+  const valid = filterValidImageFiles(files, `${cname} 360°`);
   let slot = 0;
-  for (const f of files) {
+  for (const f of valid) {
     if (slot >= 4) break;
-    if (f.type && f.type.startsWith('image/')) {
-      // Preserve any flip choice the admin already toggled in this slot.
-      const prev = editColors[i].color360[slot];
-      const prevFlip = prev && typeof prev.flip === 'boolean' ? prev.flip : false;
-      editColors[i].color360[slot] = { src: null, file: f, flip: prevFlip };
-      slot++;
-    }
+    // Preserve any flip choice the admin already toggled in this slot.
+    const prev = editColors[i].color360[slot];
+    const prevFlip = prev && typeof prev.flip === 'boolean' ? prev.flip : false;
+    editColors[i].color360[slot] = { src: null, file: f, flip: prevFlip };
+    slot++;
   }
   renderColorList();
 }
@@ -1514,53 +1516,79 @@ async function saveProduct() {
   const slug = slugify(name);
   const id = document.getElementById('p_id').value;
 
+  // Collect per-file upload errors instead of letting the first failure abort the
+  // whole save. After all uploads attempted we either continue (no failures) or
+  // surface a partial-success toast naming each failed file with its reason.
+  const uploadFailures = [];
+  async function tryUpload(file, filename) {
+    try {
+      return await uploadImageWithFilename(file, filename);
+    } catch (e) {
+      uploadFailures.push({ filename, reason: e && e.message ? e.message : 'bilinmeyen hata' });
+      console.warn('[upload failed]', filename, e && e.message);
+      return null;
+    }
+  }
+
   try {
-    // Phase 1: upload pending images[] files with predictable filenames
-    btn.textContent = 'Uploading images…';
+    // Phase 1: upload pending images[] files with predictable filenames. Failed
+    // entries retain their .file so the admin can retry without re-picking.
+    btn.textContent = 'Görseller yükleniyor…';
     const imageSrcs = [];
     for (let i = 0; i < editImages.length; i++) {
       const entry = editImages[i];
       if (entry.file) {
         const ext = getExt(entry.file.name);
         const filename = `${slug}-${i + 1}${ext}`;
-        entry.src = await uploadImageWithFilename(entry.file, filename);
-        entry.file = null;
-        imageSrcs.push(entry.src);
+        const src = await tryUpload(entry.file, filename);
+        if (src) {
+          entry.src = src;
+          entry.file = null;
+          imageSrcs.push(src);
+        }
       } else if (entry.src) {
         imageSrcs.push(entry.src);
       }
     }
 
-    // Phase 2: upload pending 360 slot files. Partial allowed (>=2, <=6).
-    // 1 filled slot is blocked upstream (updateSaveBlocker disables the
-    // button) so we only ever land here with 0 or 2+. Mode = rotation
-    // computes deg dynamically (i * 360 / N); showcase preserves the
-    // user's free-form label and drops deg entirely.
+    // Phase 2: top-level 360 slots. Partial allowed (>=2, <=6); upstream blocker
+    // disables save when filled === 1 so we only land here with 0 or 2+. Two-pass
+    // so we recompute deg from the count of *successfully uploaded* slots — a 3-file
+    // selection where 1 fails should produce a clean 2-frame 360, not a 3-frame
+    // sequence with a null src in the middle.
     let images360 = [];
     const filledSlots = edit360Slots
       .map((s, i) => s ? { slot: s, originalIdx: i } : null)
       .filter(Boolean);
-    const N360 = filledSlots.length;
-    if (N360 >= 2) {
-      btn.textContent = 'Uploading 360°…';
+    if (filledSlots.length >= 2) {
+      btn.textContent = '360° yükleniyor…';
       const isShowcase = edit360Mode === 'showcase';
+      // Upload pass
       for (let i = 0; i < filledSlots.length; i++) {
         const { slot } = filledSlots[i];
-        const slotId = 'frame-' + i;
         if (slot.file) {
           const ext = getExt(slot.file.name);
-          const filename = `${slug}-${slotId}${ext}`;
-          slot.src = await uploadImageWithFilename(slot.file, filename);
-          slot.file = null;
+          const filename = `${slug}-frame-${i}${ext}`;
+          const src = await tryUpload(slot.file, filename);
+          if (src) { slot.src = src; slot.file = null; }
         }
-        const entry = {
-          id: slotId,
-          src: slot.src,
-          label: isShowcase ? (slot.label || `Slot ${i + 1}`) : '',
-          flip: !!slot.flip
-        };
-        if (!isShowcase) entry.deg = (i * 360 / N360) + '°';
-        images360.push(entry);
+      }
+      // Build pass — only frames with a src; recompute deg from final N
+      const uploaded = filledSlots.filter(({ slot }) => slot.src);
+      if (uploaded.length >= 2) {
+        const N = uploaded.length;
+        for (let i = 0; i < uploaded.length; i++) {
+          const { slot } = uploaded[i];
+          const slotId = 'frame-' + i;
+          const entry = {
+            id: slotId,
+            src: slot.src,
+            label: isShowcase ? (slot.label || `Slot ${i + 1}`) : '',
+            flip: !!slot.flip
+          };
+          if (!isShowcase) entry.deg = (i * 360 / N) + '°';
+          images360.push(entry);
+        }
       }
     }
 
@@ -1580,50 +1608,58 @@ async function saveProduct() {
       if (c.advanced) {
         // images[]
         if (c.colorImages && c.colorImages.length > 0) {
-          btn.textContent = 'Renk fotoları yükleniyor…';
+          btn.textContent = `${out.name} görselleri yükleniyor…`;
           const colorImageSrcs = [];
           for (let i = 0; i < c.colorImages.length; i++) {
             const entry = c.colorImages[i];
             if (entry.file) {
               const ext = getExt(entry.file.name);
               const filename = `${slug}-${cid}-${i + 1}${ext}`;
-              entry.src = await uploadImageWithFilename(entry.file, filename);
-              entry.file = null;
+              const src = await tryUpload(entry.file, filename);
+              if (src) { entry.src = src; entry.file = null; }
             }
             if (entry.src) colorImageSrcs.push(entry.src);
           }
           if (colorImageSrcs.length > 0) out.images = colorImageSrcs;
         }
-        // images360 — partial allowed (>=2, <=6). Mode override per-color
-        // via c.images360Mode (defaults to product-level mode).
+        // images360 — partial allowed (>=2, <=6). Same two-pass shape as Phase 2
+        // so per-color 360 reflects only-successfully-uploaded frames.
         if (c.color360) {
           const colorFilled = c.color360.filter(s => s);
           if (colorFilled.length >= 2) {
-            btn.textContent = 'Renk 360 yükleniyor…';
-            const cN = colorFilled.length;
+            btn.textContent = `${out.name} 360° yükleniyor…`;
             const colorMode = c.images360Mode || edit360Mode;
             const isShowcase = colorMode === 'showcase';
-            const color360Out = [];
+            // Upload pass
             for (let si = 0; si < colorFilled.length; si++) {
               const slot = colorFilled[si];
-              const slotId = 'frame-' + si;
               if (slot.file) {
                 const ext = getExt(slot.file.name);
-                const filename = `${slug}-${cid}-${slotId}${ext}`;
-                slot.src = await uploadImageWithFilename(slot.file, filename);
-                slot.file = null;
+                const filename = `${slug}-${cid}-frame-${si}${ext}`;
+                const src = await tryUpload(slot.file, filename);
+                if (src) { slot.src = src; slot.file = null; }
               }
-              const entry = {
-                id: slotId,
-                src: slot.src,
-                label: isShowcase ? (slot.label || `Slot ${si + 1}`) : '',
-                flip: !!slot.flip
-              };
-              if (!isShowcase) entry.deg = (si * 360 / cN) + '°';
-              color360Out.push(entry);
             }
-            out.images360 = color360Out;
-            if (c.images360Mode && c.images360Mode !== edit360Mode) out.images360Mode = c.images360Mode;
+            // Build pass
+            const uploaded = colorFilled.filter(s => s.src);
+            if (uploaded.length >= 2) {
+              const cN = uploaded.length;
+              const color360Out = [];
+              for (let si = 0; si < uploaded.length; si++) {
+                const slot = uploaded[si];
+                const slotId = 'frame-' + si;
+                const entry = {
+                  id: slotId,
+                  src: slot.src,
+                  label: isShowcase ? (slot.label || `Slot ${si + 1}`) : '',
+                  flip: !!slot.flip
+                };
+                if (!isShowcase) entry.deg = (si * 360 / cN) + '°';
+                color360Out.push(entry);
+              }
+              out.images360 = color360Out;
+              if (c.images360Mode && c.images360Mode !== edit360Mode) out.images360Mode = c.images360Mode;
+            }
           }
         }
         // stock + priceOverride
@@ -1694,13 +1730,25 @@ async function saveProduct() {
       await api('/api/products', { method: 'POST', body: JSON.stringify(productBody) });
     }
     products = await api('/api/products');
-    setSaveState('success');
-    setTimeout(() => setSaveState('clean'), 2500);
-    closeProductModal(); renderProducts(); renderDashboard();
-    toast(id ? 'Product updated' : 'Product added');
+    // Partial-success path: product saved with whatever uploaded; per-file failures
+    // get a single combined toast so the admin can see exactly which files to fix.
+    // Modal stays open so they can re-attempt the failed slots without losing context.
+    if (uploadFailures.length > 0) {
+      setSaveState('error', `${uploadFailures.length} dosya yüklenemedi`);
+      const sample = uploadFailures.slice(0, 3).map(f => `${f.filename} (${f.reason})`).join(' | ');
+      const tail = uploadFailures.length > 3 ? ` (+${uploadFailures.length - 3} daha)` : '';
+      toast(`Ürün kaydedildi, ${uploadFailures.length} foto başarısız: ${sample}${tail}`, true);
+      renderProducts(); renderDashboard();
+      // Don't close modal — admin needs to retry failed uploads
+    } else {
+      setSaveState('success');
+      setTimeout(() => setSaveState('clean'), 2500);
+      closeProductModal(); renderProducts(); renderDashboard();
+      toast(id ? 'Ürün güncellendi' : 'Ürün eklendi');
+    }
   } catch (e) {
     setSaveState('error', 'Hata: ' + (e.message || 'kaydedilemedi'));
-    toast('Error: ' + e.message, true);
+    toast('Hata: ' + (e.message || 'kaydedilemedi'), true);
   } finally {
     btn.disabled = false; btn.textContent = 'Save Product';
   }
@@ -1784,9 +1832,51 @@ function makeSortable(container, onReorder) {
   });
 }
 
+// Upload limits kept in sync with backend (cms index.js MAX_FILE_BYTES + ALLOWED_MIMES)
+// and nginx (client_max_body_size 50m on /api/). Bumping here without bumping the other
+// two layers will produce 413/415 errors at request time instead of clean toasts.
+const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
+const ALLOWED_IMAGE_MIMES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+
+function validateImageFile(file) {
+  if (!file) return 'Dosya yok';
+  const mime = (file.type || '').toLowerCase();
+  if (!ALLOWED_IMAGE_MIMES.has(mime)) {
+    if (mime.includes('heic') || mime.includes('heif')) {
+      return 'HEIC formatı henüz desteklenmiyor — JPG veya PNG\'e dışa aktar';
+    }
+    return `Desteklenmeyen format (${mime || 'bilinmiyor'}) — JPG, PNG veya WebP gerekli`;
+  }
+  if (file.size > MAX_UPLOAD_BYTES) {
+    const mb = (file.size / (1024 * 1024)).toFixed(1);
+    return `Dosya çok büyük (${mb}MB) — max ${Math.round(MAX_UPLOAD_BYTES / (1024 * 1024))}MB`;
+  }
+  return null;
+}
+
+// Pre-flight files against validateImageFile, accumulate skip reasons into a toast,
+// return only the files that passed. All file handlers funnel through this so the
+// admin gets one consistent rejection message regardless of entry point.
+function filterValidImageFiles(files, contextLabel) {
+  const ok = [];
+  const skipped = [];
+  for (const f of files) {
+    const reason = validateImageFile(f);
+    if (reason) skipped.push(`${f.name}: ${reason}`);
+    else ok.push(f);
+  }
+  if (skipped.length > 0) {
+    const head = contextLabel ? `${contextLabel} — ` : '';
+    const sample = skipped.slice(0, 3).join(' | ');
+    const tail = skipped.length > 3 ? ` (+${skipped.length - 3} daha)` : '';
+    toast(`${head}${skipped.length} dosya atlandı: ${sample}${tail}`, true);
+  }
+  return ok;
+}
+
 function handleImageUpload(files) {
-  for (const file of files) {
-    if (!file.type || !file.type.startsWith('image/')) continue;
+  const valid = filterValidImageFiles(files, 'Görseller');
+  for (const file of valid) {
     editImages.push({ src: null, file });
   }
   renderImageThumbs();
@@ -1859,10 +1949,12 @@ function updateSaveBlocker() {
 
 function pickSlot(i) {
   const input = document.createElement('input');
-  input.type = 'file'; input.accept = 'image/*';
+  input.type = 'file'; input.accept = 'image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp';
   input.onchange = () => {
     const file = input.files && input.files[0];
     if (!file) return;
+    const reason = validateImageFile(file);
+    if (reason) { toast(`Slot ${i + 1}: ${reason}`, true); return; }
     // Preserve a previously-toggled flip / label choice if the user is
     // re-uploading into the same slot.
     const prev = edit360Slots[i];
@@ -1882,16 +1974,30 @@ async function uploadImageWithFilename(file, filename) {
   const renamed = new File([file], filename, { type: file.type });
   const fd = new FormData();
   fd.append('image', renamed);
-  const r = await fetch('/api/upload', {
-    method: 'POST',
-    headers: { 'Authorization': 'Bearer ' + sessionToken },
-    body: fd
-  });
-  if (r.status === 401) { logout(); throw new Error('Session expired'); }
+  let r;
+  try {
+    r = await fetch('/api/upload', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + sessionToken },
+      body: fd
+    });
+  } catch (netErr) {
+    throw new Error(`ağ hatası: ${netErr.message || 'bağlantı kurulamadı'}`);
+  }
+  if (r.status === 401) { logout(); throw new Error('oturum süresi doldu'); }
   if (!r.ok) {
-    let msg;
-    try { msg = (await r.json()).error; } catch (e) { msg = r.statusText; }
-    throw new Error('Upload failed: ' + (msg || r.statusText));
+    // Order matters: backend JSON wins, then explicit status reasons, then status code
+    // fallback. r.statusText can be "" on Safari + HTTP/2 + nginx HTML body — never
+    // bottom out to empty string or this toast becomes the truncated "image upload
+    // failed: " the customer reported.
+    let reason = '';
+    try { const j = await r.json(); if (j && j.error) reason = String(j.error); } catch {}
+    if (!reason) {
+      if (r.status === 413) reason = `dosya çok büyük (max ${Math.round(MAX_UPLOAD_BYTES / (1024 * 1024))}MB)`;
+      else if (r.status === 415) reason = 'desteklenmeyen format (JPG, PNG, WebP)';
+      else reason = `sunucu hatası (HTTP ${r.status})`;
+    }
+    throw new Error(reason);
   }
   const d = await r.json();
   // Backend returns { url: 'img/products/<filename>', filename }.

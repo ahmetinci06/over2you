@@ -178,6 +178,7 @@ Her push öncesi `npm run eyeball` PASS olmalı (preview 4321'de ayakta + son co
 | Mobile | `npm run eyeball:mobile` | zoom · pan · scroll · pinch-hint | YEREL (preview) |
 | Shop | `npm run eyeball:shop` | shop-oos | YEREL (preview) |
 | Misc | `npm run eyeball:misc` | 360-counter · cart · multi | counter: YEREL, cart/multi: PROD |
+| Admin | `node scripts/eyeball-admin-upload.cjs` | upload 200/413/415 + JSON shape | PROD (over2you.shop/api/upload), token signed from `/opt/over2you-cms/.env`; skip-cleanly when env yok |
 
 **Yerel-only hızlı doğrulama** (preview ayakta, prod'a dokunmadan):
 
@@ -194,6 +195,21 @@ node scripts/eyeball-pdp-thumbs.cjs && \
   node scripts/eyeball-pdp-swatches.cjs && \
   node scripts/eyeball-cart.cjs
 ```
+
+**Admin upload smoke** (cms backend + nginx /api/ chain):
+
+```bash
+node scripts/eyeball-admin-upload.cjs   # 4 assert: 200, 413, 415, 415
+```
+
+**Safari Mac repro (manuel) — image upload 413 sonrası:**
+müşteri Mac Safari 18+'da ürün create/update'te 12+ foto upload sırasında "image upload failed: " toast aldığında:
+1. CMS log: `pm2 logs over2you-cms --lines 50` — multer rejection JSON formatında mı, 413/415 mı
+2. nginx error.log: `tail /var/log/nginx/error.log | grep "too large body"` — body size eşiği nereye dayandı
+3. nginx access.log: `tail /var/log/nginx/access.log | grep "/api/upload"` — HTTP status (413 nginx, 415 multer)
+4. Frontend toast: artık `Dosya çok büyük (max 20MB)` / `HEIC formatı henüz desteklenmiyor — JPG veya PNG'e dışa aktar` gibi dolu mesaj olmalı; boş kuyruk ("image upload failed: ") = regression
+
+Müşteri tekrar repro ederse VPS log'lar senkron izlenmeli.
 
 ---
 
@@ -214,6 +230,7 @@ node scripts/eyeball-pdp-thumbs.cjs && \
 ### Kod backlog (v3 — uzak gelecek)
 - **In-place PDP magnify (mobile tap-and-hold):** desktop magnify mobile'da yok, alternative pattern. Lightbox + pinch yeterli bulunduysa skip [G3 deferred].
 - **Safari "unknown download" eski Mac 2015:** ayrı debug session [Turn 25 açık].
+- **HEIC server-side convert (sharp veya heic-convert):** şu an HEIC 415 reject + müşteri JPG export'a yönlendiriliyor. iPhone müşterileri için convert-and-accept eklenebilir; native binary ~30MB install ahmet onayına bağlı [Turn 26 admin-upload-fix sonrası deferred].
 
 ### Infra / hygiene
 - **Cylinder center top_y -248 head overflow + ghost shadow:** eski v3 backlog, 360 mode'da görsel artifakt. Ahmet manuel inceleyip "hâlâ var" derse fix turn [Turn 22 D defer].
@@ -238,3 +255,4 @@ node scripts/eyeball-pdp-thumbs.cjs && \
 | G7 | Color image upload UX parity + isolated re-render | d0e6f46 |
 | G5-batch-A | Shop OOS badge + pinch hint + lazy pan edge case | 1182683 |
 | G5-batch-B | Eyeball orchestration + TESTS.md (this commit) | — |
+| G8 | Safari image upload 413 fix — nginx 50m + multer 20MB + MIME whitelist + JSON error shape + partial-success UX | — |
