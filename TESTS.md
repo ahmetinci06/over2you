@@ -241,6 +241,25 @@ Müşteri tekrar repro ederse VPS log'lar senkron izlenmeli.
 
 ---
 
+## Infra recovery — VPS reset / nginx config loss
+
+Production nginx config artık repo'da versionlu: `infra/nginx/over2you.shop.conf` ↔ canlı `/etc/nginx/sites-available/over2you.shop`. VPS sıfırlanırsa veya config silinirse Turn-1 G8 fix (`client_max_body_size 50m;`) sessizce kaybolur → müşteri 413 problemine geri döner.
+
+**Yeniden install:**
+```bash
+sudo scripts/install-nginx.sh         # repo → /etc/nginx, validate, reload, tg-notify
+```
+
+Drift guard: canlı dosya repo'dan farklıysa script reddeder. Önce `diff /etc/nginx/sites-available/over2you.shop infra/nginx/over2you.shop.conf` ile bak; gerçek değişiklik varsa repo'ya commit et, sonra install et. Acil durum bypass: `FORCE=1 sudo scripts/install-nginx.sh`.
+
+**Hand-edit prosedürü** (canlı dosyayı düzenlerken):
+1. `/etc/nginx/sites-available/over2you.shop` üzerinde değişiklik
+2. `sudo nginx -t && sudo systemctl reload nginx`
+3. `cp /etc/nginx/sites-available/over2you.shop infra/nginx/over2you.shop.conf`
+4. Repo'da commit et — sonraki recovery'de değişiklik korunur
+
+---
+
 ## Grup Tag Sözlüğü
 
 | Tag | İçerik | Commit'ler |
