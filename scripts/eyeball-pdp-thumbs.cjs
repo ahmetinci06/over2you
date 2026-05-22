@@ -4,13 +4,30 @@
 //   2. clicks thumb[1] → expects carousel.flatIdx == 1, flat src == eFlatImages[1]
 //   3. opens 360, expects ring with 4 slots
 //   4. closes 360, expects flat idx restored to whatever it was
-// Pass list (id → expected eFlatImages):
-const TARGETS = [
-  { id: 1, name: 'BDG',  expectFlat: ['/img/products/bdg-jacket-front.png', '/img/products/bdg-jacket-back.png'] },
-  { id: 2, name: '001',  expectFlat: ['/img/products/001-1.png',            '/img/products/001-2.png'] },
-];
-
+//
+// TARGETS used to be hardcoded against BDG (id=1) + 001 (id=2). Now we pull
+// the first two live products from public/data/products.json so soft-deleting
+// a product doesn't silently break the test. Each target's expectFlat is
+// derived from product.images[] so assertions stay in sync with data.
 const { chromium } = require('playwright');
+const { getLiveProducts } = require('./eyeball-helpers.cjs');
+
+// Test asserts a 2-thumb rail + clicks thumb[1], so each fixture needs >=2
+// images. Single-image products would naturally skip via this filter.
+const TARGETS = getLiveProducts({ requireImages: true })
+  .filter(p => (p.images || []).length >= 2)
+  .slice(0, 2)
+  .map(p => ({
+    id: p.id,
+    name: p.name || `id=${p.id}`,
+    expectFlat: p.images.slice(0, 2).map(src => '/img/' + src),
+  }));
+
+if (TARGETS.length === 0) {
+  console.log('SKIP — no live products with 2+ images in public/data/products.json');
+  process.exit(0);
+}
+
 (async () => {
   const browser = await chromium.launch();
   const fails = [];

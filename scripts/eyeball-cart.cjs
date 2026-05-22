@@ -3,19 +3,34 @@
 // + checkout summary.
 
 const { chromium } = require('playwright');
+const { getFirstLiveProduct, skipIfNoFixture } = require('./eyeball-helpers.cjs');
+
+// Needs 2+ colors so we can click a non-default swatch and verify cart picks
+// up the variant. Single-color products can't exercise this code path.
+const FIX = getFirstLiveProduct({ minColors: 2 });
+skipIfNoFixture(FIX, 'eyeball-cart.cjs');
 
 (async () => {
   const browser = await chromium.launch();
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   const page = await ctx.newPage();
 
-  await page.goto('https://over2you.shop/product?id=1&cb=' + Date.now(), { waitUntil: 'networkidle' });
+  await page.goto(`https://over2you.shop/product?id=${FIX.id}&cb=` + Date.now(), { waitUntil: 'networkidle' });
   await page.waitForSelector('.pdp-color-swatch', { timeout: 8000 });
   await page.waitForTimeout(400);
 
-  // Click BLACK swatch (index 1, since TAN is default at idx 0)
-  const blackSwatch = page.locator('.pdp-color-swatch[data-color-id="black"]');
-  await blackSwatch.click();
+  // Click first non-default swatch — used to be hardcoded BLACK against BDG's
+  // TAN/BLACK pair, generalised so any live 2+color product works.
+  const targetColorId = await page.evaluate(() => {
+    const swatches = [...document.querySelectorAll('.pdp-color-swatch')];
+    const nonDefault = swatches.find(s => !s.classList.contains('active'));
+    return (nonDefault || swatches[1] || swatches[0])?.dataset.colorId;
+  });
+  if (!targetColorId) {
+    console.log('SKIP — no non-default swatch found on PDP');
+    process.exit(0);
+  }
+  await page.click(`.pdp-color-swatch[data-color-id="${targetColorId}"]`);
   await page.waitForTimeout(300);
 
   // Pick size L
@@ -31,7 +46,7 @@ const { chromium } = require('playwright');
     const raw = localStorage.getItem('over2you_cart');
     return raw ? JSON.parse(raw) : null;
   });
-  console.log('cart after BLACK+L add:');
+  console.log(`cart after ${targetColorId}+L add:`);
   if (cart && cart[0]) {
     console.log('  key:', cart[0].key);
     console.log('  selectedSize:', cart[0].selectedSize);

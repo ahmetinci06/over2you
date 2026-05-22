@@ -2,13 +2,17 @@
 // Compares post-tweak (turn 23) state against the stage bounding box.
 
 const { chromium } = require('playwright');
+const { getFirstLiveProduct, skipIfNoFixture } = require('./eyeball-helpers.cjs');
+
+const FIX = getFirstLiveProduct({ require360: true });
+skipIfNoFixture(FIX, 'eyeball-360.cjs');
 
 (async () => {
   const browser = await chromium.launch();
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   const page = await ctx.newPage();
 
-  const url = 'https://over2you.shop/product?id=1&cb=' + Date.now();
+  const url = `https://over2you.shop/product?id=${FIX.id}&cb=` + Date.now();
   await page.goto(url, { waitUntil: 'networkidle' });
 
   // Wait for carousel-3d to mount.

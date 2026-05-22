@@ -1,10 +1,15 @@
 const { chromium } = require('playwright');
+const { getFirstLiveProduct, skipIfNoFixture } = require('./eyeball-helpers.cjs');
+
+const FIX = getFirstLiveProduct({ require360: true });
+skipIfNoFixture(FIX, 'eyeball-multi.cjs');
+
 (async () => {
   const browser = await chromium.launch();
   for (const { w, h, label } of [{ w: 1920, h: 1080, label: '1920' }, { w: 375, h: 667, label: '375' }]) {
     const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 1 });
     const page = await ctx.newPage();
-    await page.goto('https://over2you.shop/product?id=1&cb=' + Date.now(), { waitUntil: 'networkidle' });
+    await page.goto(`https://over2you.shop/product?id=${FIX.id}&cb=` + Date.now(), { waitUntil: 'networkidle' });
     await page.waitForSelector('.c3d-flat img', { timeout: 8000 });
     await page.waitForTimeout(400);
     // flat mode screenshot
