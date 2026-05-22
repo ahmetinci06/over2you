@@ -260,6 +260,30 @@ Drift guard: canlı dosya repo'dan farklıysa script reddeder. Önce `diff /etc/
 
 ---
 
+## G9 — Renk semantik rollback
+
+`scripts/migrate-color-semantic.cjs` her çalıştırmada `products.json.bak.YYYYMMDD-HHMMSS` yazıyor hem `public/data/` hem `dist/data/`'a. Migration sonrası bir sorun yakalanırsa:
+
+```bash
+# 1) En yeni backup'ı bul
+ls -t /root/projects/over2you-v2/public/data/products.json.bak.* | head -1
+ls -t /root/projects/over2you-v2/dist/data/products.json.bak.* | head -1
+
+# 2) Geri kopyala
+cp /root/projects/over2you-v2/public/data/products.json.bak.<STAMP> /root/projects/over2you-v2/public/data/products.json
+cp /root/projects/over2you-v2/dist/data/products.json.bak.<STAMP>   /root/projects/over2you-v2/dist/data/products.json
+
+# 3) CMS reload (in-memory cache yok ama yine de güvenli tarafta kal)
+pm2 reload over2you-cms
+```
+
+cms backend artık her PUT/POST'ta `sanitiseProductForG9` çalıştırıyor — eski admin client'lar top-level color gönderse bile silently drop edilir. Rollback sonrası admin client da güncel kaldıysa eski şemayı yine tekrar üretemez (admin UI'da o input'lar artık yok).
+
+**Storefront fallback cleanup (G9-PR2 deferred):**
+`src/pages/product.astro` 6 yerde `product.colors[] || synth-from-product.color` pattern'i var (lines 158, 472, 510, 903, 974, 996) + `el.style.color = product.color` (line 927). Migration variantColors[0]'ı doldurduğu için synth branch fire etmiyor ve fallback'ler işlevsel olarak dead code. `public/js/app.js` aynı: 3 site (281, 420, 169). Sonraki turn'de toplu temizlik yapılacak — şu an inconsistent state değil, sadece kullanılmayan kod.
+
+---
+
 ## Grup Tag Sözlüğü
 
 | Tag | İçerik | Commit'ler |
@@ -275,3 +299,4 @@ Drift guard: canlı dosya repo'dan farklıysa script reddeder. Önce `diff /etc/
 | G5-batch-A | Shop OOS badge + pinch hint + lazy pan edge case | 1182683 |
 | G5-batch-B | Eyeball orchestration + TESTS.md (this commit) | — |
 | G8 | Safari image upload 413 fix — nginx 50m + multer 20MB + MIME whitelist + JSON error shape + partial-success UX | — |
+| G9 | Color semantic refactor — drop product.color/colorName/colorFamily + `default` flag; colors[0] = primary; drag-drop reorder; migration script; cms write-side sanitiser | — |

@@ -174,7 +174,13 @@
 
     /* Color variants list */
     .color-list { display: flex; flex-direction: column; gap: 0.5rem; }
-    .color-card { border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem; background: #fafafa; display: grid; grid-template-columns: 1fr 70px auto auto; gap: 0.6rem 0.6rem; align-items: center; }
+    .color-card { border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem; background: #fafafa; display: grid; grid-template-columns: 18px 1fr 70px auto auto; gap: 0.6rem 0.6rem; align-items: center; position: relative; }
+    .color-card[draggable="true"] { cursor: default; }
+    .color-card.dragging { opacity: 0.4; }
+    .color-card.drag-over { outline: 2px dashed var(--accent); }
+    .color-card-handle { font-size: 14px; color: var(--muted); cursor: grab; user-select: none; line-height: 1; padding: 4px 2px; }
+    .color-card-handle:active { cursor: grabbing; }
+    .color-card-primary-badge { position: absolute; top: -8px; left: 12px; background: var(--accent); color: #fff; font-size: 9px; font-weight: 700; letter-spacing: 0.08em; padding: 2px 6px; border-radius: 3px; pointer-events: none; }
     .color-card input[type="text"] { padding: 6px 10px; font-size: 12px; border: 1px solid var(--border); border-radius: 4px; }
     .color-card input[type="color"] { width: 60px; height: 32px; padding: 0; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; background: none; }
     .color-card .color-default-label { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; cursor: pointer; user-select: none; }
@@ -201,8 +207,7 @@
     .size-stock-cell input { padding: 5px 8px; font-size: 12px; border: 1px solid var(--border); border-radius: 3px; width: 100%; box-sizing: border-box; }
     .size-stock-empty { font-size: 11px; color: var(--muted); font-style: italic; padding: 0.3rem 0; }
     @media (max-width: 600px) {
-      .color-card { grid-template-columns: 1fr 60px; gap: 0.4rem; }
-      .color-card .color-default-label { grid-column: 1 / -1; }
+      .color-card { grid-template-columns: 18px 1fr 60px; gap: 0.4rem; }
       .color-card .color-remove { grid-column: 1 / -1; justify-self: end; }
     }
 
@@ -476,8 +481,8 @@
           </div>
         </div></div>
         <div class="form-row c3"><div class="form-group"><label>Price (₺) <span class="required-mark">*</span></label><input type="number" step="0.01" id="p_price" value="84.00" required min="0" placeholder="0.00"><span class="field-error">Fiyat zorunlu, sıfır veya pozitif.</span></div><div class="form-group"><label>Sale Price (₺)</label><input type="number" step="0.01" id="p_salePrice" placeholder="İndirimli fiyat (boş = indirim yok)" min="0"></div><div class="form-group"><label>Badge</label><select id="p_badge"><option value="">None</option><option value="NEW">NEW</option><option value="LAST STOCK">LAST STOCK</option><option value="SALE">SALE</option></select></div></div>
-        <div class="form-row"><div class="form-group"><label>Color Name (top-level)</label><input id="p_colorName" placeholder="Lapis Blue"></div><div class="form-group"><label>Color (top-level hex)</label><div class="color-input-wrap"><input type="color" id="p_color" value="#2a5a8a"><span class="color-hex" id="p_colorHex">#2a5a8a</span></div></div></div>
-        <div class="form-row"><div class="form-group"><label>Color Family</label><select id="p_colorFamily"><option value="black">Black</option><option value="white">White</option><option value="grey">Grey</option><option value="blue">Blue</option><option value="red">Red</option><option value="pink">Pink</option><option value="brown">Brown</option><option value="green">Green</option><option value="dark">Dark</option></select></div><div class="form-group"></div></div>
+        <!-- G9: top-level color/colorName/colorFamily inputs removed.
+             colors[] is now the sole source of variant data; first entry is primary. -->
         <div class="form-row single"><div class="form-group"><label>Description</label><textarea id="p_description" rows="3"></textarea></div></div>
         <div class="form-row"><div class="form-group">
           <label>SKU</label>
@@ -749,7 +754,7 @@ function renderFormPreview() {
         <h3 style="margin:0 0 .25rem;font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:0.02em;">${escapeHtml(name)}</h3>
         ${sku ? `<p style="font-size:11px;color:var(--muted);margin:0 0 .35rem;letter-spacing:0.04em;">SKU: ${escapeHtml(sku)}</p>` : ''}
         <p style="font-size:14px;margin:0 0 .5rem;">${priceHtml}</p>
-        ${editColors.length ? `<p style="font-size:11px;color:var(--muted);margin:.35rem 0 .25rem;">RENK: <strong style="color:var(--text);">${escapeHtml(editColors.find(c=>c.default)?.name || editColors[0]?.name || '')}</strong></p><div style="display:flex;gap:5px;margin-bottom:.5rem;">${editColors.map(c => `<span style="display:inline-block;width:18px;height:18px;border-radius:50%;background:${c.hex || '#000'};border:1px solid #ccc;" title="${escapeHtml(c.name||'')}"></span>`).join('')}</div>` : ''}
+        ${editColors.length ? `<p style="font-size:11px;color:var(--muted);margin:.35rem 0 .25rem;">RENK: <strong style="color:var(--text);">${escapeHtml(editColors[0]?.name || '')}</strong></p><div style="display:flex;gap:5px;margin-bottom:.5rem;">${editColors.map(c => `<span style="display:inline-block;width:18px;height:18px;border-radius:50%;background:${c.hex || '#000'};border:1px solid #ccc;" title="${escapeHtml(c.name||'')}"></span>`).join('')}</div>` : ''}
         ${sizes ? `<p style="font-size:11px;color:var(--muted);margin:.25rem 0;">BEDENLER: ${escapeHtml(sizes)}</p>` : ''}
         ${editCategories.length ? `<p style="font-size:11px;color:var(--muted);margin:.25rem 0;">Kategoriler: ${editCategories.map(escapeHtml).join(', ')}</p>` : ''}
         ${editTags.length ? `<p style="font-size:11px;color:var(--muted);margin:.25rem 0;">Etiketler: ${editTags.map(escapeHtml).join(', ')}</p>` : ''}
@@ -1174,10 +1179,9 @@ function openProductModal(product) {
     document.getElementById('p_price').value = product.price;
     document.getElementById('p_salePrice').value = product.salePrice || '';
     document.getElementById('p_badge').value = product.badge || '';
-    document.getElementById('p_color').value = product.color;
-    document.getElementById('p_colorHex').textContent = product.color;
-    document.getElementById('p_colorName').value = product.colorName || '';
-    document.getElementById('p_colorFamily').value = product.colorFamily || 'dark';
+    // G9: top-level color/colorName/colorFamily no longer exist on products —
+    // editColors[] is bound below from product.colors. Old products migrated
+    // by scripts/migrate-color-semantic.cjs have no top-level color fields.
     document.getElementById('p_sizes').value = product.sizes.join(',');
     document.getElementById('p_stock').value = product.stock || 'in-stock';
     document.getElementById('p_stockQty').value = product.stockQty ?? '';
@@ -1240,7 +1244,8 @@ function openProductModal(product) {
 }
 
 // ===== COLOR VARIANTS =====
-// editColors[i] = { id, name, hex, default, advanced, colorImages[], color360[], stock, priceOverride }
+// G9 — colors[] is sole source of truth, index 0 is primary, no `default` flag.
+// editColors[i] = { id, name, hex, advanced, colorImages[], color360[], stock, priceOverride }
 // colorImages: [{ src: 'products/foo.png', file?: File }]
 // color360:    [{ src: 'products/foo.png', file?: File }] in 4 slots front/side-r/back/side-l
 function renderColorList() {
@@ -1248,10 +1253,11 @@ function renderColorList() {
   if (!list) return;
   if (!editColors.length) { list.innerHTML = ''; return; }
   list.innerHTML = editColors.map((c, i) => `
-    <div class="color-card" data-color-idx="${i}">
+    <div class="color-card" data-color-idx="${i}" draggable="true" data-sort-idx="${i}">
+      <span class="color-card-handle" title="Sıralamak için sürükle" aria-hidden="true">⋮⋮</span>
+      ${i === 0 ? '<span class="color-card-primary-badge" title="İlk renk birincil (storefront ilk render)">PRIMARY</span>' : ''}
       <input type="text" placeholder="Örn: TAN" value="${(c.name || '').replace(/"/g, '&quot;')}" oninput="updateColor(${i}, 'name', this.value)">
       <input type="color" value="${c.hex || '#000000'}" oninput="updateColor(${i}, 'hex', this.value)" aria-label="Renk seç">
-      <label class="color-default-label"><input type="radio" name="color-default" ${c.default ? 'checked' : ''} onchange="setDefaultColor(${i})">Varsayılan</label>
       <button type="button" class="color-remove" onclick="removeColor(${i})" aria-label="Rengi kaldır">×</button>
       <label class="color-advanced-toggle">
         <input type="checkbox" ${c.advanced ? 'checked' : ''} onchange="toggleColorAdvanced(${i}, this.checked)">
@@ -1301,14 +1307,15 @@ function renderColorList() {
   `).join('');
 }
 function addColor() {
-  editColors.push({ id: '', name: '', hex: '#000000', default: editColors.length === 0, advanced: false, colorImages: [], color360: Array(SLOT_COUNT).fill(null), stock: null, priceOverride: null, sizeStock: {} });
+  // G9: no default flag — position 0 is primary, that's purely array order.
+  editColors.push({ id: '', name: '', hex: '#000000', advanced: false, colorImages: [], color360: Array(SLOT_COUNT).fill(null), stock: null, priceOverride: null, sizeStock: {} });
   renderColorList();
+  updateSaveBlocker();
 }
 function removeColor(i) {
-  const wasDefault = editColors[i] && editColors[i].default;
   editColors.splice(i, 1);
-  if (wasDefault && editColors.length > 0 && !editColors.some(c => c.default)) editColors[0].default = true;
   renderColorList();
+  updateSaveBlocker();
 }
 function updateColor(i, key, value) {
   if (editColors[i]) editColors[i][key] = value;
@@ -1318,17 +1325,26 @@ function updateColorNum(i, key, raw) {
   if (raw === '' || raw === null) editColors[i][key] = null;
   else editColors[i][key] = (key === 'stock') ? parseInt(raw, 10) : parseFloat(raw);
 }
-function setDefaultColor(i) {
-  editColors.forEach((c, idx) => c.default = idx === i);
+// Reorder editColors[] in-place from a new order produced by drag-drop. The
+// row that lands at index 0 becomes the primary by definition.
+function reorderColors(newOrder) {
+  editColors = newOrder.map(i => editColors[i]);
   renderColorList();
+  updateSaveBlocker();
 }
 // Wrap renderColorList to also attach drag-drop on freshly-rendered
-// per-color upload zones. Defined as a wrapper so direct callers don't
-// need to remember to call attachColorDropZones explicitly.
+// per-color upload zones AND wire up makeSortable on the color-card
+// container so the admin can drag the primary slot. makeSortable is
+// idempotent — calling on every render just refreshes the onReorder
+// closure to the latest editColors snapshot.
 const __renderColorList_inner = renderColorList;
 renderColorList = function() {
   __renderColorList_inner();
   if (typeof attachColorDropZones === 'function') attachColorDropZones();
+  const colorList = document.getElementById('colorList');
+  if (colorList && typeof makeSortable === 'function') {
+    makeSortable(colorList, newOrder => reorderColors(newOrder));
+  }
 };
 // Re-render only one color's flat image rail (in-place innerHTML swap on the
 // existing [data-color-images-idx] container). Preserves scroll/focus on the
@@ -1603,7 +1619,7 @@ async function saveProduct() {
         id: cid,
         name: c.name.trim(),
         hex: c.hex || '#000000',
-        default: !!c.default,
+        // G9: no `default` flag — index 0 in the final colors[] is primary.
       };
       if (c.advanced) {
         // images[]
@@ -1679,7 +1695,10 @@ async function saveProduct() {
       }
       colors.push(out);
     }
-    if (colors.length > 0 && !colors.some(c => c.default)) colors[0].default = true;
+    // G9: backend rejects empty colors[]; guard here for a clearer toast.
+    if (colors.length === 0) {
+      throw new Error('En az bir renk varyasyonu gerekli');
+    }
 
     // Top-level sizeStock: same cleanup as per-color. Active when colors[]
     // is empty (or as a fallback when per-color values are missing entries).
@@ -1702,9 +1721,9 @@ async function saveProduct() {
       categories: editCategories.length > 0 ? editCategories : (document.getElementById('p_category').value ? [document.getElementById('p_category').value] : []),
       sizes: document.getElementById('p_sizes').value.split(',').map(s => s.trim()).filter(Boolean),
       badge: document.getElementById('p_badge').value || null,
-      color: document.getElementById('p_color').value,
-      colorName: document.getElementById('p_colorName').value,
-      colorFamily: document.getElementById('p_colorFamily').value,
+      // G9: top-level color/colorName/colorFamily removed. colors[] (built below)
+      // is now the canonical variant array; backend sanitises any stale top-level
+      // fields out on write, so omitting them here is the contract.
       stock: document.getElementById('p_stock').value,
       stockQty: document.getElementById('p_stockQty').value ? parseInt(document.getElementById('p_stockQty').value) : null,
       sizeStock: topSizeStock,
@@ -1928,22 +1947,30 @@ function setEdit360Mode(mode) {
   render360Slots();
 }
 
-// Save blocker: 1 filled slot is invalid (need either 0 or >=2). Disables the
-// save button + shows inline error so the user can't accidentally lose work.
+// Save blocker:
+//   - 360 slots: 1 filled is invalid (need 0 or >=2)
+//   - colors[]: G9 requires >=1, since the backend rejects empty colors[].
+//     A trimmed-name check filters out blank rows the admin started but
+//     never named.
 function updateSaveBlocker() {
   const filled = edit360Slots.filter(s => s).length;
   const hint = document.getElementById('img360CountHint');
   const saveBtn = document.getElementById('saveProductBtn');
-  const invalid = filled === 1;
+  const invalid360 = filled === 1;
+  const namedColors = editColors.filter(c => c.name && c.name.trim()).length;
+  const noColors = namedColors === 0;
+  const invalid = invalid360 || noColors;
   if (hint) {
-    hint.textContent = invalid
+    hint.textContent = invalid360
       ? `${filled}/2 — en az 2 görsel gerekli (veya hepsini temizle).`
       : (filled === 0 ? 'Minimum 2 görsel gerekli. Boş slot atlanır.' : `${filled} görsel — kayıt için hazır.`);
-    hint.style.color = invalid ? 'var(--danger)' : 'var(--muted)';
+    hint.style.color = invalid360 ? 'var(--danger)' : 'var(--muted)';
   }
   if (saveBtn) {
     saveBtn.disabled = invalid;
-    saveBtn.title = invalid ? '360 için 1 görsel yetersiz — en az 2 gerek' : '';
+    saveBtn.title = invalid360
+      ? '360 için 1 görsel yetersiz — en az 2 gerek'
+      : (noColors ? 'En az bir renk varyasyonu gerekli — "Renk ekle"' : '');
   }
 }
 
@@ -2049,7 +2076,7 @@ function attachColorDropZones() {
   });
 }
 
-document.getElementById('p_color').addEventListener('input', e => { document.getElementById('p_colorHex').textContent = e.target.value; });
+// G9: p_color input listener removed along with the field itself.
 
 // ===== SIZE STOCK GRID =====
 // Read current sizes from the p_sizes input, then render one number input per

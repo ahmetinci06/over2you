@@ -12,9 +12,6 @@
       "XL"
     ],
     "badge": "NEW",
-    "color": "#c4a47a",
-    "colorName": "Tan",
-    "colorFamily": "brown",
     "description": "BDG Jeans corduroy zip-up bomber jacket in tan/khaki. Wide-wale corduroy fabric, full-length front zipper, spread collar, elasticized waistband and cuffs, side pockets. Relaxed oversized fit.",
     "images": [
       "products/bdg-jacket-front.png",
@@ -56,15 +53,271 @@
       {
         "id": "tan",
         "name": "TAN",
-        "hex": "#c4a47a",
-        "default": true
+        "hex": "#c4a47a"
       },
       {
         "id": "black",
         "name": "BLACK",
-        "hex": "#000000",
-        "default": false
+        "hex": "#000000"
       }
-    ]
+    ],
+    "deletedAt": "2026-05-22T16:29:20.792Z"
+  },
+  {
+    "name": "001",
+    "price": 2750,
+    "salePrice": null,
+    "category": "sweatpants",
+    "categories": [
+      "sweatpants"
+    ],
+    "sizes": [
+      "XXS",
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "badge": null,
+    "stock": "in-stock",
+    "stockQty": 20,
+    "outOfStock": false,
+    "description": "baggy arka baskılı eşofman",
+    "images": [
+      "products/001-1.png",
+      "products/001-2.png"
+    ],
+    "images360": [
+      {
+        "id": "frame-0",
+        "src": "products/001-front.png",
+        "label": "",
+        "flip": false,
+        "deg": "0°"
+      },
+      {
+        "id": "frame-1",
+        "src": "products/001-side-r.png",
+        "label": "",
+        "flip": false,
+        "deg": "90°"
+      },
+      {
+        "id": "frame-2",
+        "src": "products/001-back.png",
+        "label": "",
+        "flip": false,
+        "deg": "180°"
+      },
+      {
+        "id": "frame-3",
+        "src": "products/001-side-l.png",
+        "label": "",
+        "flip": true,
+        "deg": "270°"
+      }
+    ],
+    "colors": [
+      {
+        "id": "primary",
+        "name": "Renk",
+        "hex": "#000000",
+        "family": "black",
+        "images": [
+          "products/001-1.png",
+          "products/001-2.png"
+        ],
+        "sizeStock": {
+          "XXL": 0,
+          "L": 1,
+          "XXS": 2,
+          "XS": 2,
+          "S": 4,
+          "XL": 5
+        },
+        "stock": 20,
+        "images360": [
+          {
+            "id": "frame-0",
+            "src": "products/001-front.png",
+            "label": "",
+            "flip": false,
+            "deg": "0°"
+          },
+          {
+            "id": "frame-1",
+            "src": "products/001-side-r.png",
+            "label": "",
+            "flip": false,
+            "deg": "90°"
+          },
+          {
+            "id": "frame-2",
+            "src": "products/001-back.png",
+            "label": "",
+            "flip": false,
+            "deg": "180°"
+          },
+          {
+            "id": "frame-3",
+            "src": "products/001-side-l.png",
+            "label": "",
+            "flip": true,
+            "deg": "270°"
+          }
+        ]
+      }
+    ],
+    "seo": {
+      "metaTitle": null,
+      "metaDescription": null,
+      "slug": "001"
+    },
+    "sku": null,
+    "tags": [],
+    "bundleWith": [],
+    "id": 2,
+    "sizeStock": {
+      "XXL": 0,
+      "L": 1,
+      "XXS": 2,
+      "XS": 2,
+      "S": 4,
+      "XL": 5
+    }
+  },
+  {
+    "name": "deneme",
+    "price": 84,
+    "salePrice": null,
+    "category": "sweatpants",
+    "categories": [
+      "sweatpants"
+    ],
+    "sizes": [
+      "XXS",
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "badge": null,
+    "stock": "in-stock",
+    "stockQty": null,
+    "sizeStock": {
+      "XXS": 7,
+      "XS": 9,
+      "M": 5,
+      "L": 0,
+      "S": 8,
+      "XL": 9,
+      "XXL": 6
+    },
+    "outOfStock": false,
+    "description": "hzhghjghjkgfjfjgöv",
+    "images": [
+      "products/deneme-1.png"
+    ],
+    "images360": [
+      {
+        "id": "frame-0",
+        "src": "products/deneme-frame-0.png",
+        "label": "",
+        "flip": true,
+        "deg": "0°"
+      },
+      {
+        "id": "frame-1",
+        "src": "products/deneme-frame-1.png",
+        "label": "",
+        "flip": false,
+        "deg": "60°"
+      },
+      {
+        "id": "frame-2",
+        "src": "products/deneme-frame-2.png",
+        "label": "",
+        "flip": false,
+        "deg": "120°"
+      },
+      {
+        "id": "frame-3",
+        "src": "products/deneme-frame-3.png",
+        "label": "",
+        "flip": false,
+        "deg": "180°"
+      },
+      {
+        "id": "frame-4",
+        "src": "products/deneme-frame-4.png",
+        "label": "",
+        "flip": false,
+        "deg": "240°"
+      },
+      {
+        "id": "frame-5",
+        "src": "products/deneme-frame-5.png",
+        "label": "",
+        "flip": false,
+        "deg": "300°"
+      }
+    ],
+    "colors": [
+      {
+        "id": "black",
+        "name": "black",
+        "hex": "#000000",
+        "images": [
+          "products/deneme-black-1.png"
+        ],
+        "images360": [
+          {
+            "id": "frame-0",
+            "src": "products/deneme-black-frame-0.png",
+            "label": "",
+            "flip": false,
+            "deg": "0°"
+          },
+          {
+            "id": "frame-1",
+            "src": "products/deneme-black-frame-1.png",
+            "label": "",
+            "flip": false,
+            "deg": "120°"
+          },
+          {
+            "id": "frame-2",
+            "src": "products/deneme-black-frame-2.png",
+            "label": "",
+            "flip": false,
+            "deg": "240°"
+          }
+        ],
+        "stock": 30,
+        "priceOverride": 200,
+        "sizeStock": {
+          "XXS": 1,
+          "XS": 1,
+          "S": 11,
+          "XL": 2,
+          "L": 0,
+          "M": 9,
+          "XXL": 2
+        }
+      }
+    ],
+    "seo": {
+      "metaTitle": null,
+      "metaDescription": null,
+      "slug": "deneme"
+    },
+    "sku": null,
+    "tags": [],
+    "bundleWith": [],
+    "id": 3
   }
 ]
