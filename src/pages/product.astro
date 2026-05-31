@@ -103,7 +103,12 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
     // separate 360 ring via data-frames when eHas360. No thumb→ring index
     // mapping — carousel-3d keeps two independent cursors.
     function effectiveGallery(product, color, baseImages, baseFrames360) {
-      const isBase = !color || !!color.default;
+      // G9: colors[0] is the primary variant (the `default` flag was dropped).
+      // The primary inherits the product's base 360 frames when it has none of
+      // its own; non-primary variants do not. Keep the legacy `default`/null
+      // checks so synthesised single-color products still resolve as base.
+      const primary = (Array.isArray(product.colors) && product.colors.length > 0) ? product.colors[0] : null;
+      const isBase = !color || !!color.default || (!!primary && (color === primary || color.id === primary.id));
       const colorHasImages = !!(color && Array.isArray(color.images) && color.images.length > 0);
       const colorHas360    = !!(color && Array.isArray(color.images360) && color.images360.length > 0);
       const eImages    = colorHasImages ? color.images : baseImages;
