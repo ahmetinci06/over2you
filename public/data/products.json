@@ -318,6 +318,112 @@
     "sku": null,
     "tags": [],
     "bundleWith": [],
-    "id": 3
+    "id": 3,
+    "deletedAt": "2026-05-22T19:02:58.138Z"
+  },
+  {
+    "name": "Tenrengi kapri",
+    "price": 2284,
+    "salePrice": null,
+    "category": "sweatpants",
+    "categories": [
+      "sweatpants"
+    ],
+    "sizes": [
+      "XXS",
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "badge": "LAST STOCK",
+    "stock": "in-stock",
+    "stockQty": null,
+    "sizeStock": null,
+    "outOfStock": false,
+    "description": "ewewewe",
+    "images": [
+      "products/123123123-1.png",
+      "products/123123123-2.png"
+    ],
+    "images360": [
+      {
+        "id": "frame-0",
+        "src": "products/123123123-frame-0.png",
+        "label": "",
+        "flip": false,
+        "deg": "0°"
+      },
+      {
+        "id": "frame-1",
+        "src": "products/123123123-frame-1.png",
+        "label": "",
+        "flip": true,
+        "deg": "120°"
+      },
+      {
+        "id": "frame-2",
+        "src": "products/123123123-frame-2.png",
+        "label": "",
+        "flip": false,
+        "deg": "240°"
+      }
+    ],
+    "colors": [
+      {
+        "id": "sad",
+        "name": "sad",
+        "hex": "#000000"
+      },
+      {
+        "id": "tan",
+        "name": "tan",
+        "hex": "#ff6251",
+        "images": [
+          "products/tenrengi-kapri-tan-1.png"
+        ],
+        "images360": [
+          {
+            "id": "frame-0",
+            "src": "products/tenrengi-kapri-tan-frame-0.png",
+            "label": "",
+            "flip": false,
+            "deg": "0°"
+          },
+          {
+            "id": "frame-1",
+            "src": "products/tenrengi-kapri-tan-frame-1.png",
+            "label": "",
+            "flip": false,
+            "deg": "90°"
+          },
+          {
+            "id": "frame-2",
+            "src": "products/tenrengi-kapri-tan-frame-2.png",
+            "label": "",
+            "flip": false,
+            "deg": "180°"
+          },
+          {
+            "id": "frame-3",
+            "src": "products/tenrengi-kapri-tan-frame-3.png",
+            "label": "",
+            "flip": false,
+            "deg": "270°"
+          }
+        ]
+      }
+    ],
+    "seo": {
+      "metaTitle": null,
+      "metaDescription": null,
+      "slug": "123123123"
+    },
+    "sku": null,
+    "tags": [],
+    "bundleWith": [],
+    "id": 4
   }
 ]
