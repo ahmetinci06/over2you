@@ -1258,6 +1258,7 @@ function openProductModal(product) {
     document.getElementById('p_sizes').value = 'XXS,XS,S,M,L,XL,XXL';
     document.getElementById('p_price').value = '84.00';
     document.getElementById('p_stock').value = 'in-stock';
+    editColors = [];
     editCategories = [];
     editTags = [];
     editSizeStock = {};
@@ -1296,6 +1297,7 @@ function renderColorList() {
         Bu rengin kendi fotoları / stoku / fiyatı var
       </label>
       <div class="color-advanced" ${c.advanced ? '' : 'hidden'}>
+        ${i === 0 ? `<p class="color-primary-note" style="font-size:11px;color:var(--muted);line-height:1.5;margin:0;">Birincil renk (PRIMARY) — ürünün <strong style="color:var(--text);">ana galeri ve 360° fotoğrafları</strong> bu renk için kullanılır. Ayrı foto/360 gereken renkleri 2. sıradan itibaren ekleyin. Stok/fiyat aşağıda ayarlanabilir.</p>` : `
         <fieldset>
           <legend>Bu renge özel galeri fotoları (boşsa ana fotolar kullanılır)</legend>
           <div class="img-upload-zone color-upload-zone" data-color-idx="${i}" data-kind="images" onclick="this.querySelector('input').click()">
@@ -1311,9 +1313,9 @@ function renderColorList() {
           `).join('')}</div>
         </fieldset>
         <fieldset>
-          <legend>Bu renge özel 360° fotoları (4 görsel: front, side-r, back, side-l sırasıyla)</legend>
+          <legend>Bu renge özel 360° fotoları (2-6 görsel sırayla)</legend>
           <div class="img-upload-zone color-upload-zone" data-color-idx="${i}" data-kind="360" onclick="this.querySelector('input').click()">
-            📁 Sürükle bırak veya tıkla (ilk 4 görsel slot'lara dağıtılır)
+            📁 Sürükle bırak veya tıkla (ilk 6 görsel slot'lara dağıtılır)
             <input type="file" multiple accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" style="display:none;" onchange="handleColor360(${i}, this.files); this.value='';" onclick="event.stopPropagation();">
           </div>
           <div class="color-thumb-row color-360-row">${SLOT_DEFS.map((def, si) => {
@@ -1321,7 +1323,7 @@ function renderColorList() {
             const flipped = slot && !!slot.flip;
             return `<div class="color-thumb color-thumb-360 ${slot ? '' : 'empty'}" title="${def.label}"><span class="color-thumb-tag">${def.id}</span>${slot ? `<img src="${previewURL(slot)}" alt="${def.label}" style="${flipped ? 'transform:scaleX(-1);' : ''}"><button type="button" onclick="event.stopPropagation();clearColor360Slot(${i}, ${si})" aria-label="Sil">×</button><button type="button" class="color-thumb-flip ${flipped ? 'on' : ''}" onclick="event.stopPropagation();toggleColor360Flip(${i}, ${si})" aria-label="Aynala" title="Aynala">↔</button>` : ''}</div>`;
           }).join('')}</div>
-        </fieldset>
+        </fieldset>`}
         <fieldset>
           <legend>Stok ve fiyat (opsiyonel)</legend>
           <div class="color-num-row">
@@ -1377,6 +1379,21 @@ renderColorList = function() {
   if (colorList && typeof makeSortable === 'function') {
     makeSortable(colorList, newOrder => reorderColors(newOrder));
   }
+  // P1-B: wire drag-reorder on each color's flat image rail on initial render
+  // too — previously only renderColorRail() did this, so an existing product's
+  // color images weren't sortable until one was added/removed. makeSortable is
+  // idempotent (sortInit guard) so re-wiring on every render is safe.
+  editColors.forEach((c, i) => {
+    const rail = document.querySelector(`[data-color-images-idx="${i}"]`);
+    if (rail && typeof makeSortable === 'function') {
+      makeSortable(rail, newOrder => {
+        const cc = editColors[i];
+        if (!cc || !cc.colorImages) return;
+        cc.colorImages = newOrder.map(k => cc.colorImages[k]);
+        renderColorRail(i);
+      });
+    }
+  });
 };
 // Re-render only one color's flat image rail (in-place innerHTML swap on the
 // existing [data-color-images-idx] container). Preserves scroll/focus on the
@@ -1431,7 +1448,7 @@ function handleColor360(i, files) {
   const valid = filterValidImageFiles(files, `${cname} 360°`);
   let slot = 0;
   for (const f of valid) {
-    if (slot >= 4) break;
+    if (slot >= SLOT_COUNT) break; // P1-B: was hard-capped at 4; allow up to SLOT_COUNT (6) to match top-level 360 + storefront G6-PR3
     // Preserve any flip choice the admin already toggled in this slot.
     const prev = editColors[i].color360[slot];
     const prevFlip = prev && typeof prev.flip === 'boolean' ? prev.flip : false;
