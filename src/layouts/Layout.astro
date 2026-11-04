@@ -167,6 +167,7 @@ const base = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL :
         <button class="submenu-back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 18l-6-6 6-6"></path></svg> BACK</button>
         <ul class="nav-list">
           <li><a href={`${base}shop`} class="mobile-nav-link" data-i18n="nav.shopAll">TÜM ÜRÜNLER</a></li>
+          <li><a href={`${base}shop?cat=jeans`} class="mobile-nav-link" data-i18n="cat.jeans">KOT</a></li>
           <li><a href={`${base}shop?cat=jackets`} class="mobile-nav-link">JACKETS</a></li>
           <li><a href={`${base}shop?cat=hoodies`} class="mobile-nav-link" data-i18n="cat.hoodies">SWEATSHIRT</a></li>
           <li><a href={`${base}shop?cat=sweatpants`} class="mobile-nav-link" data-i18n="cat.sweatpants">EŞOFMAN</a></li>

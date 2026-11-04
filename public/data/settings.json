@@ -15,15 +15,25 @@
   "bankName": "",
   "bankIBAN": "TR00 0000 0000 0000 0000 0000 00",
   "bankHolder": "Over2You",
-  "iyzico": {
-    "apiKey": "",
-    "secretKey": "",
-    "baseUrl": "https://sandbox-api.iyzipay.com"
-  },
   "announcement": "₺500 ÜZERİ SİPARİŞLERDE ÜCRETSİZ KARGO",
   "heroSlides": [
-    { "mobileImg": "img/hero-mobile-1.jpg", "desktopImg": "img/hero-desktop-1.jpg", "buttonText": "NEW COLORS ONLINE", "buttonLink": "/shop" },
-    { "mobileImg": "img/hero-mobile-2.jpg", "desktopImg": "img/hero-desktop-2.jpg", "buttonText": "WOMEN", "buttonLink": "/shop?cat=women" },
-    { "mobileImg": "img/hero-mobile-3.jpg", "desktopImg": "img/hero-desktop-3.jpg", "buttonText": "SHOP NOW", "buttonLink": "/shop" }
+    {
+      "mobileImg": "img/hero-mobile-1.jpg",
+      "desktopImg": "img/hero-desktop-1.jpg",
+      "buttonText": "NEW COLORS ONLINE",
+      "buttonLink": "/shop"
+    },
+    {
+      "mobileImg": "img/hero-mobile-2.jpg",
+      "desktopImg": "img/hero-desktop-2.jpg",
+      "buttonText": "WOMEN",
+      "buttonLink": "/shop?cat=women"
+    },
+    {
+      "mobileImg": "img/hero-mobile-3.jpg",
+      "desktopImg": "img/hero-desktop-3.jpg",
+      "buttonText": "SHOP NOW",
+      "buttonLink": "/shop"
+    }
   ]
 }

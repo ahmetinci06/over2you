@@ -465,8 +465,8 @@ window.productsReady = false;
     if (prodRes && prodRes.ok) {
       const data = await prodRes.json();
       if (Array.isArray(data) && data.length > 0) {
-        // Filter soft-deleted products from public storefront views.
-        products = data.filter(p => !p.deletedAt);
+        // Filter soft-deleted and draft (not yet published) products from public views.
+        products = data.filter(p => !p.deletedAt && !p.draft);
         window.products = products;
         const shopGrid = document.getElementById('shopProductGrid');
         if (shopGrid) {

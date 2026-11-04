@@ -869,7 +869,7 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
       if (!section) return;
       const ids = Array.isArray(product.bundleWith) ? product.bundleWith : [];
       if (ids.length === 0) return;
-      const items = allProducts.filter(p => ids.includes(p.id) && p.id !== product.id && !p.deletedAt);
+      const items = allProducts.filter(p => ids.includes(p.id) && p.id !== product.id && !p.deletedAt && !p.draft);
       if (items.length === 0) return;
 
       const grid = section.querySelector('.pdp-bundle-grid');

@@ -10,6 +10,7 @@ const O2Y_TRANSLATIONS = {
     'nav.brand': 'HAKKIMIZDA',
     'nav.o2yPlus': 'OVER2YOU+',
     // Categories
+    'cat.jeans': 'KOT',
     'cat.hoodies': 'SWEATSHIRT',
     'cat.sweatpants': 'EŞOFMAN',
     'cat.crewnecks': 'CREWNECK',
@@ -151,6 +152,7 @@ const O2Y_TRANSLATIONS = {
     'nav.sports': 'SPORTS',
     'nav.brand': 'BRAND',
     'nav.o2yPlus': 'OVER2YOU+',
+    'cat.jeans': 'JEANS',
     'cat.hoodies': 'HOODIES',
     'cat.sweatpants': 'SWEATPANTS',
     'cat.crewnecks': 'CREWNECKS',
