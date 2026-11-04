@@ -2,9 +2,10 @@
 'use strict';
 // Launch catalog seed — 2026-11 (O2Y / Furkan + Salih, PayTR go-live).
 // Upserts by SKU into public/data/products.json (+ dist/data mirror when present),
-// so it is safe to re-run. Products land as `draft: true` with price 0 and a zeroed
-// size matrix: the store owner sets price + per-size stock in the admin, then unticks
-// "Taslak". Nothing here is visible to customers until that happens.
+// so it is safe to re-run. Launch decision (ahmet, 4 kas): only the two JADED LDN
+// front-print jeans (sarı + kırmızı) go on sale, 4.499 TL each, no stock numbers
+// (unknown stock = "Stokta", no per-size counts). Everything else lands as a hidden
+// draft (price 0) for the owner to complete in the admin.
 //
 // usage: node scripts/seed-launch-2026-11.cjs [--site /root/projects/over2you-v2]
 const fs = require('fs');
@@ -18,20 +19,22 @@ const DIST = path.join(SITE, 'dist/data/products.json');
 const sizesA = ['26', '28', '30', '32', '34', '36']; // jaded ldn
 const sizesB = ['26', '28', '30', '32', '34'];       // jaded mavi nakış
 const sizesC = ['29', '30', '31', '32', '33', '34']; // diğerleri
-const zero = (sizes) => Object.fromEntries(sizes.map(s => [s, 0]));
+const LAUNCH_PRICE = 4499; // TL, ahmet 4 kas 2026
 
-function product({ sku, name, slug, sizes, colorId, colorName, hex, images, description, badge }) {
+// No stock figures by decision: sizeStock/stockQty stay unset → storefront reads
+// "unknown" = available ("Stokta"), never "Stokta Yok".
+function product({ sku, name, slug, sizes, colorId, colorName, hex, images, description, badge, price, live }) {
   return {
     sku, name, slug,
-    price: 0, salePrice: null,
+    price: price || 0, salePrice: null,
     category: 'jeans', categories: ['jeans'],
     sizes, badge: badge || null,
     stock: 'in-stock', stockQty: null,
-    sizeStock: zero(sizes), outOfStock: false,
-    draft: true,
+    outOfStock: false,
+    draft: !live,
     description,
     images: images.slice(),
-    colors: [{ id: colorId, name: colorName, hex, images: images.slice(), sizeStock: zero(sizes) }],
+    colors: [{ id: colorId, name: colorName, hex, images: images.slice() }],
     seo: { metaTitle: null, metaDescription: null, slug },
     tags: ['jaded'], bundleWith: [],
   };
@@ -39,10 +42,18 @@ function product({ sku, name, slug, sizes, colorId, colorName, hex, images, desc
 
 const SEED = [
   product({
-    sku: 'JDD-LDN-BLK', name: 'JADED LDN Ön Baskı Kot', slug: 'jaded-ldn-on-baski-kot', sizes: sizesA,
-    colorId: 'siyah', colorName: 'SİYAH', hex: '#15161a',
+    sku: 'JDD-LDN-SARI', name: 'JADED LDN Ön Baskı Kot — Sarı', slug: 'jaded-ldn-on-baski-kot-sari', sizes: sizesA,
+    colorId: 'sari-baski', colorName: 'SARI BASKI', hex: '#e8b923',
     images: ['products/jaded-ldn-1.jpg', 'products/jaded-ldn-2.jpg', 'products/jaded-ldn-3.jpg', 'products/jaded-ldn-4.jpg', 'products/jaded-ldn-5.jpg'],
     description: 'Jaded London LDN ön baskılı baggy kot. Koyu lacivert denim, sarı LDN baskı, bol kalıp.', badge: 'NEW',
+    price: LAUNCH_PRICE, live: true,
+  }),
+  product({
+    sku: 'JDD-LDN-KIRMIZI', name: 'JADED LDN Ön Baskı Kot — Kırmızı', slug: 'jaded-ldn-on-baski-kot-kirmizi', sizes: sizesA,
+    colorId: 'kirmizi-baski', colorName: 'KIRMIZI BASKI', hex: '#c0392b',
+    images: [], // fotoğraf gelince eklenir; o güne kadar taslak
+    description: 'Jaded London LDN ön baskılı baggy kot. Koyu lacivert denim, kırmızı LDN baskı, bol kalıp.', badge: 'NEW',
+    price: LAUNCH_PRICE, live: false,
   }),
   product({
     sku: 'JDD-NAKIS-MAVI', name: 'JADED Önü Nakış Mavi Kot', slug: 'jaded-onu-nakis-mavi-kot', sizes: sizesB,
@@ -81,15 +92,22 @@ for (const seed of SEED) {
   const idx = products.findIndex(p => p.sku === seed.sku);
   if (idx === -1) {
     products.push({ ...seed, id: nextId++ });
-    report.push(`+ ${seed.sku} → #${nextId - 1} (yeni, taslak)`);
+    report.push(`+ ${seed.sku} → #${nextId - 1} (${seed.draft ? 'taslak' : 'YAYINDA'}, ${seed.price} TL)`);
   } else {
-    // Re-run: keep owner-edited fields (price, stock, draft flag, description), refresh images only when seed has some.
+    // Re-run: keep owner-edited fields; only an untouched record (price still 0)
+    // takes the seed's price / live flag. Images refresh only when the seed has some.
     const cur = products[idx];
+    const untouched = !cur.price;
+    if (untouched && seed.price) { cur.price = seed.price; cur.draft = seed.draft; }
     if (seed.images.length) {
       cur.images = seed.images.slice();
       if (Array.isArray(cur.colors) && cur.colors[0]) cur.colors[0].images = seed.images.slice();
     }
-    report.push(`= ${seed.sku} → #${cur.id} (mevcut, fiyat/stok korundu)`);
+    // Earlier seed wrote all-zero size matrices; by decision there are no stock figures.
+    const allZero = (m) => m && typeof m === 'object' && Object.values(m).every(v => v === 0);
+    if (allZero(cur.sizeStock)) delete cur.sizeStock;
+    for (const c of (cur.colors || [])) if (allZero(c.sizeStock)) delete c.sizeStock;
+    report.push(`= ${seed.sku} → #${cur.id} (mevcut${untouched ? ', fiyat/yayın seed\'den' : ', fiyat/stok korundu'})`);
   }
 }
 for (const p of products) {
