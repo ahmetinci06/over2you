@@ -6,5 +6,10 @@
   "COMPANY_TAX_OFFICE": "Kadıköy Vergi Dairesi Müdürlüğü",
   "COMPANY_MERSIS": "Şahıs işletmesi — MERSİS kaydı bulunmamaktadır",
   "FREE_SHIPPING_THRESHOLD": "999999",
-  "HOSTING_PROVIDER": "Hostinger International Ltd."
+  "DISPATCH_DAYS": "1-3",
+  "DELIVERY_DAYS": "1-5",
+  "RETURN_DAYS": "14",
+  "REFUND_CARD_DAYS": "1-15",
+  "REFUND_BANK_DAYS": "3",
+  "SUPPORT_REPLY_DAYS": "1"
 }

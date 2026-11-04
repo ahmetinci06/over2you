@@ -31,7 +31,7 @@ import LegalWarning from '../components/LegalWarning.astro';
     <ul>
       <li>Cayma bildiriminizden sonra <strong>10 (on) gün</strong> içinde ürünü kargoya verin</li>
       <li>İade kargo masrafı: müşteriye aittir (anlaşmalı kargo dışında)</li>
-      <li>Ürün tarafımıza ulaştıktan sonra <strong>14 gün</strong> içinde ödemeniz iade edilir</li>
+      <li>Ürün tarafımıza ulaştıktan sonra <strong><LegalVar name="RETURN_DAYS" /> gün</strong> içinde ödemeniz iade edilir</li>
     </ul>
 
     <h2>6. İade Adresi</h2>
@@ -41,8 +41,8 @@ import LegalWarning from '../components/LegalWarning.astro';
     <h2>7. Geri Ödeme</h2>
     <p>İade tutarı, ödeme yaptığınız yöntemle geri ödenir:</p>
     <ul>
-      <li>Kredi kartı: bankaya bağlı olarak 1-15 iş günü</li>
-      <li>Havale/EFT: 3 iş günü içinde belirttiğiniz IBAN'a</li>
+      <li>Kredi kartı: bankaya bağlı olarak <LegalVar name="REFUND_CARD_DAYS" /> iş günü</li>
+      <li>Havale/EFT: <LegalVar name="REFUND_BANK_DAYS" /> iş günü içinde belirttiğiniz IBAN'a</li>
     </ul>
 
     <h2>8. Cayma Hakkının İstisnaları</h2>

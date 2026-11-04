@@ -1,4 +1,5 @@
 /* Over2You i18n — TR (default) + EN */
+const O2Y_L = window.O2Y_LEGAL || {};
 const O2Y_TRANSLATIONS = {
   tr: {
     // Nav
@@ -42,7 +43,7 @@ const O2Y_TRANSLATIONS = {
     'product.selectSize': 'Beden Seç',
     'product.description': 'Açıklama',
     'product.shipping': 'Kargo & İade',
-    'product.shippingInfo': 'Türkiye geneli ücretsiz kargo. 14 gün içinde ücretsiz iade.',
+    'product.shippingInfo': 'Kargo ücreti ödeme adımında gösterilir. ' + (O2Y_L.RETURN_DAYS || '14') + ' gün içinde iade.',
     'product.alsoLike': 'BEĞENEBİLECEĞİNİZ',
     'product.products': 'ürün',
     // Shop
@@ -78,7 +79,7 @@ const O2Y_TRANSLATIONS = {
     'checkout.shipping': 'Kargo',
     'checkout.payment': 'Ödeme',
     // Misc
-    'announcement.freeShipping': '₺500 ÜZERİ SİPARİŞLERDE ÜCRETSİZ KARGO',
+    'announcement.freeShipping': 'TÜRKİYE GENELİ KARGO · ' + (O2Y_L.RETURN_DAYS || '14') + ' GÜN İADE',
     'lang.switch': 'EN',
     // About
     'about.title': 'HAKKIMIZDA',
@@ -98,8 +99,8 @@ const O2Y_TRANSLATIONS = {
     'pdp.related.heading': 'BENZER ÜRÜNLER',
     'pdp.related.empty': 'Yakında daha fazla ürün.',
     'pdp.colorHint.suffix': 'için fotoğraflar yakında',
-    'pdp.shipDays': '3-5 iş günü içinde kargoda',
-    'pdp.freeReturn': '14 gün ücretsiz değişim hakkı',
+    'pdp.shipDays': (O2Y_L.DISPATCH_DAYS || '1-3') + ' iş günü içinde kargoda',
+    'pdp.freeReturn': (O2Y_L.RETURN_DAYS || '14') + ' gün ücretsiz değişim hakkı',
     'pdp.sku': 'SKU',
     // Lightbox
     'lightbox.close': 'Kapat',
@@ -179,7 +180,7 @@ const O2Y_TRANSLATIONS = {
     'product.selectSize': 'Select Size',
     'product.description': 'Description',
     'product.shipping': 'Shipping & Returns',
-    'product.shippingInfo': 'Free shipping across Turkey. Free returns within 14 days.',
+    'product.shippingInfo': 'Shipping fee is shown at checkout. Returns within ' + (O2Y_L.RETURN_DAYS || '14') + ' days.',
     'product.alsoLike': 'YOU MAY ALSO LIKE',
     'product.products': 'products',
     'shop.title': 'SHOP',
@@ -210,7 +211,7 @@ const O2Y_TRANSLATIONS = {
     'checkout.info': 'Information',
     'checkout.shipping': 'Shipping',
     'checkout.payment': 'Payment',
-    'announcement.freeShipping': 'FREE SHIPPING ON ORDERS OVER ₺500',
+    'announcement.freeShipping': 'SHIPPING ACROSS TÜRKİYE · ' + (O2Y_L.RETURN_DAYS || '14') + '-DAY RETURNS',
     'lang.switch': 'TR',
     'about.title': 'ABOUT',
     'about.story': 'Our Story',
@@ -228,8 +229,8 @@ const O2Y_TRANSLATIONS = {
     'pdp.related.heading': 'YOU MAY ALSO LIKE',
     'pdp.related.empty': 'More products coming soon.',
     'pdp.colorHint.suffix': 'photos coming soon',
-    'pdp.shipDays': 'Ships in 3-5 business days',
-    'pdp.freeReturn': '14-day free exchange',
+    'pdp.shipDays': 'Ships in ' + (O2Y_L.DISPATCH_DAYS || '1-3') + ' business days',
+    'pdp.freeReturn': (O2Y_L.RETURN_DAYS || '14') + '-day free exchange',
     'pdp.sku': 'SKU',
     'lightbox.close': 'Close',
     'lightbox.prev': 'Previous',
