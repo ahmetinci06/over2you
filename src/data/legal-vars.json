@@ -1,11 +1,11 @@
 {
-  "COMPANY_NAME": "",
-  "COMPANY_ADDRESS": "",
+  "COMPANY_NAME": "Salih Süleyman Arslan (Over2You)",
+  "COMPANY_ADDRESS": "Caferağa Mah. Hacı Şükrü Sk. Revnak Apt. B Blok No:5 C, Kadıköy / İstanbul",
   "COMPANY_EMAIL": "",
   "COMPANY_PHONE": "",
-  "COMPANY_TAX_OFFICE": "",
+  "COMPANY_TAX_OFFICE": "Kadıköy Vergi Dairesi Müdürlüğü",
   "COMPANY_TAX_NUMBER": "",
-  "COMPANY_MERSIS": "",
-  "FREE_SHIPPING_THRESHOLD": "",
-  "HOSTING_PROVIDER": ""
+  "COMPANY_MERSIS": "Şahıs işletmesi — MERSİS kaydı bulunmamaktadır",
+  "FREE_SHIPPING_THRESHOLD": "500",
+  "HOSTING_PROVIDER": "Hostinger International Ltd."
 }
