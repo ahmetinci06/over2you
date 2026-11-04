@@ -14,7 +14,7 @@ import LegalWarning from '../components/LegalWarning.astro';
     <ul>
       <li>Ünvan: <LegalVar name="COMPANY_NAME" /></li>
       <li>Adres: <LegalVar name="COMPANY_ADDRESS" /></li>
-      <li>Vergi No: <LegalVar name="COMPANY_TAX_NUMBER" /> / <LegalVar name="COMPANY_TAX_OFFICE" /></li>
+      <li>Vergi Dairesi: <LegalVar name="COMPANY_TAX_OFFICE" /></li>
       <li>MERSİS: <LegalVar name="COMPANY_MERSIS" /></li>
       <li>E-posta: <LegalVar name="COMPANY_EMAIL" /></li>
       <li>Telefon: <LegalVar name="COMPANY_PHONE" /></li>
@@ -35,7 +35,7 @@ import LegalWarning from '../components/LegalWarning.astro';
     <h2>4. Ödeme ve Teslimat</h2>
     <ul>
       <li>Ödeme: kredi/banka kartı, havale/EFT veya WhatsApp aracılığıyla yapılabilir</li>
-      <li>Teslimat süresi: ödemenin onaylanmasından itibaren 1-5 iş günü</li>
+      <li>Teslimat süresi: ödemenin onaylanmasından itibaren <LegalVar name="DELIVERY_DAYS" /> iş günü</li>
       <li>Kargo: anlaşmalı kargo şirketi ile gönderilir</li>
       <li>Teslimat adresi: ALICI'nın belirttiği adrestir</li>
     </ul>

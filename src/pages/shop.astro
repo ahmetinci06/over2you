@@ -9,6 +9,7 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
   </div>
   <div class="shop-filters" style="padding:0 var(--container-gutter) 1.5rem;display:flex;gap:0.5rem;flex-wrap:wrap;">
     <button class="filter-btn active" data-filter="all" onclick="filterProducts('all',this)">ALL</button>
+    <button class="filter-btn" data-filter="jeans" onclick="filterProducts('jeans',this)" data-i18n="cat.jeans">KOT</button>
     <button class="filter-btn" data-filter="jackets" onclick="filterProducts('jackets',this)">JACKETS</button>
     <button class="filter-btn" data-filter="hoodies" onclick="filterProducts('hoodies',this)">HOODIES</button>
     <button class="filter-btn" data-filter="sweatpants" onclick="filterProducts('sweatpants',this)">SWEATPANTS</button>

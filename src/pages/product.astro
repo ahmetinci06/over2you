@@ -141,6 +141,7 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
       if (!metaEl) { metaEl = document.createElement('meta'); metaEl.setAttribute('name', 'description'); document.head.appendChild(metaEl); }
       metaEl.setAttribute('content', metaDesc);
       const B = window.O2Y_BASE;
+      const L = window.O2Y_LEGAL || {};
       const imgBase = B + 'img/';
       const related = list.filter(r => r.category === product.category && r.id !== product.id).slice(0, 8);
 
@@ -244,7 +245,7 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
               const dot = `<span class="pdp-stock-dot" aria-hidden="true"${oos ? ' style="background:#dc3545"' : ''}></span>`;
               const body = oos
                 ? '<strong>Stokta Yok</strong> <span>— stok yenilendiğinde haber veririz</span>'
-                : `<strong>Stokta</strong> <span>— ${low ? `son ${sum} adet` : '3-5 iş günü içinde kargoda'}</span>`;
+                : `<strong>Stokta</strong> <span>— ${low ? `son ${sum} adet` : `${L.DISPATCH_DAYS} iş günü içinde kargoda`}</span>`;
               return `<div class="pdp-stock${oos ? ' pdp-stock--oos' : ''}">${dot}${body}</div>`;
             })()}
 
@@ -260,7 +261,7 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
                 <polyline points="1 20 1 14 7 14"/>
                 <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
               </svg>
-              <span data-i18n="pdp.freeReturn">14 gün ücretsiz değişim hakkı</span>
+              <span data-i18n="pdp.freeReturn">${L.RETURN_DAYS} gün ücretsiz değişim hakkı</span>
             </div>
 
             <div class="product-accordion">
@@ -297,14 +298,14 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
                 </span>
                 <span class="accordion-toggle">+</span>
               </div>
-              <div class="accordion-content">100₺ üzeri siparişlerde kargo ücretsizdir. Standart teslimat 3-5 iş günü. 14 gün içinde ücretsiz değişim ve iade hakkı.</div>
+              <div class="accordion-content">Kargo ücreti ödeme adımında gösterilir. Kargoya veriliş ${L.DISPATCH_DAYS} iş günü, teslimat ${L.DELIVERY_DAYS} iş günü. ${L.RETURN_DAYS} gün içinde değişim ve iade hakkı.</div>
             </div>
 
             <div class="pdp-payment-strip" aria-label="Kabul edilen ödeme yöntemleri">
               <span class="pdp-payment-badge">VISA</span>
               <span class="pdp-payment-badge">MASTERCARD</span>
               <span class="pdp-payment-badge">TROY</span>
-              <span class="pdp-payment-badge">IYZICO</span>
+              <span class="pdp-payment-badge">PAYTR</span>
             </div>
           </div>
         </div>
@@ -484,7 +485,7 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
           const dot = '<span class="pdp-stock-dot" aria-hidden="true"' + (oos ? ' style="background:#dc3545"' : '') + '></span>';
           const body = oos
             ? '<strong>Stokta Yok</strong> <span>— stok yenilendiğinde haber veririz</span>'
-            : '<strong>Stokta</strong> <span>— ' + (low ? 'son ' + sum + ' adet' : '3-5 iş günü içinde kargoda') + '</span>';
+            : '<strong>Stokta</strong> <span>— ' + (low ? 'son ' + sum + ' adet' : (window.O2Y_LEGAL||{}).DISPATCH_DAYS + ' iş günü içinde kargoda') + '</span>';
           stockEl.innerHTML = dot + body;
         }
       }
@@ -869,7 +870,7 @@ const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL 
       if (!section) return;
       const ids = Array.isArray(product.bundleWith) ? product.bundleWith : [];
       if (ids.length === 0) return;
-      const items = allProducts.filter(p => ids.includes(p.id) && p.id !== product.id && !p.deletedAt);
+      const items = allProducts.filter(p => ids.includes(p.id) && p.id !== product.id && !p.deletedAt && !p.draft);
       if (items.length === 0) return;
 
       const grid = section.querySelector('.pdp-bundle-grid');

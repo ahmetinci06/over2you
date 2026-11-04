@@ -2,36 +2,90 @@
 import Layout from '../layouts/Layout.astro';
 const base = (import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : import.meta.env.BASE_URL + '/');
 ---
-<Layout title="Order Confirmed — Over2You">
-  <div style="max-width:600px;margin:0 auto;padding:6rem var(--container-gutter) 6rem;text-align:center;" id="confirmPage"></div>
+<Layout title="Sipariş — Over2You">
+  <div style="max-width:600px;margin:0 auto;padding:6rem var(--container-gutter) 6rem;text-align:center;" id="confirmPage">
+    <p style="color:rgb(var(--text-color)/0.4);">Sipariş durumu alınıyor...</p>
+  </div>
 </Layout>
 
 <script is:inline>
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const page = document.getElementById('confirmPage');
   const params = new URLSearchParams(window.location.search);
-  const orderNumber = params.get('order') || 'N/A';
-  const method = params.get('method') || 'card';
+  const oid = params.get('order') || '';
   const B = window.O2Y_BASE;
+  const money = (n) => '₺' + Number(n).toFixed(2);
+  const esc = (v) => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-  const orders = JSON.parse(localStorage.getItem('over2you_orders')||'[]');
-  const order = orders.find(o => o.orderNumber === orderNumber) || orders[orders.length-1];
+  let settings = {};
+  try { const r = await fetch(B + 'data/settings.json', { cache: 'no-store' }); if (r.ok) settings = await r.json(); } catch (e) {}
 
-  page.innerHTML = `
-    <div style="width:64px;height:64px;border-radius:50%;background:#28a745;display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;">
-      <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#fff" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-    </div>
-    <h1 style="font:var(--heading-font-style) 900 1.5rem/1.2 var(--heading-font-family);text-transform:uppercase;margin-bottom:0.75rem;">${method==='bank'?'ORDER RECEIVED':'ORDER CONFIRMED'}</h1>
-    <p style="color:rgb(var(--text-color)/0.6);margin-bottom:2rem;">
-      ${method==='bank'?'Please complete the bank transfer below.':'Thank you for your purchase!'}
-    </p>
-    <div style="background:#f5f5f5;padding:1.25rem;margin-bottom:2rem;">
-      <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:rgb(var(--text-color)/0.5);margin-bottom:0.3rem;">Order Number</div>
-      <div style="font:var(--heading-font-style) 800 1.25rem/1.2 var(--heading-font-family);letter-spacing:0.06em;">${orderNumber}</div>
-    </div>
-    ${method==='bank'?`<div style="text-align:left;background:#fffbe6;border:1px solid #f0d000;padding:1.25rem;margin-bottom:2rem;font-size:var(--text-sm);line-height:1.8;"><strong>⚠ Payment Required</strong><br><br>Transfer <strong>₺${order?order.total.toFixed(2):'0.00'}</strong> to:<br>IBAN: TR00 0000 0000 0000 0000 0000 00<br>Reference: <strong>${orderNumber}</strong></div>`:''}
-    ${order?`<div style="text-align:left;border-top:1px solid rgb(var(--border-color));padding-top:1.5rem;margin-bottom:2rem;">${order.items.map(i=>'<div style="display:flex;justify-content:space-between;padding:0.5rem 0;font-size:var(--text-sm);"><span>'+i.name+' ('+i.size+') x'+i.qty+'</span><span>₺'+(i.price*i.qty).toFixed(2)+'</span></div>').join('')}<div style="display:flex;justify-content:space-between;padding-top:0.75rem;margin-top:0.5rem;border-top:1px solid rgb(var(--border-color));font-weight:700;">Total: ₺${order.total.toFixed(2)}</div></div>`:''}
-    <a href="${B}shop" class="btn-primary" style="display:block;text-align:center;padding:0.85rem 2rem;">CONTINUE SHOPPING</a>
-  `;
+  async function fetchOrder() {
+    if (!oid) return null;
+    try { const r = await fetch(B + 'api/orders/' + encodeURIComponent(oid), { cache: 'no-store' }); return r.ok ? await r.json() : null; }
+    catch (e) { return null; }
+  }
+
+  const STATUS = {
+    paid:              { icon: '#28a745', title: 'ÖDEME ALINDI',       text: 'Teşekkürler! Siparişiniz hazırlanıyor, kargoya verildiğinde bilgilendirileceksiniz.' },
+    shipped:           { icon: '#28a745', title: 'KARGOYA VERİLDİ',    text: 'Siparişiniz yola çıktı.' },
+    pending_payment:   { icon: '#999',    title: 'ÖDEME BEKLENİYOR',   text: 'Ödeme sonucu bankadan bekleniyor. Bu sayfa birkaç saniyede bir yenilenir.' },
+    awaiting_transfer: { icon: '#f0b400', title: 'SİPARİŞ ALINDI',     text: 'Havale / EFT ödemeniz hesabımıza ulaşınca siparişiniz kargoya verilir.' },
+    whatsapp:          { icon: '#25D366', title: 'SİPARİŞ ALINDI',     text: 'Sipariş özetiniz WhatsApp üzerinden bize iletildi; ödeme ve teslimat için sizinle iletişime geçeceğiz.' },
+    failed:            { icon: '#c94c4c', title: 'ÖDEME ALINAMADI',    text: 'Kartınızdan çekim yapılmadı. Sepetiniz duruyor, tekrar deneyebilirsiniz.' },
+    cancelled:         { icon: '#c94c4c', title: 'SİPARİŞ İPTAL EDİLDİ', text: '' },
+  };
+
+  function render(order) {
+    if (!order) {
+      page.innerHTML = '<h1 style="font:var(--heading-font-style) 900 1.5rem/1.2 var(--heading-font-family);text-transform:uppercase;margin-bottom:1rem;">SİPARİŞ BULUNAMADI</h1><p style="color:rgb(var(--text-color)/0.6);margin-bottom:2rem;">Sipariş numarası geçersiz ya da süresi dolmuş.</p><a href="'+B+'shop" class="btn-primary" style="display:inline-block;padding:0.85rem 2rem;">ALIŞVERİŞE DEVAM</a>';
+      return;
+    }
+    const st = STATUS[order.status] || STATUS.pending_payment;
+    const isDone = order.status === 'paid' || order.status === 'shipped';
+    const bankBlock = order.status === 'awaiting_transfer' ? `
+      <div style="text-align:left;background:#fffbe6;border:1px solid #f0d000;padding:1.25rem;margin-bottom:2rem;font-size:var(--text-sm);line-height:1.8;">
+        <strong>Havale / EFT bilgileri</strong><br><br>
+        Tutar: <strong>${money(order.total)}</strong><br>
+        ${settings.bankIBAN ? 'IBAN: <strong>' + esc(settings.bankIBAN) + '</strong><br>' : ''}
+        ${settings.bankHolder ? 'Alıcı: ' + esc(settings.bankHolder) + '<br>' : ''}
+        ${settings.bankName ? 'Banka: ' + esc(settings.bankName) + '<br>' : ''}
+        Açıklama: <strong>${esc(order.oid)}</strong>
+      </div>` : '';
+    const failBlock = order.status === 'failed' ? `<div style="text-align:left;background:#fdecec;border:1px solid #c94c4c;padding:1rem 1.25rem;margin-bottom:2rem;font-size:var(--text-sm);line-height:1.7;">${esc(order.failedReason || 'Banka ödemeyi onaylamadı.')}<br><a href="${B}checkout" style="font-weight:700;">Tekrar dene →</a></div>` : '';
+    page.innerHTML = `
+      <div style="width:64px;height:64px;border-radius:50%;background:${st.icon};display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;">
+        ${isDone ? '<svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#fff" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>' : '<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#fff" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>'}
+      </div>
+      <h1 style="font:var(--heading-font-style) 900 1.5rem/1.2 var(--heading-font-family);text-transform:uppercase;margin-bottom:0.75rem;">${st.title}</h1>
+      <p style="color:rgb(var(--text-color)/0.6);margin-bottom:2rem;">${st.text}</p>
+      <div style="background:#f5f5f5;padding:1.25rem;margin-bottom:2rem;">
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:rgb(var(--text-color)/0.5);margin-bottom:0.3rem;">Sipariş Numarası</div>
+        <div style="font:var(--heading-font-style) 800 1.25rem/1.2 var(--heading-font-family);letter-spacing:0.06em;">${esc(order.oid)}</div>
+      </div>
+      ${bankBlock}${failBlock}
+      <div style="text-align:left;border-top:1px solid rgb(var(--border-color));padding-top:1.5rem;margin-bottom:2rem;">
+        ${order.items.map(i => '<div style="display:flex;justify-content:space-between;padding:0.5rem 0;font-size:var(--text-sm);"><span>'+esc(i.name)+(i.colorName?' · '+esc(i.colorName):'')+' · '+esc(i.size)+' x'+i.qty+'</span><span>'+money(i.unitPrice*i.qty)+'</span></div>').join('')}
+        <div style="display:flex;justify-content:space-between;padding-top:0.5rem;font-size:var(--text-sm);color:rgb(var(--text-color)/0.6);"><span>Kargo</span><span>${order.shipping === 0 ? 'ÜCRETSİZ' : money(order.shipping)}</span></div>
+        <div style="display:flex;justify-content:space-between;padding-top:0.75rem;margin-top:0.5rem;border-top:1px solid rgb(var(--border-color));font-weight:700;">Toplam: ${money(order.total)}</div>
+      </div>
+      <a href="${B}shop" class="btn-primary" style="display:block;text-align:center;padding:0.85rem 2rem;">ALIŞVERİŞE DEVAM</a>
+    `;
+  }
+
+  let order = await fetchOrder();
+  render(order);
+  if (order && (order.status === 'paid' || order.status === 'shipped')) localStorage.removeItem('over2you_cart');
+  // PayTR redirects to ok_url before (or at the same time as) the callback lands;
+  // poll briefly so the customer sees the real status, then clear the cart.
+  let tries = 0;
+  const timer = setInterval(async () => {
+    if (!order || order.status !== 'pending_payment' || ++tries > 40) { clearInterval(timer); return; }
+    const fresh = await fetchOrder();
+    if (fresh && fresh.status !== order.status) {
+      order = fresh; render(order);
+      if (order.status === 'paid') localStorage.removeItem('over2you_cart');
+    }
+  }, 3000);
 });
 </script>

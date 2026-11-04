@@ -443,16 +443,31 @@
         <div class="form-row"><div class="form-group"><label>Bank Name</label><input id="s_bankName"></div><div class="form-group"><label>Account Holder</label><input id="s_bankHolder"></div></div>
         <div class="form-row single"><div class="form-group"><label>IBAN</label><input id="s_bankIBAN"></div></div>
       </div>
-      <div class="card"><div class="card-title">Payment — iyzico</div>
-        <div class="form-row"><div class="form-group"><label>API Key</label><input id="s_iyzicoApiKey"></div><div class="form-group"><label>Secret Key</label><input type="password" id="s_iyzicoSecretKey"></div></div>
-        <div class="form-row single"><div class="form-group"><label>Base URL</label><select id="s_iyzicoBaseUrl"><option value="https://sandbox-api.iyzipay.com">Sandbox</option><option value="https://api.iyzipay.com">Production</option></select></div></div>
+      <div class="card"><div class="card-title">Payment — PayTR (kart)</div>
+        <p id="paytrStatusLine" style="font-size:13px;margin:0 0 0.5rem;">Durum alınıyor…</p>
+        <p style="font-size:11px;color:var(--muted);margin:0;">Mağaza anahtarları sunucuda <code>.env</code> dosyasında tutulur, buradan değiştirilmez. PayTR panelinde <em>Bildirim URL</em> = <code>https://over2you.shop/api/paytr/callback</code> olmalı.</p>
       </div>
     </div>
 
     <!-- ORDERS -->
     <div class="tab-panel" id="tab-orders">
-      <div class="main-header"><h1 class="main-title">Orders</h1><button class="btn btn-outline" onclick="exportOrdersCSV()">Export CSV</button></div>
-      <div class="card" id="ordersList"><p style="color:var(--muted);font-size:13px;">Orders from localStorage.</p></div>
+      <div class="main-header"><h1 class="main-title">Siparişler</h1>
+        <div class="btn-group">
+          <select id="orderFilter" onchange="renderOrdersList()" style="padding:0.4rem 0.6rem;border:1px solid var(--border);border-radius:6px;font-size:12px;">
+            <option value="open">Açık (ödendi / havale bekliyor / whatsapp)</option>
+            <option value="paid">Ödendi — kargo bekliyor</option>
+            <option value="awaiting_transfer">Havale bekleniyor</option>
+            <option value="whatsapp">WhatsApp</option>
+            <option value="shipped">Kargoya verildi</option>
+            <option value="failed">Başarısız / iptal</option>
+            <option value="all">Hepsi</option>
+          </select>
+          <button class="btn btn-outline" onclick="loadOrders()">↻ Yenile</button>
+          <button class="btn btn-outline" onclick="exportOrdersCSV()">CSV</button>
+        </div>
+      </div>
+      <div class="stats-grid" id="orderStats"></div>
+      <div class="card" id="ordersList"><p style="color:var(--muted);font-size:13px;">Siparişler yükleniyor…</p></div>
     </div>
   </main>
 </div>
@@ -472,7 +487,7 @@
     <details class="form-section" open>
       <summary>Temel Bilgiler</summary>
       <div class="form-section-body">
-        <div class="form-row"><div class="form-group"><label>Product Name <span class="required-mark">*</span></label><input id="p_name" placeholder="Hoodie Lapis Blue" required minlength="3"><span class="field-error">En az 3 karakter olmalı.</span></div><div class="form-group"><label>Primary Category</label><select id="p_category"><option value="jackets">Jackets</option><option value="hoodies">Hoodies</option><option value="sweatpants">Sweatpants</option><option value="crewnecks">Crewnecks</option><option value="tshirts">T-Shirts</option><option value="accessories">Accessories</option></select></div></div>
+        <div class="form-row"><div class="form-group"><label>Product Name <span class="required-mark">*</span></label><input id="p_name" placeholder="Hoodie Lapis Blue" required minlength="3"><span class="field-error">En az 3 karakter olmalı.</span></div><div class="form-group"><label>Primary Category</label><select id="p_category"><option value="jeans">Jeans / Kot</option><option value="jackets">Jackets</option><option value="hoodies">Hoodies</option><option value="sweatpants">Sweatpants</option><option value="crewnecks">Crewnecks</option><option value="tshirts">T-Shirts</option><option value="accessories">Accessories</option></select></div></div>
         <div class="form-row single"><div class="form-group">
           <label>Ek kategoriler (chip — primary kategori dahil tüm kategoriler chip listesindekiler. Enter veya virgül ile ekle)</label>
           <div class="chip-input">
@@ -481,6 +496,7 @@
           </div>
         </div></div>
         <div class="form-row c3"><div class="form-group"><label>Price (₺) <span class="required-mark">*</span></label><input type="number" step="0.01" id="p_price" value="84.00" required min="0" placeholder="0.00"><span class="field-error">Fiyat zorunlu, sıfır veya pozitif.</span></div><div class="form-group"><label>Sale Price (₺)</label><input type="number" step="0.01" id="p_salePrice" placeholder="İndirimli fiyat (boş = indirim yok)" min="0"></div><div class="form-group"><label>Badge</label><select id="p_badge"><option value="">None</option><option value="NEW">NEW</option><option value="LAST STOCK">LAST STOCK</option><option value="SALE">SALE</option></select></div></div>
+        <div class="form-row single"><div class="form-group"><label class="oos-toggle"><input type="checkbox" id="p_draft"> <strong>Taslak</strong> — mağazada gösterilmez, satışa kapalı (fiyat/stok/foto tamamlanınca kaldır)</label></div></div>
         <!-- G9: top-level color/colorName/colorFamily inputs removed.
              colors[] is now the sole source of variant data; first entry is primary. -->
         <div class="form-row single"><div class="form-group"><label>Description</label><textarea id="p_description" rows="3"></textarea></div></div>
@@ -958,6 +974,7 @@ function switchTab(tab) {
   document.getElementById('tab-' + tab)?.classList.add('active');
   document.querySelector(`[data-tab="${tab}"]`)?.classList.add('active');
   document.getElementById('sidebar')?.classList.remove('open');
+  if (tab === 'orders') loadOrders();
 }
 
 // ===== DASHBOARD =====
@@ -1007,15 +1024,29 @@ function filterProducts() {
       : `<div class="btn-group"><button class="btn btn-sm btn-outline" onclick="editProduct(${idx})" title="Düzenle">Edit</button><button class="btn btn-sm btn-outline" onclick="duplicateProduct(${idx})" title="Bu ürünün bir kopyasını oluştur">Kopyala</button><button class="btn btn-sm btn-outline" style="color:var(--danger);" onclick="deleteProduct(${idx})" title="Sil">×</button></div>`;
     return `<tr${isDeleted ? ' style="opacity:0.45;"' : ''}>
       <td>${isDeleted ? '' : `<input type="checkbox" data-idx="${idx}" class="product-cb" ${selectedProducts.has(idx)?'checked':''} onchange="toggleSelect(${idx})">`}</td>
-      <td><div class="product-cell"><div class="swatch" style="background:${(p.colors && p.colors[0] && p.colors[0].hex) || '#ccc'};"></div><div><div class="product-name">${p.name}${isDeleted ? ' <span style="font-size:10px;color:var(--danger);font-weight:600;">(SİLİNDİ)</span>' : ''}</div><div class="product-id">#${p.id}</div></div></div></td>
+      <td><div class="product-cell"><div class="swatch" style="background:${(p.colors && p.colors[0] && p.colors[0].hex) || '#ccc'};"></div><div><div class="product-name">${p.name}${isDeleted ? ' <span style="font-size:10px;color:var(--danger);font-weight:600;">(SİLİNDİ)</span>' : ''}${(!isDeleted && p.draft) ? ' <span class="badge badge-stock" title="Mağazada gösterilmiyor">TASLAK</span>' : ''}</div><div class="product-id">#${p.id}</div></div></div></td>
       <td style="text-transform:capitalize;">${p.category}</td>
       <td>${(typeof p.salePrice === 'number' && p.salePrice < p.price) ? `<strong>₺${p.salePrice.toFixed(2)}</strong> <span style="text-decoration:line-through;color:var(--muted);font-size:11px;">₺${p.price.toFixed(2)}</span>` : `₺${p.price.toFixed(2)}`}</td>
       <td style="font-size:11px;">${p.sizes.join(', ')}</td>
-      <td>${stockDot} ${p.stockQty != null ? p.stockQty : '∞'}</td>
+      <td>${stockCell(p)}</td>
       <td>${p.badge ? `<span class="badge badge-${p.badge==='NEW'?'new':p.badge==='SALE'?'sale':'stock'}">${p.badge}</span>` : '—'}</td>
       <td>${actionBtns}</td>
     </tr>`;
   }).join('');
+}
+
+// Stock column: sum of the size matrix (per color when present), else stockQty, else ∞.
+function stockCell(p) {
+  if (p.outOfStock) return '🔴 stokta yok';
+  const sumOf = (obj) => obj && typeof obj === 'object' ? Object.values(obj).filter(v => typeof v === 'number').reduce((a, b) => a + b, 0) : null;
+  let total = null;
+  if (Array.isArray(p.colors) && p.colors.length > 0) {
+    const perColor = p.colors.map(c => { const s = sumOf(c.sizeStock); return s !== null ? s : (typeof c.stock === 'number' ? c.stock : null); });
+    if (perColor.some(v => v !== null)) total = perColor.reduce((a, b) => a + (b || 0), 0);
+  }
+  if (total === null) { const s = sumOf(p.sizeStock); total = s !== null ? s : (typeof p.stockQty === 'number' ? p.stockQty : null); }
+  if (total === null) return '⚪ ∞';
+  return (total === 0 ? '🔴 ' : total <= 3 ? '🟡 ' : '🟢 ') + total;
 }
 
 function toggleSelect(idx) {
@@ -1186,6 +1217,7 @@ function openProductModal(product) {
     document.getElementById('p_stock').value = product.stock || 'in-stock';
     document.getElementById('p_stockQty').value = product.stockQty ?? '';
     document.getElementById('p_outOfStock').checked = !!product.outOfStock;
+    document.getElementById('p_draft').checked = !!product.draft;
     editCategories = Array.isArray(product.categories) && product.categories.length > 0
       ? [...product.categories]
       : (product.category ? [product.category] : []);
@@ -1728,6 +1760,7 @@ async function saveProduct() {
       stockQty: document.getElementById('p_stockQty').value ? parseInt(document.getElementById('p_stockQty').value) : null,
       sizeStock: topSizeStock,
       outOfStock: document.getElementById('p_outOfStock').checked,
+      draft: document.getElementById('p_draft').checked,
       description: document.getElementById('p_description').value,
       images: imageSrcs,
       images360: images360,
@@ -2171,11 +2204,11 @@ async function savePageContent() {
 function renderSettings() {
   const fields = ['siteName','logoText','supportEmail','whatsappNumber','instagram','tiktok','freeShippingThreshold','shippingCost','bankName','bankHolder','bankIBAN'];
   fields.forEach(f => { const el = document.getElementById('s_' + f); if (el) el.value = settings[f] || ''; });
-  if (settings.iyzico) {
-    document.getElementById('s_iyzicoApiKey').value = settings.iyzico.apiKey || '';
-    document.getElementById('s_iyzicoSecretKey').value = settings.iyzico.secretKey || '';
-    document.getElementById('s_iyzicoBaseUrl').value = settings.iyzico.baseUrl || 'https://sandbox-api.iyzipay.com';
-  }
+  fetch('/api/paytr/status', { cache: 'no-store' }).then(r => r.json()).then(st => {
+    const el = document.getElementById('paytrStatusLine');
+    if (!st.enabled) { el.innerHTML = '🔴 <strong>Kapalı</strong> — sunucuda PayTR anahtarları tanımlı değil; checkout yalnız havale / WhatsApp gösterir.'; return; }
+    el.innerHTML = st.testMode ? '🟡 <strong>TEST MODU</strong> — gerçek çekim yapılmaz. Canlıya almak için sunucuda <code>PAYTR_TEST_MODE=0</code>.' : '🟢 <strong>Canlı</strong> — kart ödemeleri alınıyor.';
+  }).catch(() => { document.getElementById('paytrStatusLine').textContent = 'Durum alınamadı.'; });
 }
 async function saveSettings() {
   settings.siteName = document.getElementById('s_siteName').value;
@@ -2189,25 +2222,96 @@ async function saveSettings() {
   settings.bankName = document.getElementById('s_bankName').value;
   settings.bankHolder = document.getElementById('s_bankHolder').value;
   settings.bankIBAN = document.getElementById('s_bankIBAN').value;
-  settings.iyzico = { apiKey: document.getElementById('s_iyzicoApiKey').value, secretKey: document.getElementById('s_iyzicoSecretKey').value, baseUrl: document.getElementById('s_iyzicoBaseUrl').value };
+  delete settings.iyzico; // secrets never live in the public settings.json
   try {
     await api('/api/settings', { method: 'PUT', body: JSON.stringify(settings) });
     toast('Settings saved');
   } catch(e) { toast('Error: ' + e.message, true); }
 }
 
-// ===== ORDERS =====
-function renderOrders() {
-  const orders = JSON.parse(localStorage.getItem('over2you_orders') || '[]');
+// ===== ORDERS (server-backed: /api/orders) =====
+let orders = [];
+const ORDER_STATUS = {
+  pending_payment:   { label: 'Ödeme bekleniyor', color: '#999' },
+  paid:              { label: 'ÖDENDİ — kargo bekliyor', color: '#28a745' },
+  awaiting_transfer: { label: 'Havale bekleniyor', color: '#f0b400' },
+  whatsapp:          { label: 'WhatsApp siparişi', color: '#25D366' },
+  shipped:           { label: 'Kargoya verildi', color: '#2563eb' },
+  failed:            { label: 'Ödeme başarısız', color: '#c94c4c' },
+  cancelled:         { label: 'İptal', color: '#c94c4c' },
+};
+async function loadOrders() {
+  try { orders = await api('/api/orders'); }
+  catch (e) { document.getElementById('ordersList').innerHTML = '<p style="color:var(--danger);font-size:12px;">Siparişler alınamadı: ' + esc(e.message) + '</p>'; return; }
+  renderOrdersList();
+}
+function renderOrders() { loadOrders(); }
+function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function money(n) { return '₺' + Number(n || 0).toFixed(2); }
+function orderMatches(o, f) {
+  if (f === 'all') return true;
+  if (f === 'open') return ['paid', 'awaiting_transfer', 'whatsapp'].includes(o.status);
+  if (f === 'failed') return o.status === 'failed' || o.status === 'cancelled';
+  return o.status === f;
+}
+function renderOrdersList() {
+  const f = document.getElementById('orderFilter').value;
+  const list = orders.filter(o => orderMatches(o, f));
+  const paidCount = orders.filter(o => o.status === 'paid').length;
+  const revenue = orders.filter(o => o.status === 'paid' || o.status === 'shipped').reduce((s, o) => s + (o.total || 0), 0);
+  document.getElementById('orderStats').innerHTML = `
+    <div class="stat-card"><div class="stat-value">${paidCount}</div><div class="stat-label">Kargo bekleyen</div></div>
+    <div class="stat-card"><div class="stat-value">${orders.filter(o => o.status === 'awaiting_transfer').length}</div><div class="stat-label">Havale bekleyen</div></div>
+    <div class="stat-card"><div class="stat-value">${orders.filter(o => o.status === 'shipped').length}</div><div class="stat-label">Kargolandı</div></div>
+    <div class="stat-card"><div class="stat-value">${money(revenue)}</div><div class="stat-label">Tahsilat (ödendi+kargo)</div></div>`;
   const el = document.getElementById('ordersList');
-  if (!orders.length) { el.innerHTML = '<p style="color:var(--muted);font-size:12px;">No orders yet.</p>'; return; }
-  el.innerHTML = orders.reverse().map(o => `
-    <div style="border:1px solid var(--border);border-radius:6px;padding:0.75rem;margin-bottom:0.5rem;">
-      <div style="display:flex;justify-content:space-between;margin-bottom:0.3rem;"><strong style="font-size:13px;">${o.orderNumber}</strong><span style="font-size:11px;color:var(--muted);">${new Date(o.date).toLocaleString()}</span></div>
-      <div style="font-size:11px;color:var(--muted);">${o.items?.map(i=>`${i.name} (${i.size}) ×${i.qty}`).join(', ')||''}</div>
-      <div style="font-size:13px;font-weight:700;margin-top:0.3rem;">₺${o.total?.toFixed(2)||'?'} — ${o.paymentMethod||'?'}</div>
-    </div>
-  `).join('');
+  if (!list.length) { el.innerHTML = '<p style="color:var(--muted);font-size:12px;">Bu filtrede sipariş yok.</p>'; return; }
+  el.innerHTML = list.map(o => {
+    const st = ORDER_STATUS[o.status] || { label: o.status, color: '#999' };
+    const c = o.customer || {};
+    const addr = [c.address, c.address2, c.postalCode, c.city, c.country].filter(Boolean).join(', ');
+    const items = (o.items || []).map(i => `<li>${esc(i.name)}${i.colorName ? ' · ' + esc(i.colorName) : ''} · <strong>${esc(i.size)}</strong> × ${i.qty} <span style="color:var(--muted);">(${money(i.unitPrice)})</span></li>`).join('');
+    const pay = o.paymentMethod === 'card' ? 'Kart (PayTR)' + (o.paytr && o.paytr.testMode ? ' <span class="badge badge-stock">TEST</span>' : '') : (o.paymentMethod === 'bank' ? 'Havale / EFT' : 'WhatsApp');
+    const fail = (o.paytr && o.paytr.failedReasonMsg) ? `<div style="font-size:11px;color:var(--danger);margin-top:0.3rem;">${esc(o.paytr.failedReasonMsg)}</div>` : '';
+    const actions = [];
+    if (o.status === 'awaiting_transfer' || o.status === 'whatsapp') actions.push(`<button class="btn btn-sm btn-success" onclick="updateOrder('${o.oid}', { status: 'paid' })">✓ Ödeme alındı (stok düş)</button>`);
+    if (o.status === 'paid') actions.push(`<button class="btn btn-sm btn-primary" onclick="markShipped('${o.oid}')">📦 Kargoya verildi</button>`);
+    if (['paid', 'awaiting_transfer', 'whatsapp', 'pending_payment'].includes(o.status)) actions.push(`<button class="btn btn-sm btn-outline" style="color:var(--danger);" onclick="if(confirm('Sipariş iptal edilsin mi? (stok geri eklenmez)')) updateOrder('${o.oid}', { status: 'cancelled' })">İptal</button>`);
+    return `<div style="border:1px solid var(--border);border-left:4px solid ${st.color};border-radius:6px;padding:0.85rem 1rem;margin-bottom:0.6rem;">
+      <div style="display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;align-items:center;margin-bottom:0.4rem;">
+        <div><strong style="font-size:13px;letter-spacing:0.04em;">${esc(o.oid)}</strong> <span style="font-size:11px;color:var(--muted);margin-left:0.5rem;">${new Date(o.createdAt).toLocaleString('tr-TR')}</span></div>
+        <div style="font-size:11px;font-weight:700;color:${st.color};text-transform:uppercase;letter-spacing:0.04em;">${st.label}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;font-size:12px;">
+        <div><div><strong>${esc(c.firstName)} ${esc(c.lastName)}</strong></div><div>${esc(c.phone)} · <a href="mailto:${esc(c.email)}">${esc(c.email)}</a></div><div style="color:var(--muted);margin-top:0.2rem;">${esc(addr)}</div>${c.notes ? '<div style="margin-top:0.2rem;"><em>Not: ' + esc(c.notes) + '</em></div>' : ''}</div>
+        <div><ul style="margin:0;padding-left:1rem;">${items}</ul><div style="margin-top:0.3rem;">Kargo ${o.shipping === 0 ? 'ücretsiz' : money(o.shipping)} · <strong>Toplam ${money(o.total)}</strong> · ${pay}</div>${fail}</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-top:0.6rem;">
+        <div style="font-size:11px;color:var(--muted);">${o.fulfillment && o.fulfillment.tracking ? 'Takip no: <strong>' + esc(o.fulfillment.tracking) + '</strong>' : ''}${o.fulfillment && o.fulfillment.shippedAt ? ' · kargo ' + new Date(o.fulfillment.shippedAt).toLocaleDateString('tr-TR') : ''}</div>
+        <div class="btn-group">${actions.join('')}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+async function updateOrder(oid, patch) {
+  try {
+    const updated = await api('/api/orders/' + encodeURIComponent(oid), { method: 'PATCH', body: JSON.stringify(patch) });
+    const i = orders.findIndex(o => o.oid === oid); if (i !== -1) orders[i] = updated;
+    renderOrdersList(); toast('Sipariş güncellendi');
+    if (patch.status === 'paid') { products = await api('/api/products'); renderProducts(); renderDashboard(); }
+  } catch (e) { toast('Hata: ' + e.message, true); }
+}
+function markShipped(oid) {
+  const tracking = prompt('Kargo takip numarası (boş bırakılabilir):', '') ;
+  if (tracking === null) return;
+  updateOrder(oid, { status: 'shipped', tracking: tracking.trim() });
+}
+function exportOrdersCSV() {
+  if (!orders.length) { toast('Sipariş yok', true); return; }
+  const h = ['Sipariş No','Tarih','Durum','Ödeme','Ad Soyad','Telefon','E-posta','Adres','Ürünler','Ara Toplam','Kargo','Toplam','Takip No'];
+  const rows = orders.map(o => { const c = o.customer || {}; return [o.oid, o.createdAt, (ORDER_STATUS[o.status] || {}).label || o.status, o.paymentMethod, (c.firstName||'')+' '+(c.lastName||''), c.phone||'', c.email||'', [c.address,c.address2,c.postalCode,c.city,c.country].filter(Boolean).join(' '), (o.items||[]).map(i=>`${i.name}${i.colorName?' '+i.colorName:''} ${i.size} x${i.qty}`).join('; '), (o.subtotal||0).toFixed(2), (o.shipping||0).toFixed(2), (o.total||0).toFixed(2), (o.fulfillment&&o.fulfillment.tracking)||'']; });
+  const csv = '\ufeff' + [h,...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(';')).join('\n');
+  const blob = new Blob([csv],{type:'text/csv;charset=utf-8'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `siparisler-${new Date().toISOString().split('T')[0]}.csv`; a.click(); toast('CSV indirildi');
 }
 
 // ===== EXPORT =====
@@ -2230,15 +2334,6 @@ async function importProductsJSON() {
   };
   input.click();
 }
-function exportOrdersCSV() {
-  const orders = JSON.parse(localStorage.getItem('over2you_orders') || '[]');
-  if (!orders.length) { toast('No orders', true); return; }
-  const h = ['Order #','Date','Name','Email','Items','Total','Payment'];
-  const rows = orders.map(o => [o.orderNumber, o.date, (o.customer?.firstName||'')+' '+(o.customer?.lastName||''), o.customer?.email||'', o.items?.map(i=>`${i.name}(${i.size})x${i.qty}`).join(';')||'', o.total?.toFixed(2)||'', o.paymentMethod||'']);
-  const csv = [h,...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
-  const blob = new Blob([csv],{type:'text/csv'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `orders-${new Date().toISOString().split('T')[0]}.csv`; a.click(); toast('CSV exported');
-}
-
 function toast(msg, isError) {
   const el = document.getElementById('toast');
   el.textContent = msg;
