@@ -595,10 +595,11 @@
         <div class="form-row single"><div class="form-group">
           <div class="color-list" id="colorList"></div>
           <button type="button" class="btn btn-outline btn-sm" onclick="addColor()" style="margin-top:0.5rem;">+ Renk Ekle</button>
-          <p style="font-size:11px;color:var(--muted);margin-top:0.4rem;line-height:1.4;">Boş bırakırsan ürün tek renk kalır (Temel Bilgiler'deki Color Name + Color alanları kullanılır). Birden fazla renk eklersen storefront PDP'sinde swatch satırı bu listeden gelir.</p>
+          <p style="font-size:11px;color:var(--muted);margin-top:0.4rem;line-height:1.4;">Boş bırakırsan ürün tek renk ("Standart") olarak kaydedilir. Birden fazla renk eklersen storefront PDP'sinde swatch satırı bu listeden gelir.</p>
         </div></div>
       </div>
     </details>
+    <div id="saveError" role="alert" style="display:none;margin-top:1rem;padding:0.6rem 0.8rem;background:#fdecec;border:1px solid var(--danger);color:#7a1f1f;font-size:12px;border-radius:6px;"></div>
     <div class="btn-group" style="margin-top:1.25rem;justify-content:space-between;align-items:center;">
       <button type="button" class="btn btn-outline" onclick="togglePreview()" id="previewBtn">👁 Önizleme</button>
       <div class="btn-group" style="gap:0.5rem;">
@@ -1574,7 +1575,9 @@ async function saveProduct() {
   const btn = document.getElementById('saveProductBtn');
   const name = document.getElementById('p_name').value.trim();
   const priceVal = parseFloat(document.getElementById('p_price').value);
-  if (!name || !priceVal) { toast('Name and price required', true); return; }
+  const errBox = document.getElementById('saveError');
+  errBox.style.display = 'none'; errBox.textContent = '';
+  if (!name || !priceVal) { errBox.textContent = 'Ürün adı ve fiyat zorunlu.'; errBox.style.display = 'block'; toast('Name and price required', true); return; }
 
   btn.disabled = true; btn.textContent = 'Saving...';
   setSaveState('saving');
@@ -1660,7 +1663,13 @@ async function saveProduct() {
     // Phase 3: build colors[] from editColors. Filter empty-name entries,
     // upload pending advanced files with predictable filenames, then build
     // the final colors[] objects with optional advanced fields populated.
-    const validColors = editColors.filter(c => c.name && c.name.trim());
+    let validColors = editColors.filter(c => c.name && c.name.trim());
+    // No colour entered → single-colour product. Backend requires colors[] ≥ 1, so
+    // synthesise one 'Standart' variant that inherits the product-level images and
+    // size matrix instead of failing the save (Furkan, Safari, 5 Nov).
+    if (validColors.length === 0) {
+      validColors = [{ id: 'standart', name: 'Standart', hex: '#111111', advanced: false, colorImages: [], color360: Array(SLOT_COUNT).fill(null), stock: null, priceOverride: null, sizeStock: (editSizeStock && typeof editSizeStock === 'object') ? { ...editSizeStock } : {} }];
+    }
     const colors = [];
     for (const c of validColors) {
       const cid = (c.id || slugify(c.name)) || ('color-' + Math.random().toString(36).slice(2, 7));
@@ -1817,6 +1826,9 @@ async function saveProduct() {
     }
   } catch (e) {
     setSaveState('error', 'Hata: ' + (e.message || 'kaydedilemedi'));
+    errBox.textContent = 'Kaydedilemedi: ' + (e.message || 'bilinmeyen hata');
+    errBox.style.display = 'block';
+    errBox.scrollIntoView({ block: 'nearest' });
     toast('Hata: ' + (e.message || 'kaydedilemedi'), true);
   } finally {
     btn.disabled = false; btn.textContent = 'Save Product';
